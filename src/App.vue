@@ -1,47 +1,100 @@
-<script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+  <div id="app-container">
+    <DashboardGrid class="dashboard-container">
+      <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="8" gs-h="5">
+        <div class="grid-stack-item-content">
+          <div class="widget-wrapper">
+            <TimingTableWidget />
+          </div>
+        </div>
+      </div>
+      
+      <div class="grid-stack-item" gs-x="8" gs-y="0" gs-w="4" gs-h="3">
+         <div class="grid-stack-item-content">
+           <div class="widget-wrapper">
+            <F1StatusDisplay />
+           </div>
+        </div>
+      </div>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
+    </DashboardGrid>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<script>
+import F1StatusDisplay from '@/components/widgets/F1StatusDisplay.vue';
+import TimingTableWidget from '@/components/widgets/TimingTableWidget.vue';
+import DashboardGrid from './components/DashboardGrid.vue';
+
+export default {
+  components: {
+    DashboardGrid,
+    F1StatusDisplay,
+    TimingTableWidget
+  }
+}
+</script>
+
+<style>
+
+*, *::before, *::after {
+  box-sizing: border-box;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: sans-serif; 
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+#app-container {
+  display:flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden; 
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+#app-container > h1 {
+  flex-shrink: 0; 
+  margin: 10px 20px;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.dashboard-container {
+  flex-grow: 1; /* Allow dashboard to take remaining space */
+  margin: 0 20px 20px 20px;
+  overflow: auto;
+  min-width: 0; 
+}
+
+.grid-stack-item-content {
+  background-color: #f8f9fa; 
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  overflow: auto !important; 
+  color: #212529;
+  display: flex; 
+  flex-direction: column; 
+}
+
+.widget-wrapper {
+  padding: 10px;
+  flex-grow: 1; 
+  display: flex;
+  flex-direction: column;
+  overflow: auto; 
+}
+
+.widget-wrapper h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+}
+
+.p-button {
+    margin-right: 5px;
 }
 </style>

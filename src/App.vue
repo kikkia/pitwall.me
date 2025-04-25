@@ -1,5 +1,6 @@
 <template>
   <div id="app-container">
+    <Navbar />
     <DashboardGrid class="dashboard-container">
       <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="8" gs-h="5">
         <div class="grid-stack-item-content">
@@ -25,9 +26,11 @@
 import F1StatusDisplay from '@/components/widgets/F1StatusDisplay.vue';
 import TimingTableWidget from '@/components/widgets/TimingTableWidget.vue';
 import DashboardGrid from './components/DashboardGrid.vue';
+import Navbar from './components/Navbar.vue';
 
 export default {
   components: {
+    Navbar,
     DashboardGrid,
     F1StatusDisplay,
     TimingTableWidget

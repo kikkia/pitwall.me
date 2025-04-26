@@ -23,9 +23,7 @@ import Button from "primevue/button"
 const f1Store = useF1Store();
 
 const isConnected = computed(() => f1Store.state.isConnected);
-const drivers = computed(() => f1Store.state.raceData?.DriverList);
 const lastMessageForDebug = computed(() => f1Store.state.lastRawMessage);
-const weather = computed(() => f1Store.state.raceData?.WeatherData); // Add null check
 
 const connectionStatus = computed(() => isConnected.value ? 'Connected' : 'Disconnected');
 

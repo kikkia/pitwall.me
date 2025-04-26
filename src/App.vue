@@ -2,7 +2,7 @@
   <div id="app-container">
     <Navbar />
     <DashboardGrid class="dashboard-container">
-      <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="8" gs-h="5">
+      <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="4" gs-h="8">
         <div class="grid-stack-item-content">
           <div class="widget-wrapper">
             <TimingTableWidget />
@@ -10,10 +10,18 @@
         </div>
       </div>
       
-      <div class="grid-stack-item" gs-x="8" gs-y="0" gs-w="4" gs-h="3">
+      <div class="grid-stack-item" gs-x="4" gs-y="0" gs-w="6" gs-h="5">
          <div class="grid-stack-item-content">
            <div class="widget-wrapper">
             <F1StatusDisplay />
+           </div>
+        </div>
+      </div>
+
+      <div class="grid-stack-item" gs-x="10" gs-y="0" gs-w="1" gs-h="1">
+        <div class="grid-stack-item-content">
+           <div class="widget-wrapper">
+            <TrackStatusLEDWidget />
            </div>
         </div>
       </div>
@@ -24,6 +32,7 @@
 
 <script>
 import F1StatusDisplay from '@/components/widgets/F1StatusDisplay.vue';
+import TrackStatusLEDWidget from './components/widgets/TrackStatusLEDWidget.vue';
 import TimingTableWidget from '@/components/widgets/TimingTableWidget.vue';
 import DashboardGrid from './components/DashboardGrid.vue';
 import Navbar from './components/Navbar.vue';
@@ -33,7 +42,8 @@ export default {
     Navbar,
     DashboardGrid,
     F1StatusDisplay,
-    TimingTableWidget
+    TimingTableWidget,
+    TrackStatusLEDWidget
   }
 }
 </script>

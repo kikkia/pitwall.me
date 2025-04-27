@@ -161,3 +161,4 @@ coverage
 
 *.tsbuildinfo
 
+env.d.ts

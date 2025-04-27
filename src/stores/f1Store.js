@@ -125,7 +125,6 @@ export const useF1Store = defineStore('f1', () => {
         case "TimingStats":
         case "TimingAppData":
         case "TimingData":
-        case "TyreStintSeries": // Add TyreStintSeries (map of driver -> array of stints)
             // --- Complex Map/Nested Object/Array Updates ---
             // These require the detailed merging logic using helpers.
             // Example placeholder for TimingData:
@@ -156,6 +155,44 @@ export const useF1Store = defineStore('f1', () => {
                   }
             }
             break;
+        
+        case "TyreStintSeries": // Add TyreStintSeries (map of driver -> array of stints)
+            if (target.TyreStintSeries && target.TyreStintSeries.Stints) {
+                for (const [driver, stintUpdate] of Object.entries(payload.Stints)) {
+                    if (!target.TyreStintSeries.Stints[driver]) {
+                            target.TyreStintSeries.Stints[driver] = []; // Create if new
+                    }
+                    const targetStints = target.TyreStintSeries.Stints[driver];
+                    // Basically these come in keyed to index in array, so we can iterate over all values 
+                    // expecting them to parse to ints and checking against the array we have
+                    // If present, merge, if abscent add to array
+                    for (const [stintIndex, update] of Object.entries(stintUpdate)) {
+                        let index = parseInt(stintIndex);
+                        if (isNaN(index)) {
+                            console.warn("Tyre Stint update index was not parseable??? Recieved " + stintIndex);
+                            break;
+                        }
+                        if (index == targetStints.length) {
+                            // New stint, we should NEVER get a stint > 1 index above our current length
+                            targetStints.push(update);
+                            break;
+                        } else if (index > targetStints.length) {
+                            console.warn("Recieved a Tyre stint update at a higher than expected index. What are they doing 2 stints in a couple seconds?");
+                            break;
+                        }
+
+                        let existingStint = targetStints[index];
+                        // Directly assign updated fields
+                        for (const [fieldName, newValue] of Object.entries(update)) {
+                             if (typeof existingStint === 'object' && existingStint !== null) {
+                                  existingStint[fieldName] = newValue;
+                             } else {
+                                  console.warn(`Target stint at index ${index} for driver ${driver} is not an object.`);
+                             }
+                        }
+                    } 
+                }
+            }
 
         case "TopThree": // Array update often uses map indices in payload
             if (target.TopThree && payload.Lines) {
@@ -177,11 +214,6 @@ export const useF1Store = defineStore('f1', () => {
                           if (msg) target.RaceControlMessages.Messages.push(msg);
                       });
                 }
-                  // Optional: Limit array size
-                  // const MAX_MESSAGES = 100;
-                  // if (target.RaceControlMessages.Messages.length > MAX_MESSAGES) {
-                  //    target.RaceControlMessages.Messages = target.RaceControlMessages.Messages.slice(-MAX_MESSAGES);
-                  // }
             }
             break;
 
@@ -198,31 +230,26 @@ export const useF1Store = defineStore('f1', () => {
             }
             break;
 
-        case "TeamRadio": // Append new captures
+        case "TeamRadio": 
             if (target.TeamRadio && payload.Captures) {
                 if (Array.isArray(payload.Captures)) {
                     target.TeamRadio.Captures.push(...payload.Captures);
-                } else if (typeof payload.Captures === 'object') { // Map format {"index": capture}
+                } else if (typeof payload.Captures === 'object') {
                     Object.values(payload.Captures).forEach(cap => {
                         if (cap) target.TeamRadio.Captures.push(cap);
                     });
                 }
-                // Optional: Limit array size
             }
             break;
 
         default:
             console.warn(`Store Action: Unhandled field name in applyFeedUpdate: ${fieldName}`);
     }
-    // ***** END: DETAILED MERGE LOGIC PLACEHOLDER *****
-
   }
 
-  // --- Actions to Trigger Service ---
   function initialize() {
     console.log("Store Action: Initializing connection...");
-    // No longer fetches driver list here
-    f1WebSocketService.connect(); // Just connect the WebSocket
+    f1WebSocketService.connect();
   }
 
   function terminate() {
@@ -230,18 +257,12 @@ export const useF1Store = defineStore('f1', () => {
     f1WebSocketService.disconnect();
   }
 
-  // === GETTERS ===
-  // (Add computed properties here later if needed e.g., sorted timing list)
-
   return {
-    // Use readonly for safer access from components
     state: readonly(state),
-    // Expose specific actions needed by components/services
-    setConnected, // Needed by service
-    setInitialState, // Needed by service
-    applyFeedUpdate, // Needed by service
-    setLastRawMessage, // Needed by service
-    // Actions for components
+    setConnected, 
+    setInitialState,
+    applyFeedUpdate, 
+    setLastRawMessage, 
     initialize,
     terminate,
   };

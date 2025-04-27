@@ -124,35 +124,19 @@ export const useF1Store = defineStore('f1', () => {
         case "DriverList":
         case "TimingStats":
         case "TimingAppData":
+            
+            break;
+
         case "TimingData":
-            // --- Complex Map/Nested Object/Array Updates ---
-            // These require the detailed merging logic using helpers.
-            // Example placeholder for TimingData:
-            if (fieldName === "TimingData" && target.TimingData) {
-                if (payload.Lines) {
-                    if (!target.TimingData.Lines) target.TimingData.Lines = {};
-                    for (const driverNumber in payload.Lines) {
-                        const driverUpdate = payload.Lines[driverNumber];
-                        if (!target.TimingData.Lines[driverNumber]) {
-                              target.TimingData.Lines[driverNumber] = {}; // Create if new
-                        }
-                        // *** Call your detailed merge function for DriverTimingData ***
-                        mergeDriverTimingData(target.TimingData.Lines[driverNumber], driverUpdate);
-                        console.warn(`Placeholder: Need detailed merge for TimingData driver ${driverNumber}`);
-                        Object.assign(target.TimingData.Lines[driverNumber], driverUpdate); // INSUFFICIENT
+            if (payload.Lines) {
+                if (!target.TimingData.Lines) target.TimingData.Lines = {};
+                for (const driverNumber in payload.Lines) {
+                    const driverUpdate = payload.Lines[driverNumber];
+                    if (!target.TimingData.Lines[driverNumber]) {
+                            target.TimingData.Lines[driverNumber] = {}; // Create if new
                     }
+                    deepMergeObjects(target.TimingData.Lines[driverNumber], driverUpdate);
                 }
-                // Update other top-level fields in TimingData if present in payload
-                if (payload.SessionPart !== undefined) target.TimingData.SessionPart = payload.SessionPart;
-                if (payload.NoEntries !== undefined) target.TimingData.NoEntries = payload.NoEntries;
-                // ... handle other fields like Withheld, CutOffTime etc.
-            } else {
-                // Implement similar logic for DriverList, TimingStats, TimingAppData, TyreStintSeries
-                console.warn(`Placeholder: Need detailed merge for ${fieldName}`);
-                // Basic merge - LIKELY WRONG for nested structures
-                  if (target[fieldName] && payload.Lines) {
-                    Object.assign(target[fieldName].Lines, payload.Lines);
-                  }
             }
             break;
         
@@ -166,9 +150,7 @@ export const useF1Store = defineStore('f1', () => {
                     // Basically these come in keyed to index in array, so we can iterate over all values 
                     // expecting them to parse to ints and checking against the array we have
                     // If present, merge, if abscent add to array
-                    for (const [stintIndex, update] of Object.entries(stintUpdate)) {
-                        applyUpdatesByMappedIndex(stintIndex, update, targetStints);
-                    } 
+                    applyUpdatesByMappedIndex(stintUpdate, targetStints);
                 }
             }
 
@@ -225,40 +207,72 @@ export const useF1Store = defineStore('f1', () => {
     }
   }
 
-  function applyUpdatesByMappedIndex(index, update, array) {
-    let parsedIndex = parseInt(index);
-    if (isNaN(parsedIndex)) {
-        console.warn("update index was not parseable??? Recieved " + index);
-        return;
-    }
-    if (parsedIndex == array.length) {
-        // New stint, we should NEVER get a stint > 1 index above our current length
-        array.push(update);
-        return;
-    } else if (parsedIndex > array.length) {
-        console.warn("Recieved a index update at a higher than expected max index.");
-        return;
-    }
-
-    let existing = array[parsedIndex];
-
-    if (typeof existing !== 'object' || existing === null) {
-        console.warn(`Cannot update fields of non-object/non-array element at index ${parsedIndex}. Element type: ${typeof existing}`);
-        return; 
-    }
-
-    // Directly assign updated fields
-    for (const [fieldName, newValue] of Object.entries(update)) {
-        if (Array.isArray(existing[fieldName])) {
-            // Nested array, try recursive handling
-            for (const [nestedIndex, nestedUpdate] of Object.entries(newValue)) {
-                applyUpdatesByMappedIndex(nestedIndex, nestedUpdate, existing[fieldName]);
+  function applyUpdatesByMappedIndex(fullUpdate, array) {
+    for (const [index, update] of Object.entries(fullUpdate)) {
+        let parsedIndex = parseInt(index);
+        if (isNaN(parsedIndex)) {
+            console.warn("update index was not parseable??? Recieved " + index);
+            return;
+        }
+        if (parsedIndex == array.length) {
+            // New stint, we should NEVER get a stint > 1 index above our current length
+            array.push(update);
+            return;
+        } else if (parsedIndex > array.length) {
+            console.warn("Recieved a index update at a higher than expected max index.");
+            return;
+        }
+    
+        let existing = array[parsedIndex];
+    
+        if (typeof existing !== 'object' || existing === null) {
+            console.warn(`Cannot update fields of non-object/non-array element at index ${parsedIndex}. Element type: ${typeof existing}`);
+            return; 
+        }
+    
+        // Directly assign updated fields
+        for (const [fieldName, newValue] of Object.entries(update)) {
+            if (Array.isArray(existing[fieldName])) {
+                // Nested array, try recursive handling
+                for (const [nestedIndex, nestedUpdate] of Object.entries(newValue)) {
+                    applyUpdatesByMappedIndex(nestedIndex, nestedUpdate, existing[fieldName]);
+                }
+            } else {
+                existing[fieldName] = newValue;
             }
-        } else {
-            existing[fieldName] = newValue;
+        }
+    } 
+  }
+
+function deepMergeObjects(target, source) {
+    if (typeof target !== 'object' || target === null || Array.isArray(target) ||
+        typeof source !== 'object' || source === null || Array.isArray(source)) {
+        console.error("Internal Error: deepMergeObjects called with invalid types", target, source);
+        return target;
+    }
+
+    for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const sourceValue = source[key];
+            const targetValue = target[key];
+
+            // Both targetValue and sourceValue are objects, go deeper
+            if (typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue) &&
+                typeof targetValue === 'object' && targetValue !== null && !Array.isArray(targetValue)) {
+                deepMergeObjects(targetValue, sourceValue); // Recurse on objects
+
+            // TargetValue is an Array and sourceValue is an Object. Use applyUpdatesByMappedIndex.
+            // This handles updates like {"Sectors": {"2": {...}}} where Sectors is an array.
+            } else if (Array.isArray(targetValue) && typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue)) {
+                 applyUpdatesByMappedIndex(sourceValue, targetValue);
+            } else {
+                // Handles primative replacements
+                target[key] = sourceValue;
+            }
         }
     }
-  }
+    return target;
+}
 
   function initialize() {
     console.log("Store Action: Initializing connection...");

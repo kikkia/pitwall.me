@@ -101,32 +101,62 @@ export const useF1Store = defineStore('f1', () => {
 
     switch (fieldName) {
         case "Heartbeat":
+            target.Heartbeat.Utc = payload.Utc;
+            break;
+
         case "ExtrapolatedClock":
+            deepMergeObjects(target.ExtrapolatedClock, payload);
+            break;
+
         case "WeatherData":
+            deepMergeObjects(target.WeatherData, payload);
+            break;
+
         case "TrackStatus":
+            deepMergeObjects(target.TrackStatus, payload);
+            break;
+
         case "SessionInfo":
-            // Simple assignment/merge for top-level objects that are fully replaced or simple
-            if (target[fieldName] && typeof payload === 'object' && payload !== null) {
-                // Could merge if partial updates are possible for these
-                Object.assign(target[fieldName], payload);
-            } else {
-                target[fieldName] = payload; // Replace if null or different type
-            }
+            deepMergeObjects(target.SessionInfo, payload);
             break;
 
         case "CarData.z":
-            target.CarDataZ = payload; // Direct assignment for strings
+            target.CarDataZ = payload;
             break;
         case "Position.z":
-            target.PositionZ = payload; // Direct assignment for strings
+            target.PositionZ = payload;
             break;
 
         case "DriverList":
-        case "TimingStats":
-        case "TimingAppData":
-            
+            deepMergeObjects(target.DriverList, payload);
             break;
 
+        case "TimingStats":
+            if (payload.Lines) {
+                if (!target.TimingStats.Lines) target.TimingStats.Lines = {};
+                for (const driverNumber in payload.Lines) {
+                    const driverUpdate = payload.Lines[driverNumber];
+                    if (!target.TimingStats.Lines[driverNumber]) {
+                            target.TimingStats.Lines[driverNumber] = {}; // Create if new
+                    }
+                    deepMergeObjects(target.TimingStats.Lines[driverNumber], driverUpdate);
+                }
+            }
+            break;
+
+        case "TimingAppData":
+            if (payload.Lines) {
+                if (!target.TimingAppData.Lines) target.TimingAppData.Lines = {};
+                for (const driverNumber in payload.Lines) {
+                    const driverUpdate = payload.Lines[driverNumber];
+                    if (!target.TimingAppData.Lines[driverNumber]) {
+                            target.TimingAppData.Lines[driverNumber] = {}; // Create if new
+                    }
+                    deepMergeObjects(target.TimingAppData.Lines[driverNumber], driverUpdate);
+                }
+            }
+            break;
+            
         case "TimingData":
             if (payload.Lines) {
                 if (!target.TimingData.Lines) target.TimingData.Lines = {};
@@ -154,14 +184,10 @@ export const useF1Store = defineStore('f1', () => {
                 }
             }
 
-        case "TopThree": // Array update often uses map indices in payload
-            if (target.TopThree && payload.Lines) {
-                // *** Use applyMapUpdatesToSlice helper ***
-                // applyMapUpdatesToSlice(target.TopThree.Lines, payload.Lines, () => ({}));
-                console.warn("Placeholder: Need applyMapUpdatesToSlice for TopThree.Lines");
-            }
-            if (target.TopThree && payload.SessionPart !== undefined) target.TopThree.SessionPart = payload.SessionPart;
-            if (target.TopThree && payload.Withheld !== undefined) target.TopThree.Withheld = payload.Withheld;
+        case "TopThree":
+            // Lines in our update payload seems to be an array with ALL data for the driver
+            // Lets try deep merge to see if basic array replace works
+            deepMergeObjects(target.TopThree, payload)
             break;
 
         case "RaceControlMessages": // Append new messages
@@ -178,16 +204,9 @@ export const useF1Store = defineStore('f1', () => {
             break;
 
         case "SessionData":
-            if (target.SessionData) {
-                if (payload.Series) {
-                    // applyMapUpdatesToSlice(target.SessionData.Series, payload.Series, () => ({}));
-                    console.warn("Placeholder: Need applyMapUpdatesToSlice for SessionData.Series");
-                }
-                if (payload.StatusSeries) {
-                    // applyMapUpdatesToSlice(target.SessionData.StatusSeries, payload.StatusSeries, () => ({}));
-                    console.warn("Placeholder: Need applyMapUpdatesToSlice for SessionData.StatusSeries");
-                }
-            }
+            // Also seems to send full arrays on any update
+            // Try deep merge to see if array replaces work consistently
+            deepMergeObjects(target.SessionData, payload);
             break;
 
         case "TeamRadio": 

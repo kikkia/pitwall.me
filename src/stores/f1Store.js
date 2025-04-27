@@ -167,29 +167,7 @@ export const useF1Store = defineStore('f1', () => {
                     // expecting them to parse to ints and checking against the array we have
                     // If present, merge, if abscent add to array
                     for (const [stintIndex, update] of Object.entries(stintUpdate)) {
-                        let index = parseInt(stintIndex);
-                        if (isNaN(index)) {
-                            console.warn("Tyre Stint update index was not parseable??? Recieved " + stintIndex);
-                            break;
-                        }
-                        if (index == targetStints.length) {
-                            // New stint, we should NEVER get a stint > 1 index above our current length
-                            targetStints.push(update);
-                            break;
-                        } else if (index > targetStints.length) {
-                            console.warn("Recieved a Tyre stint update at a higher than expected index. What are they doing 2 stints in a couple seconds?");
-                            break;
-                        }
-
-                        let existingStint = targetStints[index];
-                        // Directly assign updated fields
-                        for (const [fieldName, newValue] of Object.entries(update)) {
-                             if (typeof existingStint === 'object' && existingStint !== null) {
-                                  existingStint[fieldName] = newValue;
-                             } else {
-                                  console.warn(`Target stint at index ${index} for driver ${driver} is not an object.`);
-                             }
-                        }
+                        applyUpdatesByMappedIndex(stintIndex, update, targetStints);
                     } 
                 }
             }
@@ -244,6 +222,41 @@ export const useF1Store = defineStore('f1', () => {
 
         default:
             console.warn(`Store Action: Unhandled field name in applyFeedUpdate: ${fieldName}`);
+    }
+  }
+
+  function applyUpdatesByMappedIndex(index, update, array) {
+    let parsedIndex = parseInt(index);
+    if (isNaN(parsedIndex)) {
+        console.warn("update index was not parseable??? Recieved " + index);
+        return;
+    }
+    if (parsedIndex == array.length) {
+        // New stint, we should NEVER get a stint > 1 index above our current length
+        array.push(update);
+        return;
+    } else if (parsedIndex > array.length) {
+        console.warn("Recieved a index update at a higher than expected max index.");
+        return;
+    }
+
+    let existing = array[parsedIndex];
+
+    if (typeof existing !== 'object' || existing === null) {
+        console.warn(`Cannot update fields of non-object/non-array element at index ${parsedIndex}. Element type: ${typeof existing}`);
+        return; 
+    }
+
+    // Directly assign updated fields
+    for (const [fieldName, newValue] of Object.entries(update)) {
+        if (Array.isArray(existing[fieldName])) {
+            // Nested array, try recursive handling
+            for (const [nestedIndex, nestedUpdate] of Object.entries(newValue)) {
+                applyUpdatesByMappedIndex(nestedIndex, nestedUpdate, existing[fieldName]);
+            }
+        } else {
+            existing[fieldName] = newValue;
+        }
     }
   }
 

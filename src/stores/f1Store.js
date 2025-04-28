@@ -1,12 +1,8 @@
 import { defineStore } from 'pinia';
-import { reactive, readonly } from 'vue'; 
+import { reactive, readonly, computed } from 'vue';
 import * as f1WebSocketService from '@/services/websocketService';
-
-
-/**
- * @typedef {import('./f1DataModels').DriverInfo} DriverInfo // Assuming models are defined elsewhere
- * @typedef {import('./f1DataModels').RaceData} RaceData // Assuming models are defined elsewhere
- */
+import * as transformer from '@/stores/f1DataTransformer';
+import { DriverViewModel } from "@/stores/f1DataTransformer"; 
 
 const createInitialRaceData = () => ({
   Heartbeat: null,
@@ -24,7 +20,8 @@ const createInitialRaceData = () => ({
   CarDataZ: '',
   PositionZ: '',
   TeamRadio: { Captures: [] },      
-  TyreStintSeries: { Stints: {} } 
+  TyreStintSeries: { Stints: {} },
+  LapCount: {}
 });
 
 export const useF1Store = defineStore('f1', () => {
@@ -34,6 +31,23 @@ export const useF1Store = defineStore('f1', () => {
     lastRawMessage: null, // Optional: For debugging WS messages
     /** @type {ReturnType<typeof createInitialRaceData>} */
     raceData: createInitialRaceData(),
+    driversViewModelMap: new Map(),
+  });
+
+  const sortedDriversViewModel = computed(() => {
+    const drivers = Array.from(state.driversViewModelMap.values());
+    // Sort drivers by position (handle non-numeric/missing positions)
+    drivers.filter(driver => driver.RacingNumber != "_kf")
+    drivers.sort((a, b) => {
+         const posA = parseInt(a.position || '99', 10);
+         const posB = parseInt(b.position || '99', 10);
+         // Handle retired drivers - maybe push them to the bottom?
+         if (a.retired && !b.retired) return 1;
+         if (!a.retired && b.retired) return -1;
+         if (a.retired && b.retired) return 0; // Keep relative order among retired
+         return posA - posB;
+    });
+    return drivers;
   });
 
   // === ACTIONS ===
@@ -76,7 +90,9 @@ export const useF1Store = defineStore('f1', () => {
         state.raceData.DriverList = state.raceData.DriverList || {};
         state.raceData.TeamRadio = state.raceData.TeamRadio || { Captures: [] };
         state.raceData.TyreStintSeries = state.raceData.TyreStintSeries || { Stints: {} };
+        state.raceData.LapCount = state.raceData.LapCount || {};
 
+        state.driversViewModelMap = transformer.buildDriverViewModels(state.raceData);
 
         console.log("Store Action: Initial state applied.");
         // console.log("Initial DriverList:", state.raceData.DriverList); // Debug
@@ -98,26 +114,19 @@ export const useF1Store = defineStore('f1', () => {
 
     // Example Snippet (Needs full implementation for all cases):
     const target = state.raceData; // Target the main data object
+    let affectedDriverNumbers = new Set();
 
     switch (fieldName) {
         case "Heartbeat":
-            target.Heartbeat.Utc = payload.Utc;
-            break;
-
         case "ExtrapolatedClock":
-            deepMergeObjects(target.ExtrapolatedClock, payload);
-            break;
-
         case "WeatherData":
-            deepMergeObjects(target.WeatherData, payload);
-            break;
-
         case "TrackStatus":
-            deepMergeObjects(target.TrackStatus, payload);
-            break;
-
         case "SessionInfo":
-            deepMergeObjects(target.SessionInfo, payload);
+        // Lines in our update payload seems to be an array with ALL data for the driver
+        // Lets try deep merge to see if basic array replace works
+        case "TopThree":
+        case "SessionData":
+            deepMergeObjects(target[fieldName], payload);
             break;
 
         case "CarData.z":
@@ -132,62 +141,41 @@ export const useF1Store = defineStore('f1', () => {
             break;
 
         case "TimingStats":
-            if (payload.Lines) {
-                if (!target.TimingStats.Lines) target.TimingStats.Lines = {};
-                for (const driverNumber in payload.Lines) {
-                    const driverUpdate = payload.Lines[driverNumber];
-                    if (!target.TimingStats.Lines[driverNumber]) {
-                            target.TimingStats.Lines[driverNumber] = {}; // Create if new
-                    }
-                    deepMergeObjects(target.TimingStats.Lines[driverNumber], driverUpdate);
-                }
-            }
-            break;
-
         case "TimingAppData":
-            if (payload.Lines) {
-                if (!target.TimingAppData.Lines) target.TimingAppData.Lines = {};
-                for (const driverNumber in payload.Lines) {
-                    const driverUpdate = payload.Lines[driverNumber];
-                    if (!target.TimingAppData.Lines[driverNumber]) {
-                            target.TimingAppData.Lines[driverNumber] = {}; // Create if new
-                    }
-                    deepMergeObjects(target.TimingAppData.Lines[driverNumber], driverUpdate);
-                }
-            }
-            break;
-            
         case "TimingData":
+            // These updates are keyed by driver number in payload.Lines
             if (payload.Lines) {
-                if (!target.TimingData.Lines) target.TimingData.Lines = {};
+                if (!target[fieldName]) target[fieldName] = { Lines: {} }; // Initialize if missing
+                if (!target[fieldName].Lines) target[fieldName].Lines = {};
                 for (const driverNumber in payload.Lines) {
                     const driverUpdate = payload.Lines[driverNumber];
-                    if (!target.TimingData.Lines[driverNumber]) {
-                            target.TimingData.Lines[driverNumber] = {}; // Create if new
+                    if (!target[fieldName].Lines[driverNumber]) {
+                        target[fieldName].Lines[driverNumber] = {}; // Create raw data entry if new
                     }
-                    deepMergeObjects(target.TimingData.Lines[driverNumber], driverUpdate);
+                    deepMergeObjects(target[fieldName].Lines[driverNumber], driverUpdate);
+                    affectedDriverNumbers.add(driverNumber); // Mark this driver for VM update
                 }
+                // Update other fields like Withheld, SessionType if present
+                if (payload.Withheld !== undefined) target[fieldName].Withheld = payload.Withheld;
+                if (payload.SessionType !== undefined) target[fieldName].SessionType = payload.SessionType;
+
             }
             break;
         
-        case "TyreStintSeries": // Add TyreStintSeries (map of driver -> array of stints)
-            if (target.TyreStintSeries && target.TyreStintSeries.Stints) {
-                for (const [driver, stintUpdate] of Object.entries(payload.Stints)) {
-                    if (!target.TyreStintSeries.Stints[driver]) {
-                            target.TyreStintSeries.Stints[driver] = []; // Create if new
-                    }
-                    const targetStints = target.TyreStintSeries.Stints[driver];
-                    // Basically these come in keyed to index in array, so we can iterate over all values 
-                    // expecting them to parse to ints and checking against the array we have
-                    // If present, merge, if abscent add to array
-                    applyUpdatesByMappedIndex(stintUpdate, targetStints);
+        case "TyreStintSeries":
+            if (payload.Stints) {
+                if (!target.TyreStintSeries) target.TyreStintSeries = { Stints: {} };
+                if (!target.TyreStintSeries.Stints) target.TyreStintSeries.Stints = {};
+
+                for (const [driverNumber, stintUpdate] of Object.entries(payload.Stints)) {
+                        if (!target.TyreStintSeries.Stints[driverNumber]) {
+                            target.TyreStintSeries.Stints[driverNumber] = []; // Create if new driver
+                        }
+                        const targetStints = target.TyreStintSeries.Stints[driverNumber];
+                        applyUpdatesByMappedIndex(stintUpdate, targetStints); // Use your existing merge helper
+                        affectedDriverNumbers.add(driverNumber); // Mark this driver
                 }
             }
-
-        case "TopThree":
-            // Lines in our update payload seems to be an array with ALL data for the driver
-            // Lets try deep merge to see if basic array replace works
-            deepMergeObjects(target.TopThree, payload)
             break;
 
         case "RaceControlMessages": // Append new messages
@@ -201,12 +189,6 @@ export const useF1Store = defineStore('f1', () => {
                       });
                 }
             }
-            break;
-
-        case "SessionData":
-            // Also seems to send full arrays on any update
-            // Try deep merge to see if array replaces work consistently
-            deepMergeObjects(target.SessionData, payload);
             break;
 
         case "TeamRadio": 
@@ -223,6 +205,31 @@ export const useF1Store = defineStore('f1', () => {
 
         default:
             console.warn(`Store Action: Unhandled field name in applyFeedUpdate: ${fieldName}`);
+            // If it's an unknown top-level field, maybe assign directly?
+            // Or handle potential future nested structures.
+            if (target[fieldName] === undefined) {
+                target[fieldName] = payload;
+            } else if (typeof target[fieldName] === 'object' && target[fieldName] !== null && typeof payload === 'object' && payload !== null) {
+                deepMergeObjects(target[fieldName], payload);
+            } else {
+                target[fieldName] = payload;
+            }
+    }
+    if (affectedDriverNumbers.size > 0) {
+        // console.debug("Updating view models for drivers:", Array.from(affectedDriverNumbers));
+        for (const driverNumber of affectedDriverNumbers) {
+            const existingVM = state.driversViewModelMap.get(driverNumber);
+            // Pass the *entire updated raw state* to the transformer
+            const updatedVM = transformer.createOrUpdateDriverViewModel(driverNumber, state.raceData, existingVM);
+             // If the driver is new (no existingVM) or updated, set it in the map
+             if (!existingVM || updatedVM !== existingVM) {
+                state.driversViewModelMap.set(driverNumber, updatedVM);
+             } else {
+                 // Optimization: If createOrUpdateDriverViewModel returns the exact same object instance
+                 // (meaning no actual changes were needed), we don't strictly need to .set() again.
+                 // However, .set() is generally safe.
+             }
+        }
     }
   }
 
@@ -231,7 +238,7 @@ export const useF1Store = defineStore('f1', () => {
         let parsedIndex = parseInt(index);
         if (isNaN(parsedIndex)) {
             console.warn("update index was not parseable??? Recieved " + index);
-            return;
+            continue;
         }
         if (parsedIndex == array.length) {
             // New stint, we should NEVER get a stint > 1 index above our current length
@@ -243,23 +250,35 @@ export const useF1Store = defineStore('f1', () => {
         }
     
         let existing = array[parsedIndex];
-    
-        if (typeof existing !== 'object' || existing === null) {
-            console.warn(`Cannot update fields of non-object/non-array element at index ${parsedIndex}. Element type: ${typeof existing}`);
-            return; 
-        }
-    
-        // Directly assign updated fields
-        for (const [fieldName, newValue] of Object.entries(update)) {
-            if (Array.isArray(existing[fieldName])) {
-                // Nested array, try recursive handling
-                for (const [nestedIndex, nestedUpdate] of Object.entries(newValue)) {
-                    applyUpdatesByMappedIndex(nestedIndex, nestedUpdate, existing[fieldName]);
-                }
+
+        if (typeof update === 'object' && update !== null) {
+            if (typeof existing !== 'object' || existing === null) {
+                // If existing item isn't an object, replace it entirely
+                array[parsedIndex] = update;
             } else {
-                existing[fieldName] = newValue;
+                // Deep merge into the existing object at the index
+                deepMergeObjects(existing, update);
             }
+        } else {
+             // If the update is a primitive, just replace the value at the index
+             array[parsedIndex] = update;
         }
+    
+        // if (typeof existing !== 'object' || existing === null) {
+        //     console.warn(`Cannot update fields of non-object/non-array element at index ${parsedIndex}. Element type: ${typeof existing}, Array: ${array}, FullUpdate: ${fullUpdate}`);
+        //     return; 
+        // }
+    
+        // // Directly assign updated fields
+        // for (const [fieldName, newValue] of Object.entries(update)) {
+        //     if (Array.isArray(existing[fieldName])) {
+        //         // Nested array, try recursive handling
+        //         applyUpdatesByMappedIndex(newValue, existing[fieldName]);
+        //     } else {
+        //         existing[fieldName] = newValue;
+        //     }
+        // }
+
     } 
   }
 
@@ -278,14 +297,13 @@ function deepMergeObjects(target, source) {
             // Both targetValue and sourceValue are objects, go deeper
             if (typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue) &&
                 typeof targetValue === 'object' && targetValue !== null && !Array.isArray(targetValue)) {
-                deepMergeObjects(targetValue, sourceValue); // Recurse on objects
+                return deepMergeObjects(targetValue, sourceValue); // Recurse on objects
 
             // TargetValue is an Array and sourceValue is an Object. Use applyUpdatesByMappedIndex.
             // This handles updates like {"Sectors": {"2": {...}}} where Sectors is an array.
             } else if (Array.isArray(targetValue) && typeof sourceValue === 'object' && sourceValue !== null && !Array.isArray(sourceValue)) {
-                 applyUpdatesByMappedIndex(sourceValue, targetValue);
+                applyUpdatesByMappedIndex(sourceValue, targetValue);
             } else {
-                // Handles primative replacements
                 target[key] = sourceValue;
             }
         }
@@ -305,10 +323,19 @@ function deepMergeObjects(target, source) {
 
   return {
     state: readonly(state),
-    setConnected, 
+    // Expose connection status etc.
+    isConnected: readonly(computed(() => state.isConnected)),
+    lastRawMessage: readonly(computed(() => state.lastRawMessage)),
+
+    driversViewModelMap: readonly(state.driversViewModelMap), // Optional: Expose the map directly (readonly)
+    sortedDriversViewModel: sortedDriversViewModel, // Expose the computed sorted array
+
+    setConnected, // Should remain internal? Maybe triggered by websocketService
+    // Internal actions (usually not exposed directly unless needed)
     setInitialState,
-    applyFeedUpdate, 
-    setLastRawMessage, 
+    applyFeedUpdate,
+    setLastRawMessage,
+    // Actions for components to call
     initialize,
     terminate,
   };

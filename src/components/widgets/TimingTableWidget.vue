@@ -4,32 +4,8 @@ import { useF1Store } from '@/stores/f1Store';
 
 const f1Store = useF1Store();
 
-// Use computed for efficient updates when relevant data changes
-const timingLines = computed(() => {
-  if (!f1Store.state.raceData?.TimingData?.Lines) return [];
-  // Combine TimingData with DriverList info and sort
-  return Object.values(f1Store.state.raceData?.TimingData.Lines)
-    .map(timing => {
-      const driverInfo = f1Store.state.raceData?.DriverList?.[timing.RacingNumber];
-      return {
-        ...timing, // Spread timing data
-        Tla: driverInfo?.Tla || 'N/A',
-        TeamColour: driverInfo?.TeamColour || 'FFFFFF',
-        FullName: driverInfo?.FullName || 'Unknown Driver',
-        // Add other needed driver details
-      };
-    })
-    .sort((a, b) => {
-        const posA = parseInt(a.Position, 10); // Position often comes as string
-        const posB = parseInt(b.Position, 10);
-        if (!isNaN(posA) && !isNaN(posB)) return posA - posB;
-        return a.Line - b.Line; // Fallback to Line (grid position) if Position NaN
-    }); // Sort by Position
-});
+const drivers = computed(() => f1Store.sortedDriversViewModel.filter((driver) => driver.racingNumber != "_kf"));
 
-// Access other parts of the state as needed
-const sessionType = computed(() => f1Store.state.raceData?.SessionInfo?.Type);
-const trackStatus = computed(() => f1Store.state.raceData?.TrackStatus?.Status);
 
 </script>
 
@@ -49,16 +25,19 @@ const trackStatus = computed(() => f1Store.state.raceData?.TrackStatus?.Status);
         </tr>
       </thead>
       <tbody>
-        <tr v-for="driver in timingLines" :key="driver.RacingNumber" :style="{ borderLeft: `5px solid #${driver.TeamColour}` }">
-          <td>{{ driver.Position }}</td>
-          <td>{{ driver.RacingNumber }}</td>
-          <td>{{ driver.Tla }}</td>
-          <td>{{ driver.BestLapTime?.Value || '-' }}</td>
-           <td>{{ driver.LastLapTime?.Value || '-' }}</td>
-          <td>{{ /* Calculate Gap - driver.Stats[CurrentSessionPart]?.TimeDiffToFastest */ '-' }}</td>
-          <td>{{ /* Calculate Interval - driver.Stats[CurrentSessionPart]?.TimeDifftoPositionAhead */ '-' }}</td>
-          <td>{{ driver.NumberOfPitStops }}</td>
-          <!-- Add other cells -->
+        <tr v-for="driver in drivers" :key="driver.racingNumber" :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped ? 0.5 : 1 }">
+          <td>{{ driver.position }}</td>
+          <td>{{ driver.racingNumber }}</td>
+          <td>{{ driver.tla }}</td>
+          <td>{{ driver.bestLapTime?.Value || '-' }}</td>
+          <td>{{ driver.lastLapTime?.Value || '-' }}</td>
+          <td>{{ driver.gapToLeader || '-' }}</td>
+          <td>{{ driver.gapToAhead || '-' }}</td>
+          <td>{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
+        </tr>
+        <!-- Empty state -->
+         <tr v-if="drivers.length === 0">
+            <td colspan="8" style="text-align: center;">Waiting for timing data...</td>
         </tr>
       </tbody>
     </table>
@@ -66,6 +45,10 @@ const trackStatus = computed(() => f1Store.state.raceData?.TrackStatus?.Status);
 </template>
 
 <style scoped>
-table { width: 100%; border-collapse: collapse; }
-th, td { padding: 1px 2px; text-align: left; border-bottom: 1px solid #ccc; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9em; } 
+  th, td { padding: 2px 4px; text-align: left; border-bottom: 1px solid #444; white-space: nowrap; }
+  th { background-color: #333; color: #eee; font-weight: bold; }
+  td { background-color: #222; color: #ddd; }
+  tr:nth-child(even) td { background-color: #282828; }
+  tr[style*="opacity: 0.5"] td { color: #888; } 
 </style>

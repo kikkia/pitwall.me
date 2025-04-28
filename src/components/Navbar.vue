@@ -55,7 +55,10 @@
     let active = statuses[statuses.length - 1].SessionStatus
     switch (active) {
         case "Started":
-            return "Ongoing"
+          if (f1Store.state.raceData?.LapCount != null) {
+            return `Lap ${f1Store.state.raceData.LapCount.CurrentLap} / ${f1Store.state.raceData.LapCount.TotalLaps}`
+          }
+          return "Ongoing"
         case "Finished":
         case "Ends":
         case "Finalized":

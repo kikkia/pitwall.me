@@ -58,7 +58,7 @@ export function connect() {
       if (message && typeof message === 'object' && message.R && typeof message.R === 'object') {
           console.log("Service: Detected initial state message.");
           store.setInitialState(message.R); // Pass the entire 'R' object
-          store.setLastRawMessage(null); // Clear raw message debug after processing initial state
+          //store.setLastRawMessage(null); // Clear raw message debug after processing initial state
       }
       // --- Assume Update Message Format ---
       // Expecting ["FieldName", {payload}] based on Go ApplyFeedUpdate
@@ -66,7 +66,7 @@ export function connect() {
         // console.log(`Service: Detected update message for field: ${message[0]}`); // Debug
         const [fieldName, payload] = message;
         store.applyFeedUpdate(fieldName, payload); // Call store action
-        store.setLastRawMessage(null); // Clear raw message debug after processing update
+       // store.setLastRawMessage(null); // Clear raw message debug after processing update
       }
 
       else if (message && typeof message === 'object' && message.M && Array.isArray(message.M)) {
@@ -84,12 +84,12 @@ export function connect() {
             console.warn("Service: Unrecognized entry in wrapped feed message:", entry);
           }
         });
-        store.setLastRawMessage(null);
+        //store.setLastRawMessage(null);
       }
       // --- Handle other formats if necessary (e.g., simple heartbeats) ---
       // else if (typeof message === 'string' && message === 'Heartbeat') { ... }
       else {
-        console.warn('Service: Received unknown WebSocket message format:', message);
+        //console.warn('Service: Received unknown WebSocket message format:', message);
         store.setLastRawMessage(event.data); // Keep raw message for debugging unknown formats
       }
 

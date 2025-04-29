@@ -121,7 +121,7 @@ function handleSettingsClick() {
 }
 
 .widget-container > :deep(div:not(.widget-actions)) {
-  padding: 10px;
+  padding: 0px;
 }
 
 :deep(.widget-wrapper) {

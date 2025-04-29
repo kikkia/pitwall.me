@@ -7,7 +7,39 @@ const f1Store = useF1Store();
 const props = defineProps({
   showTimestamp: { type: Boolean, default: true },
   showCategory: { type: Boolean, default: true },
-  selectedCategories: { type: Array, default: () => ["Flag", "Other", "Drs", "SafetyCar"] }
+  selectedCategories: { type: Array, default: () => ["Flag", "Other", "Drs", "SafetyCar"] },
+  messageFontSize: { type: Number, default: 90 }
+});
+
+const settingsDefinition = ref([
+  {
+    id: 'showTimestamp',        // Matches prop name
+    label: 'Show Timestamp',    // User-friendly label
+    type: 'boolean',            // Data type
+    component: 'Checkbox'       // PrimeVue component to use
+  },
+  {
+    id: 'showCategory',
+    label: 'Show Category Column',
+    type: 'boolean',
+    component: 'Checkbox'
+  },
+  {
+    id: 'messageFontSize',
+    label: 'Message Font Size (%)',
+    type: 'number',
+    component: 'Slider',        // Use a slider
+    props: {                    // Specific props for the Slider
+      min: 50,                  // Minimum font size %
+      max: 150,                 // Maximum font size %
+      step: 10                  // Increment step
+    }
+  }
+  // Add 'selectedCategories' here later if needed, maybe with MultiSelect component
+]);
+
+defineExpose({
+  settingsDefinition
 });
 
 const categories = ["Flag", "Other", "Drs", "SafetyCar"];
@@ -46,10 +78,14 @@ watch(() => filteredMessages.value.length, (newLength, oldLength) => {
   });
 }, { immediate: true });
 
+const tableStyle = computed(() => ({
+    fontSize: `${props.messageFontSize}%` 
+}));
+
 </script>
 
 <template>
-    <div ref="messagesContainerRef" class="widget race-control-messages">
+    <div ref="messagesContainerRef" class="widget race-control-messages" :style="tableStyle">
       <table>
         <thead>
           <tr>
@@ -85,31 +121,6 @@ watch(() => filteredMessages.value.length, (newLength, oldLength) => {
     height: 100%; /* Or a defined height */
   }
 
-  .filter-controls {
-    padding: 5px;
-    background-color: #333;
-    color: #eee;
-    border-bottom: 1px solid #444;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .filter-controls label {
-      font-weight: bold;
-      font-size: 0.9em;
-  }
-
-   .filter-controls select {
-       padding: 2px 4px;
-       font-size: 0.9em;
-       background-color: #222;
-       color: #ddd;
-       border: 1px solid #444;
-       border-radius: 3px;
-   }
-
-
    .widget.race-control-messages {
     flex-grow: 1; 
     overflow-y: auto; 
@@ -124,7 +135,6 @@ watch(() => filteredMessages.value.length, (newLength, oldLength) => {
   table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.9em;
   }
 
   thead {

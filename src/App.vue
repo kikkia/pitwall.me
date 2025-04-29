@@ -10,31 +10,71 @@
         :gs-y="widget.y"
         :gs-w="widget.w"
         :gs-h="widget.h"
-        :gs-id="widget.id"  
-        :ref="el => setWidgetRef(widget.id, el)"
+        :gs-id="widget.id"
+        :ref="el => setGridItemRef(widget.id, el)" 
       >
-
         <WidgetContainer
           :widget-id="widget.id"
           @remove="removeWidget"
           @open-settings="openWidgetSettings"
         >
-          
-          <component :is="widget.component" v-bind="widget.props || {}" />
+          <component
+            :is="widget.component"
+            :ref="el => setWidgetInstanceRef(widget.id, el)"
+            v-bind="widget.config"
+           />
         </WidgetContainer>
       </div>
     </DashboardGrid>
 
-    <div v-if="settingsWidgetId" class="settings-modal">
-      <h2>Settings for Widget {{ settingsWidgetId }}</h2>
-      <p>Settings content soon...</p>
-      <button @click="settingsWidgetId = null">Close</button>
-    </div>
+    <!-- PrimeVue Dialog for Settings -->
+    <Dialog
+      v-model:visible="isSettingsDialogOpen"
+      modal
+      :header="`Settings for Widget: ${settingsTargetWidget?.id}`"
+      :style="{ width: '350px' }"
+      @hide="onSettingsDialogHide"
+    >
+        <div v-if="currentSettingsDefinition && currentWidgetConfig" class="settings-panel">
+            <div v-for="setting in currentSettingsDefinition" :key="setting.id" class="setting-item">
+
+                <!-- Checkbox for Boolean -->
+                <div v-if="setting.component === 'Checkbox'" class="p-field-checkbox">
+                    <Checkbox
+                        :inputId="`${settingsTargetWidget.id}-${setting.id}`"
+                        v-model="currentWidgetConfig[setting.id]"
+                        :binary="true"
+                    />
+                    <label :for="`${settingsTargetWidget.id}-${setting.id}`">{{ setting.label }}</label>
+                </div>
+
+                <!-- Slider for Number -->
+                <div v-if="setting.component === 'Slider'" class="p-field slider-field">
+                    <label :for="`${settingsTargetWidget.id}-${setting.id}`">{{ setting.label }}: {{ currentWidgetConfig[setting.id] }}</label>
+                    <Slider
+                        :id="`${settingsTargetWidget.id}-${setting.id}`"
+                        v-model="currentWidgetConfig[setting.id]"
+                        v-bind="setting.props || {}" 
+                    />
+                </div>
+
+
+            </div>
+        </div>
+        <div v-else>
+            Loading settings or settings not available...
+        </div>
+
+        <template #footer>
+            <Button label="Close" icon="pi pi-times" @click="isSettingsDialogOpen = false" class="p-button-text"/>
+        </template>
+    </Dialog>
+
   </div>
 </template>
 
 <script setup>
-import { ref, shallowRef, nextTick, onMounted, defineAsyncComponent } from 'vue';
+import { ref, shallowRef, nextTick, onMounted, defineAsyncComponent, computed} from 'vue';
 import Navbar from './components/Navbar.vue';
 import DashboardGrid from './components/DashboardGrid.vue'; 
 import WidgetContainer from './components/WidgetContainer.vue';
@@ -44,6 +84,8 @@ const RaceControlMessagesWidget = shallowRef(defineAsyncComponent(() => import('
 const TrackStatusLEDWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TrackStatusLEDWidget.vue')));
 
 const dashboardGridRef = ref(null);
+const gridItemRefs = ref({});
+const widgetInstanceRefs = ref({});
 
 const widgetRefs = ref({});
 const setWidgetRef = (id, el) => {
@@ -54,35 +96,78 @@ const setWidgetRef = (id, el) => {
   }
 };
 
+const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90 };
+
 const activeWidgets = ref([
   {
     id: 'timing-1', 
     component: TimingTableWidget, 
-    x: 0, y: 0, w: 4, h: 8
+    x: 0, y: 0, w: 12, h: 15,
+    config: {},
   },
   {
     id: 'rcm-1',
     component: RaceControlMessagesWidget,
-    x: 4, y: 0, w: 6, h: 5
+    x: 12, y: 0, w: 16, h: 10,
+    config: { ...defaultRcmConfig},
   },
   {
     id: 'track-status-1',
     component: TrackStatusLEDWidget,
-    x: 10, y: 0, w: 2, h: 1 
+    x: 28, y: 0, w: 4, h: 2 ,
+    config: {},
   }
 ]);
 
-const removeWidget = async (widgetIdToRemove) => {
-  console.log(`App.vue: Received remove request for widget ID: ${widgetIdToRemove}`);
+const settingsTargetWidgetId = ref("");
+const isSettingsDialogOpen = ref(false);              
 
+const settingsTargetWidget = computed(() => {
+    if (!settingsTargetWidgetId.value) return null;
+    return activeWidgets.value.find(w => w.id === settingsTargetWidgetId.value);
+});
+
+const currentWidgetInstance = computed(() => {
+    if (!settingsTargetWidgetId.value) return null;
+    return widgetInstanceRefs.value[settingsTargetWidgetId.value];
+});
+
+const currentSettingsDefinition = computed(() => {
+    return currentWidgetInstance.value?.settingsDefinition || null;
+});
+
+const currentWidgetConfig = computed(() => {
+    return settingsTargetWidget.value?.config || null;
+});
+
+
+const setGridItemRef = (id, el) => {
+  if (el) {
+    gridItemRefs.value[id] = el;
+  } else {
+    if (gridItemRefs.value[id]) {
+       delete gridItemRefs.value[id];
+    }
+  }
+};
+
+const setWidgetInstanceRef = (id, el) => {
+  if (el) {
+    widgetInstanceRefs.value[id] = el;
+  } else {
+     if (widgetInstanceRefs.value[id]) {
+        delete widgetInstanceRefs.value[id];
+     }
+  }
+};
+
+const removeWidget = async (widgetIdToRemove) => {
   const widgetIndex = activeWidgets.value.findIndex(w => w.id === widgetIdToRemove);
 
   if (widgetIndex !== -1) {
     const grid = dashboardGridRef.value?.getGridInstance(); 
     const widgetElement = widgetRefs.value[widgetIdToRemove];
     if (grid && widgetElement) {
-       console.log(`App.vue: Telling GridStack to remove element for ID: ${widgetIdToRemove}`, widgetElement);
-
        grid.removeWidget(widgetElement, false); // false = don't remove DOM node, Vue will do that
     } else {
          console.warn(`App.vue: Could not find Gridstack instance or DOM element for widget ID: ${widgetIdToRemove} during removal.`);
@@ -104,11 +189,28 @@ const removeWidget = async (widgetIdToRemove) => {
 const settingsWidgetId = ref(null); 
 
 const openWidgetSettings = (widgetId) => {
-  console.log(`App.vue: Received open-settings request for widget ID: ${widgetId}`);
-  settingsWidgetId.value = widgetId;
-  // open a modal here and pass widgetId to it
-  // PrimeVue Dialog maybe.
+  const widgetInstance = widgetInstanceRefs.value[widgetId];
+
+  if (widgetInstance) {
+     // Check if the instance actually exposed settingsDefinition (it might not)
+     if(widgetInstance.settingsDefinition && widgetInstance.settingsDefinition.length > 0){
+        settingsTargetWidgetId.value = widgetId;
+        isSettingsDialogOpen.value = true; 
+        console.log("Settings Definition:", widgetInstance.settingsDefinition);
+     } else {
+         console.warn(`Widget ${widgetId} does not expose any settings.`);
+         alert(`Widget ${widgetId} has no configurable settings.`);
+     }
+
+  } else {
+      console.error(`Cannot open settings: Widget instance or config not found for ID ${widgetId}`);
+  }
 };
+
+const onSettingsDialogHide = () => {
+    settingsTargetWidgetId.value = null;
+    console.log('Settings dialog hidden');
+}
 
 </script>
 
@@ -179,16 +281,31 @@ html, body {
     margin-right: 5px;
 }
 
-.settings-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 20px;
-  border: 1px solid #ccc;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 100;
-  min-width: 300px;
+.settings-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; 
+}
+
+.setting-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.p-field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; 
+}
+.p-field-checkbox label {
+    margin-bottom: 0; 
+}
+
+.slider-field label {
+    display: block; 
+    margin-bottom: 0.75rem;
+    font-weight: bold;
+    font-size: 0.9em;
 }
 </style>

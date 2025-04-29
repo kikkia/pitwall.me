@@ -26,7 +26,7 @@
   </template>
   
   <script setup>
-  import { computed } from 'vue';
+  import { computed, onMounted } from 'vue';
   import Toolbar from 'primevue/toolbar';
   import Tag from 'primevue/tag';
   import { useF1Store } from '@/stores/f1Store';
@@ -46,6 +46,14 @@
   const eventName = computed(() => {
       return f1Store.state.raceData?.SessionInfo?.Meeting?.Name || 'Loading Event...';
   })
+
+  const connect = () => {
+  f1Store.initialize();
+};
+
+onMounted(() => {
+  connect();
+});
 
   const raceStatusLabel = computed(() => {
     const statuses = f1Store.state.raceData?.SessionData?.StatusSeries.filter((st) => st.SessionStatus);

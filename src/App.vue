@@ -13,7 +13,7 @@
       <div class="grid-stack-item" gs-x="4" gs-y="0" gs-w="6" gs-h="5">
          <div class="grid-stack-item-content">
            <div class="widget-wrapper">
-            <F1StatusDisplay />
+            <RaceControlMessagesWidget />
            </div>
         </div>
       </div>
@@ -36,6 +36,7 @@ import TrackStatusLEDWidget from './components/widgets/TrackStatusLEDWidget.vue'
 import TimingTableWidget from '@/components/widgets/TimingTableWidget.vue';
 import DashboardGrid from './components/DashboardGrid.vue';
 import Navbar from './components/Navbar.vue';
+import RaceControlMessagesWidget from './components/widgets/RaceControlMessagesWidget.vue';
 
 export default {
   components: {
@@ -43,7 +44,8 @@ export default {
     DashboardGrid,
     F1StatusDisplay,
     TimingTableWidget,
-    TrackStatusLEDWidget
+    TrackStatusLEDWidget,
+    RaceControlMessagesWidget
   }
 }
 </script>

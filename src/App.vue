@@ -27,59 +27,13 @@
       </div>
     </DashboardGrid>
 
-    <!-- PrimeVue Dialog for Settings -->
-    <Dialog
+    <WidgetSettingsDialog
       v-model:visible="isSettingsDialogOpen"
-      modal
-      :header="`Settings for Widget: ${settingsTargetWidget?.id}`"
-      :style="{ width: '350px' }"
+      :widget-id="settingsTargetWidgetId"
+      :settings-definition="currentSettingsDefinition"
+      :widget-config="currentWidgetConfig"
       @hide="onSettingsDialogHide"
-    >
-        <div v-if="currentSettingsDefinition && currentWidgetConfig" class="settings-panel">
-            <div v-for="setting in currentSettingsDefinition" :key="setting.id" class="setting-item">
-
-                <!-- Checkbox for Boolean -->
-                <div v-if="setting.component === 'Checkbox'" class="p-field-checkbox">
-                    <Checkbox
-                        :inputId="`${settingsTargetWidget.id}-${setting.id}`"
-                        v-model="currentWidgetConfig[setting.id]"
-                        :binary="true"
-                    />
-                    <label :for="`${settingsTargetWidget.id}-${setting.id}`">{{ setting.label }}</label>
-                </div>
-
-                <!-- Slider for Number -->
-                <div v-if="setting.component === 'Slider'" class="p-field slider-field">
-                    <label :for="`${settingsTargetWidget.id}-${setting.id}`">{{ setting.label }}: {{ currentWidgetConfig[setting.id] }}</label>
-                    <Slider
-                        :id="`${settingsTargetWidget.id}-${setting.id}`"
-                        v-model="currentWidgetConfig[setting.id]"
-                        v-bind="setting.props || {}" 
-                    />
-                </div>
-
-                <!-- Multiselect for arrays of bool -->
-                <div v-if="setting.component === 'MultiSelect'" class="p-field multi-field">
-                    <label :for="`${settingsTargetWidget.id}-${setting.id}`">{{ setting.label }}: {{ currentWidgetConfig[setting.id] }}</label>
-                    <MultiSelect
-                        :id="`${settingsTargetWidget.id}-${setting.id}`"
-                        :options="defaultRcmConfig.selectedCategories"
-                        v-model="currentWidgetConfig[setting.id]"
-                        v-bind="setting.props || {}" 
-                    />
-                </div>
-
-
-            </div>
-        </div>
-        <div v-else>
-            Loading settings or settings not available...
-        </div>
-
-        <template #footer>
-            <Button label="Close" icon="pi pi-times" @click="isSettingsDialogOpen = false" class="p-button-text"/>
-        </template>
-    </Dialog>
+    />
 
   </div>
 </template>
@@ -89,6 +43,7 @@ import { ref, shallowRef, nextTick, onMounted, defineAsyncComponent, computed} f
 import Navbar from './components/Navbar.vue';
 import DashboardGrid from './components/DashboardGrid.vue'; 
 import WidgetContainer from './components/WidgetContainer.vue';
+import WidgetSettingsDialog from './components/WidgetSettingsDialog.vue';
 
 const TimingTableWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TimingTableWidget.vue')));
 const RaceControlMessagesWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/RaceControlMessagesWidget.vue')));
@@ -98,8 +53,8 @@ const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
 const widgetInstanceRefs = ref({});
 
-const widgetRefs = ref({});
-const setWidgetRef = (id, el) => {
+const widgetRefs = ref({}); // Keep this if WidgetContainer still uses it
+const setWidgetRef = (id, el) => { // Keep this if WidgetContainer still uses it
   if (el) {
     widgetRefs.value[id] = el;
   } else {
@@ -111,8 +66,8 @@ const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontS
 
 const activeWidgets = ref([
   {
-    id: 'timing-1', 
-    component: TimingTableWidget, 
+    id: 'timing-1',
+    component: TimingTableWidget,
     x: 0, y: 0, w: 12, h: 15,
     config: {},
   },
@@ -130,8 +85,8 @@ const activeWidgets = ref([
   }
 ]);
 
-const settingsTargetWidgetId = ref("");
-const isSettingsDialogOpen = ref(false);              
+const isSettingsDialogOpen = ref(false);
+const settingsTargetWidgetId = ref(null);
 
 const settingsTargetWidget = computed(() => {
     if (!settingsTargetWidgetId.value) return null;
@@ -144,7 +99,10 @@ const currentWidgetInstance = computed(() => {
 });
 
 const currentSettingsDefinition = computed(() => {
-    return currentWidgetInstance.value?.settingsDefinition || null;
+    if (currentWidgetInstance.value?.settingsDefinition) {
+        return currentWidgetInstance.value.settingsDefinition;
+    }
+    return null; 
 });
 
 const currentWidgetConfig = computed(() => {
@@ -172,55 +130,56 @@ const setWidgetInstanceRef = (id, el) => {
   }
 };
 
+// --- Widget Actions ---
 const removeWidget = async (widgetIdToRemove) => {
   const widgetIndex = activeWidgets.value.findIndex(w => w.id === widgetIdToRemove);
 
   if (widgetIndex !== -1) {
-    const grid = dashboardGridRef.value?.getGridInstance(); 
-    const widgetElement = widgetRefs.value[widgetIdToRemove];
+    const grid = dashboardGridRef.value?.getGridInstance();
+    // Use gridItemRefs which refs the actual grid-stack-item element
+    const widgetElement = gridItemRefs.value[widgetIdToRemove];
     if (grid && widgetElement) {
        grid.removeWidget(widgetElement, false); // false = don't remove DOM node, Vue will do that
     } else {
-         console.warn(`App.vue: Could not find Gridstack instance or DOM element for widget ID: ${widgetIdToRemove} during removal.`);
-         // const element = grid?.el?.querySelector(`[gs-id="${widgetIdToRemove}"]`);
-         // if (grid && element) grid.removeWidget(element, false);
+         console.warn(`App.vue: Could not find Gridstack instance or DOM element ref for widget ID: ${widgetIdToRemove} during removal.`);
     }
 
     activeWidgets.value.splice(widgetIndex, 1);
 
-    await nextTick();
-
-     delete widgetRefs.value[widgetIdToRemove];
+    delete gridItemRefs.value[widgetIdToRemove];
+    delete widgetInstanceRefs.value[widgetIdToRemove];
+    delete widgetRefs.value[widgetIdToRemove]; // If using widgetRefs
 
   } else {
     console.warn(`App.vue: Widget with ID ${widgetIdToRemove} not found.`);
   }
 };
 
-const settingsWidgetId = ref(null); 
 
 const openWidgetSettings = (widgetId) => {
+  const targetWidget = activeWidgets.value.find(w => w.id === widgetId);
   const widgetInstance = widgetInstanceRefs.value[widgetId];
 
-  if (widgetInstance) {
-     // Check if the instance actually exposed settingsDefinition (it might not)
-     if(widgetInstance.settingsDefinition && widgetInstance.settingsDefinition.length > 0){
-        settingsTargetWidgetId.value = widgetId;
-        isSettingsDialogOpen.value = true; 
-        console.log("Settings Definition:", widgetInstance.settingsDefinition);
-     } else {
-         console.warn(`Widget ${widgetId} does not expose any settings.`);
-         alert(`Widget ${widgetId} has no configurable settings.`);
-     }
+  if (!targetWidget || !widgetInstance) {
+      console.error(`Cannot open settings: Widget data or instance not found for ID ${widgetId}`);
+      return;
+  }
 
+  let settingsDef = widgetInstance.settingsDefinition; 
+
+  if (settingsDef && settingsDef.length > 0) {
+     settingsTargetWidgetId.value = widgetId;
+     isSettingsDialogOpen.value = true;
+     console.log(`Opening settings for ${widgetId} with definition:`, settingsDef);
   } else {
-      console.error(`Cannot open settings: Widget instance or config not found for ID ${widgetId}`);
+      console.warn(`Widget ${widgetId} does not expose any settings.`);
+      alert(`Widget '${widgetId}' has no configurable settings.`);
   }
 };
 
+// called when the dialog component emits 'hide'
 const onSettingsDialogHide = () => {
     settingsTargetWidgetId.value = null;
-    console.log('Settings dialog hidden');
 }
 
 </script>

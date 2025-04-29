@@ -58,6 +58,17 @@
                     />
                 </div>
 
+                <!-- Multiselect for arrays of bool -->
+                <div v-if="setting.component === 'MultiSelect'" class="p-field multi-field">
+                    <label :for="`${settingsTargetWidget.id}-${setting.id}`">{{ setting.label }}: {{ currentWidgetConfig[setting.id] }}</label>
+                    <MultiSelect
+                        :id="`${settingsTargetWidget.id}-${setting.id}`"
+                        :options="defaultRcmConfig.selectedCategories"
+                        v-model="currentWidgetConfig[setting.id]"
+                        v-bind="setting.props || {}" 
+                    />
+                </div>
+
 
             </div>
         </div>
@@ -96,7 +107,7 @@ const setWidgetRef = (id, el) => {
   }
 };
 
-const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90 };
+const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Drs", "SafetyCar"] };
 
 const activeWidgets = ref([
   {
@@ -303,6 +314,13 @@ html, body {
 }
 
 .slider-field label {
+    display: block; 
+    margin-bottom: 0.75rem;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.multi-field label {
     display: block; 
     margin-bottom: 0.75rem;
     font-weight: bold;

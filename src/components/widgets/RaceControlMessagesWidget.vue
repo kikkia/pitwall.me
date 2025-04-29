@@ -4,6 +4,9 @@ import { useF1Store } from '@/stores/f1Store';
 
 const f1Store = useF1Store();
 
+// TODO: Standardize this in some shared array
+const selectableCategories = ["Flag", "Other", "Drs", "SafetyCar"];
+
 const props = defineProps({
   showTimestamp: { type: Boolean, default: true },
   showCategory: { type: Boolean, default: true },
@@ -13,10 +16,10 @@ const props = defineProps({
 
 const settingsDefinition = ref([
   {
-    id: 'showTimestamp',        // Matches prop name
-    label: 'Show Timestamp',    // User-friendly label
-    type: 'boolean',            // Data type
-    component: 'Checkbox'       // PrimeVue component to use
+    id: 'showTimestamp',       
+    label: 'Show Timestamp',    
+    type: 'boolean',            
+    component: 'Checkbox'
   },
   {
     id: 'showCategory',
@@ -28,14 +31,22 @@ const settingsDefinition = ref([
     id: 'messageFontSize',
     label: 'Message Font Size (%)',
     type: 'number',
-    component: 'Slider',        // Use a slider
-    props: {                    // Specific props for the Slider
-      min: 50,                  // Minimum font size %
-      max: 150,                 // Maximum font size %
-      step: 10                  // Increment step
+    component: 'Slider',        
+    props: {                    
+      min: 50,                  
+      max: 150,                
+      step: 10 
+    }
+  },
+  {
+    id: 'selectedCategories',
+    label: 'Show Categories',
+    type: 'array',
+    component: 'MultiSelect',
+    props: {
+      options: selectableCategories
     }
   }
-  // Add 'selectedCategories' here later if needed, maybe with MultiSelect component
 ]);
 
 defineExpose({
@@ -118,7 +129,7 @@ const tableStyle = computed(() => ({
    .widget-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100%; /* Or a defined height */
+    height: 100%; 
   }
 
    .widget.race-control-messages {

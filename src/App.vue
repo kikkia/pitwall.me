@@ -27,8 +27,7 @@
 
     <div v-if="settingsWidgetId" class="settings-modal">
       <h2>Settings for Widget {{ settingsWidgetId }}</h2>
-      <!-- Here you would load the actual settings UI based on settingsWidgetId -->
-      <p>Settings content goes here...</p>
+      <p>Settings content soon...</p>
       <button @click="settingsWidgetId = null">Close</button>
     </div>
   </div>
@@ -107,9 +106,8 @@ const settingsWidgetId = ref(null);
 const openWidgetSettings = (widgetId) => {
   console.log(`App.vue: Received open-settings request for widget ID: ${widgetId}`);
   settingsWidgetId.value = widgetId;
-  // In a real app, you'd likely open a modal here and pass widgetId to it
-  // The modal would then contain the specific settings controls for that widget type.
-  // For example, using a library like PrimeVue Dialog or a custom modal component.
+  // open a modal here and pass widgetId to it
+  // PrimeVue Dialog maybe.
 };
 
 </script>

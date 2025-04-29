@@ -1,53 +1,117 @@
 <template>
   <div id="app-container">
     <Navbar />
-    <DashboardGrid class="dashboard-container">
-      <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="4" gs-h="8">
-        <div class="grid-stack-item-content">
-          <div class="widget-wrapper">
-            <TimingTableWidget />
-          </div>
-        </div>
-      </div>
-      
-      <div class="grid-stack-item" gs-x="4" gs-y="0" gs-w="6" gs-h="5">
-         <div class="grid-stack-item-content">
-           <div class="widget-wrapper">
-            <RaceControlMessagesWidget />
-           </div>
-        </div>
-      </div>
+    <DashboardGrid ref="dashboardGridRef" class="dashboard-container">
+      <div
+        v-for="widget in activeWidgets"
+        :key="widget.id"
+        class="grid-stack-item"
+        :gs-x="widget.x"
+        :gs-y="widget.y"
+        :gs-w="widget.w"
+        :gs-h="widget.h"
+        :gs-id="widget.id"  
+        :ref="el => setWidgetRef(widget.id, el)"
+      >
 
-      <div class="grid-stack-item" gs-x="10" gs-y="0" gs-w="1" gs-h="1">
-        <div class="grid-stack-item-content">
-           <div class="widget-wrapper">
-            <TrackStatusLEDWidget />
-           </div>
-        </div>
+        <WidgetContainer
+          :widget-id="widget.id"
+          @remove="removeWidget"
+          @open-settings="openWidgetSettings"
+        >
+          
+          <component :is="widget.component" v-bind="widget.props || {}" />
+        </WidgetContainer>
       </div>
-
     </DashboardGrid>
+
+    <div v-if="settingsWidgetId" class="settings-modal">
+      <h2>Settings for Widget {{ settingsWidgetId }}</h2>
+      <!-- Here you would load the actual settings UI based on settingsWidgetId -->
+      <p>Settings content goes here...</p>
+      <button @click="settingsWidgetId = null">Close</button>
+    </div>
   </div>
 </template>
 
-<script>
-import F1StatusDisplay from '@/components/widgets/F1StatusDisplay.vue';
-import TrackStatusLEDWidget from './components/widgets/TrackStatusLEDWidget.vue';
-import TimingTableWidget from '@/components/widgets/TimingTableWidget.vue';
-import DashboardGrid from './components/DashboardGrid.vue';
+<script setup>
+import { ref, shallowRef, nextTick, onMounted, defineAsyncComponent } from 'vue';
 import Navbar from './components/Navbar.vue';
-import RaceControlMessagesWidget from './components/widgets/RaceControlMessagesWidget.vue';
+import DashboardGrid from './components/DashboardGrid.vue'; 
+import WidgetContainer from './components/WidgetContainer.vue';
 
-export default {
-  components: {
-    Navbar,
-    DashboardGrid,
-    F1StatusDisplay,
-    TimingTableWidget,
-    TrackStatusLEDWidget,
-    RaceControlMessagesWidget
+const TimingTableWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TimingTableWidget.vue')));
+const RaceControlMessagesWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/RaceControlMessagesWidget.vue')));
+const TrackStatusLEDWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TrackStatusLEDWidget.vue')));
+
+const dashboardGridRef = ref(null);
+
+const widgetRefs = ref({});
+const setWidgetRef = (id, el) => {
+  if (el) {
+    widgetRefs.value[id] = el;
+  } else {
+    delete widgetRefs.value[id];
   }
-}
+};
+
+const activeWidgets = ref([
+  {
+    id: 'timing-1', 
+    component: TimingTableWidget, 
+    x: 0, y: 0, w: 4, h: 8
+  },
+  {
+    id: 'rcm-1',
+    component: RaceControlMessagesWidget,
+    x: 4, y: 0, w: 6, h: 5
+  },
+  {
+    id: 'track-status-1',
+    component: TrackStatusLEDWidget,
+    x: 10, y: 0, w: 2, h: 1 
+  }
+]);
+
+const removeWidget = async (widgetIdToRemove) => {
+  console.log(`App.vue: Received remove request for widget ID: ${widgetIdToRemove}`);
+
+  const widgetIndex = activeWidgets.value.findIndex(w => w.id === widgetIdToRemove);
+
+  if (widgetIndex !== -1) {
+    const grid = dashboardGridRef.value?.getGridInstance(); 
+    const widgetElement = widgetRefs.value[widgetIdToRemove];
+    if (grid && widgetElement) {
+       console.log(`App.vue: Telling GridStack to remove element for ID: ${widgetIdToRemove}`, widgetElement);
+
+       grid.removeWidget(widgetElement, false); // false = don't remove DOM node, Vue will do that
+    } else {
+         console.warn(`App.vue: Could not find Gridstack instance or DOM element for widget ID: ${widgetIdToRemove} during removal.`);
+         // const element = grid?.el?.querySelector(`[gs-id="${widgetIdToRemove}"]`);
+         // if (grid && element) grid.removeWidget(element, false);
+    }
+
+    activeWidgets.value.splice(widgetIndex, 1);
+
+    await nextTick();
+
+     delete widgetRefs.value[widgetIdToRemove];
+
+  } else {
+    console.warn(`App.vue: Widget with ID ${widgetIdToRemove} not found.`);
+  }
+};
+
+const settingsWidgetId = ref(null); 
+
+const openWidgetSettings = (widgetId) => {
+  console.log(`App.vue: Received open-settings request for widget ID: ${widgetId}`);
+  settingsWidgetId.value = widgetId;
+  // In a real app, you'd likely open a modal here and pass widgetId to it
+  // The modal would then contain the specific settings controls for that widget type.
+  // For example, using a library like PrimeVue Dialog or a custom modal component.
+};
+
 </script>
 
 <style>
@@ -77,10 +141,14 @@ html, body {
 }
 
 .dashboard-container {
-  flex-grow: 1; /* Allow dashboard to take remaining space */
-  margin: 0 20px 20px 20px;
+  flex-grow: 1; 
+  margin: 0 20px 0 0;
   overflow: auto;
   min-width: 0; 
+}
+
+.grid-stack-item {
+   overflow: visible !important;
 }
 
 .grid-stack-item-content {
@@ -111,5 +179,18 @@ html, body {
 
 .p-button {
     margin-right: 5px;
+}
+
+.settings-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  padding: 20px;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 100;
+  min-width: 300px;
 }
 </style>

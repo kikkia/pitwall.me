@@ -4,68 +4,121 @@ import { useF1Store } from '@/stores/f1Store';
 
 const f1Store = useF1Store();
 
+const props = defineProps({
+  showTimestamp: { type: Boolean, default: true },
+  showCategory: { type: Boolean, default: true },
+  selectedCategories: { type: Array, default: () => ["Flag", "Other", "Drs", "SafetyCar"] }
+});
+
+const categories = ["Flag", "Other", "Drs", "SafetyCar"];
+
 const messages = computed(() => f1Store.state.raceData.RaceControlMessages.Messages);
 
 const messagesContainerRef = ref<HTMLElement | null>(null);
 
 const highlightedMessageId = ref<string | null>(null);
 
-watch(() => messages.value.length, () => {
+
+const filteredMessages = computed(() => {
+  const allMessages = f1Store.state.raceData.RaceControlMessages.Messages || [];
+    return allMessages.filter(message => props.selectedCategories.includes(message.Category));
+});
+
+watch(() => filteredMessages.value.length, (newLength, oldLength) => {
+  if (filteredMessages.value.length == 0) {
+    return
+  }
+  const newMessage = filteredMessages.value[filteredMessages.value.length - 1];
+  const messageId = `${newMessage.Utc}-${newMessage.Message}`;
+
+  highlightedMessageId.value = messageId;
+
+  setTimeout(() => {
+    if (highlightedMessageId.value === messageId) {
+      highlightedMessageId.value = null;
+    }
+  }, 4000);
+
   nextTick(() => {
-    const newMessage = messages.value[messages.value.length - 1]; // Get the newest message
-    const messageId = `${newMessage.Utc}-${newMessage.Message}`; // Use a separator like '-' for clarity
-
-    highlightedMessageId.value = messageId;
-
-    setTimeout(() => {
-      if (highlightedMessageId.value === messageId) {
-        highlightedMessageId.value = null;
-      }
-    }, 4000);
     if (messagesContainerRef.value) {
       messagesContainerRef.value.scrollTop = messagesContainerRef.value.scrollHeight;
     }
   });
-});
+}, { immediate: true });
 
 </script>
 
 <template>
-  <div ref="messagesContainerRef" class="widget race-control-messages">
-    <table>
-      <thead>
-        <tr>
-          <th>Timestamp</th>
-          <th>Category</th>
-          <th>Message</th>
-        </tr>
-      </thead>
-      <tbody class="message-list">
-        <tr v-if="messages?.length == 0">
-            <td colspan="8" style="text-align: center;">Waiting for messages from race control...</td>
-        </tr>
-        <tr
-          v-for="rcMessage in messages"
-          :key="`${rcMessage.Utc}-${rcMessage.Message}`" :class="{ 'highlight-fade': `${rcMessage.Utc}-${rcMessage.Message}` === highlightedMessageId }"
-        >
-          <td>{{ new Date(rcMessage.Utc).toLocaleTimeString() }}</td>
-          <td>{{ rcMessage.Category }}</td>
-          <td>{{ rcMessage.Message }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <div ref="messagesContainerRef" class="widget race-control-messages">
+      <table>
+        <thead>
+          <tr>
+            <th v-if="props.showTimestamp">Timestamp</th>
+            <th v-if="props.showCategory">Category</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="filteredMessages?.length === 0">
+            <td :colspan=" (props.showTimestamp ? 1:0) + (props.showCategory ? 1:0) + 1" style="text-align: center;">
+                {{ props.selectedCategories.length === categories.length ? 'Waiting for messages...' : `No messages for selected categories...` }}
+            </td>
+          </tr>
+          <tr
+            v-for="rcMessage in filteredMessages"
+            :key="`${rcMessage.Utc}-${rcMessage.Message}`"
+            :class="{ 'highlight-fade': `${rcMessage.Utc}-${rcMessage.Message}` === highlightedMessageId }"
+          >
+            <td v-if="props.showTimestamp">{{ new Date(rcMessage.Utc).toLocaleTimeString() }}</td>
+            <td v-if="props.showCategory">{{ rcMessage.Category }}</td>
+            <td>{{ rcMessage.Message }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 </template>
 
 <style scoped>
-    .widget.race-control-messages {
-    height: 100%;
+   .widget-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Or a defined height */
+  }
+
+  .filter-controls {
+    padding: 5px;
+    background-color: #333;
+    color: #eee;
+    border-bottom: 1px solid #444;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filter-controls label {
+      font-weight: bold;
+      font-size: 0.9em;
+  }
+
+   .filter-controls select {
+       padding: 2px 4px;
+       font-size: 0.9em;
+       background-color: #222;
+       color: #ddd;
+       border: 1px solid #444;
+       border-radius: 3px;
+   }
+
+
+   .widget.race-control-messages {
+    flex-grow: 1; 
     overflow-y: auto; 
-    overflow-x: hidden; 
-    display: block;
+    overflow-x: hidden;
+    display: block; 
     position: relative; 
-    border: 1px solid #333; 
-    background-color: #222;
+    border: 1px solid #333;
+    background-color: #222; 
+    height: 100%; 
   }
 
   table {
@@ -75,9 +128,9 @@ watch(() => messages.value.length, () => {
   }
 
   thead {
-    position: sticky; 
+    position: sticky;
     top: 0;
-    z-index: 1; 
+    z-index: 1;
     background-color: #333;
   }
 
@@ -92,6 +145,7 @@ watch(() => messages.value.length, () => {
     color: #ddd;
     word-break: break-word;
     white-space: normal;
+    transition: background-color 4s ease-out;
   }
 
   th {
@@ -104,22 +158,21 @@ watch(() => messages.value.length, () => {
     background-color: #282828;
   }
 
+  tr.highlight-fade td {
+    background-color: rgba(247, 0, 255, 0.733);
+  }
+
+  tr:nth-child(odd):not(.highlight-fade) td {
+      background-color: #222;
+  }
+
+  tr:nth-child(even):not(.highlight-fade) td {
+      background-color: #282828;
+  }
+
+
   tr[style*="opacity: 0.5"] td {
     color: #888;
-  }
-
-  tr.highlight-fade {
-    background-color: rgba(247, 0, 255, 0.733); 
-    transition: background-color 4s ease-in-out; 
-  }
-
-  tr.highlight-fade td {
-      background-color: transparent; 
-  }
-
-
-  tr:not(.highlight-fade) td {
-      transition: background-color 0s;
   }
 
 </style>

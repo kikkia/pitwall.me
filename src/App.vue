@@ -63,19 +63,20 @@ const setWidgetRef = (id, el) => { // Keep this if WidgetContainer still uses it
 };
 
 const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Drs", "SafetyCar"] };
+const defaultTimingTableConfig = {showNumber: true, showBest: true, showLast: true, showGap: true, showInterval: true, showTire: true, showPitstopCount: true, messageFontSize: 90};
 
 const activeWidgets = ref([
   {
     id: 'timing-1',
     component: TimingTableWidget,
     x: 0, y: 0, w: 12, h: 15,
-    config: {},
+    config: {...defaultTimingTableConfig},
   },
   {
     id: 'rcm-1',
     component: RaceControlMessagesWidget,
     x: 12, y: 0, w: 16, h: 10,
-    config: { ...defaultRcmConfig},
+    config: {...defaultRcmConfig},
   },
   {
     id: 'track-status-1',

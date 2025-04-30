@@ -37,14 +37,13 @@ export const useF1Store = defineStore('f1', () => {
   const sortedDriversViewModel = computed(() => {
     const drivers = Array.from(state.driversViewModelMap.values());
     // Sort drivers by position (handle non-numeric/missing positions)
-    drivers.filter(driver => driver.RacingNumber != "_kf")
     drivers.sort((a, b) => {
          const posA = parseInt(a.position || '99', 10);
          const posB = parseInt(b.position || '99', 10);
          // Handle retired drivers - maybe push them to the bottom?
-         if (a.retired && !b.retired) return 1;
-         if (!a.retired && b.retired) return -1;
-         if (a.retired && b.retired) return 0; // Keep relative order among retired
+
+         if ((a.retired || a.stopped) && !(b.retired || b.stopped)) return 1;
+         if (!(a.retired || a.stopped) && (b.retired || b.stopped)) return -1;
          return posA - posB;
     });
     return drivers;

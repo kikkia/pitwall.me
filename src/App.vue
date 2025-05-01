@@ -48,6 +48,7 @@ import WidgetSettingsDialog from './components/WidgetSettingsDialog.vue';
 const TimingTableWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TimingTableWidget.vue')));
 const RaceControlMessagesWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/RaceControlMessagesWidget.vue')));
 const TrackStatusLEDWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TrackStatusLEDWidget.vue')));
+const SectorTimingWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/SectorTimingWidget.vue')));
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
@@ -69,19 +70,25 @@ const activeWidgets = ref([
   {
     id: 'timing-1',
     component: TimingTableWidget,
-    x: 0, y: 0, w: 12, h: 15,
+    x: 0, y: 0, w: 24, h: 30,
     config: {...defaultTimingTableConfig},
   },
   {
     id: 'rcm-1',
     component: RaceControlMessagesWidget,
-    x: 12, y: 0, w: 16, h: 10,
+    x: 24, y: 0, w: 32, h: 20,
     config: {...defaultRcmConfig},
   },
   {
     id: 'track-status-1',
     component: TrackStatusLEDWidget,
-    x: 28, y: 0, w: 4, h: 2 ,
+    x: 56, y: 0, w: 8, h: 4 ,
+    config: {},
+  },
+  {
+    id: 'sector-timing',
+    component: SectorTimingWidget,
+    x: 0, y: 30, w:60, h:30,
     config: {},
   }
 ]);

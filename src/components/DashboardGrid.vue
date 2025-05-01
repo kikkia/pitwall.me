@@ -21,12 +21,12 @@ onMounted(() => {
     if (gridContainer.value) {
         console.log("INIT GRIDSTACK");
         grid = GridStack.init({
-            cellHeight: 40,
+            cellHeight: 20,
             float: true,
             animate: true,
             disableResize: false,
             margin: 2,
-            column: innerWidth/40,
+            column: innerWidth/20,
             staticGrid: false, 
             acceptWidgets: true,
         }, gridContainer.value);

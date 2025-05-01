@@ -10,7 +10,6 @@
       <div v-if="settingsDefinition && widgetConfig" class="settings-panel">
         <div v-for="setting in settingsDefinition" :key="setting.id" class="setting-item">
   
-          <!-- Checkbox for Boolean -->
           <div v-if="setting.component === 'Checkbox'" class="p-field-checkbox">
             <Checkbox
               :inputId="`${widgetId}-${setting.id}`"
@@ -20,7 +19,6 @@
             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
           </div>
   
-          <!-- Slider for Number -->
           <div v-if="setting.component === 'Slider'" class="p-field slider-field">
             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}: {{ widgetConfig[setting.id] }}</label>
             <Slider
@@ -30,7 +28,6 @@
             />
           </div>
   
-          <!-- Multiselect for arrays -->
           <div v-if="setting.component === 'MultiSelect'" class="p-field multi-field">
              <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
              <MultiSelect
@@ -45,9 +42,7 @@
                 class="w-full"
              />
           </div>
-  
-           <!-- Add other setting types here as needed -->
-  
+    
         </div>
       </div>
       <div v-else>
@@ -56,7 +51,6 @@
   
       <template #footer>
         <Button label="Close" icon="pi pi-times" @click="closeDialog" class="p-button-text"/>
-        <!-- Optional: Add a Save button if you don't want live updates -->
         <!-- <Button label="Save" icon="pi pi-check" @click="saveSettings" /> -->
       </template>
     </Dialog>

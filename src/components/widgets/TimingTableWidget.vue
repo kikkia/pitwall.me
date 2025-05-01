@@ -25,6 +25,12 @@ const settingsDefinition = ref([
     component: 'Checkbox'
   },
   {
+    id: 'showTire',
+    label: 'Show tire compound',
+    type: 'boolean',
+    component: 'Checkbox'
+  },
+  {
     id: 'showBest',
     label: 'Show best lap time',
     type: 'boolean',
@@ -45,12 +51,6 @@ const settingsDefinition = ref([
   {
     id: 'showInterval',
     label: 'Show gap to ahead (Also used for In pit/Pit exit)',
-    type: 'boolean',
-    component: 'Checkbox'
-  },
-  {
-    id: 'showTire',
-    label: 'Show tire compound',
     type: 'boolean',
     component: 'Checkbox'
   },
@@ -82,7 +82,7 @@ const tableStyle = computed(() => ({
 }));
 
 function getTireStyle(driver) {
-  const compound = driver.currentStint.compound;
+  const compound = driver.currentStint?.compound;
   let color = '';
 
   switch (compound) {
@@ -133,7 +133,7 @@ function getTireStyle(driver) {
           <td>{{ driver.position }}</td>
           <td v-if="showNumber">{{ driver.racingNumber }}</td>
           <td>{{ driver.tla }}</td>
-          <td v-if="showTire" :style="getTireStyle(driver)">{{ driver.currentStint?.compound.charAt(0) || '' }}</td>
+          <td v-if="showTire" :style="getTireStyle(driver)">{{ driver.currentStint?.compound?.charAt(0) || '' }}</td>
           <td v-if="showBest">{{ driver.bestLapTime?.Value || '-' }}</td>
           <td v-if="showLast">{{ driver.lastLapTime?.Value || '-' }}</td>
           <td v-if="showGap">{{ driver.gapToLeader || '-' }}</td>

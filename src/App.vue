@@ -65,6 +65,7 @@ const setWidgetRef = (id, el) => { // Keep this if WidgetContainer still uses it
 
 const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Sector", "Drs", "SafetyCar"] };
 const defaultTimingTableConfig = {showNumber: true, showBest: true, showLast: true, showGap: true, showInterval: true, showTire: true, showPitstopCount: true, messageFontSize: 90};
+const defaultSectorTimingConfig = { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90}
 
 const activeWidgets = ref([
   {
@@ -89,7 +90,7 @@ const activeWidgets = ref([
     id: 'sector-timing',
     component: SectorTimingWidget,
     x: 0, y: 30, w:60, h:30,
-    config: {},
+    config: {...defaultSectorTimingConfig},
   }
 ]);
 

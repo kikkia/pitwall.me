@@ -30,6 +30,17 @@ export class DriverViewModel {
     currentStint = null; 
     stintHistory = []; 
 
+    rpm = 0;
+    speed = 0;
+    gear = 0;
+    throttle = 0; 
+    brake = 0;
+    drs = 0;
+    positionStatus = '';
+    posX = 0;
+    posY = 0;
+    posZ = 0;
+
 
     constructor(racingNumber) {
         this.racingNumber = racingNumber;

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia';
 import { reactive, readonly, computed } from 'vue';
 import * as f1WebSocketService from '@/services/websocketService';
 import * as transformer from '@/stores/f1DataTransformer';
-import { DriverViewModel } from "@/stores/f1DataTransformer"; 
+import pako from 'pako';
 
 const createInitialRaceData = () => ({
   Heartbeat: null,
@@ -97,21 +97,28 @@ export const useF1Store = defineStore('f1', () => {
         // console.log("Initial DriverList:", state.raceData.DriverList); // Debug
   }
 
+  function inflateData(base64String) {
+    try {
+        const binaryString = atob(base64String);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        const inflated = pako.inflateRaw(bytes, {to: "string"});
+        return JSON.parse(inflated);
+    } catch (error) {
+        console.error("Error inflating data:", error, "Input:", base64String.substring(0, 50) + "...");
+        return null;
+    }
+  }
+
   /**
    * Applies a partial update payload to the raceData state.
    * @param {string} fieldName - The top-level field in RaceData (e.g., "TimingData", "WeatherData")
    * @param {any} payload - The update data for that field
    */
   function applyFeedUpdate(fieldName, payload) {
-    // console.debug(`Store Action: Applying update for ${fieldName}`, payload); // Debug
-
-    // ***** START: DETAILED MERGE LOGIC (FROM PREVIOUS ANSWER) *****
-    // This section NEEDS the full switch statement and helper functions
-    // (deepMerge, applyMapUpdatesToSlice, specific mergers) to handle
-    // all the different data types and nested structures correctly.
-    // Without this, updates WILL NOT WORK properly.
-
-    // Example Snippet (Needs full implementation for all cases):
     const target = state.raceData; // Target the main data object
     let affectedDriverNumbers = new Set();
 
@@ -121,18 +128,9 @@ export const useF1Store = defineStore('f1', () => {
         case "WeatherData":
         case "TrackStatus":
         case "SessionInfo":
-        // Lines in our update payload seems to be an array with ALL data for the driver
-        // Lets try deep merge to see if basic array replace works
         case "TopThree":
-        case "SessionData":
+        case "SessionData": // TODO: On new qualifying part then wipe timing data, eliminate bottom 5
             deepMergeObjects(target[fieldName], payload);
-            break;
-
-        case "CarData.z":
-            target.CarDataZ = payload;
-            break;
-        case "Position.z":
-            target.PositionZ = payload;
             break;
 
         case "DriverList":
@@ -142,17 +140,16 @@ export const useF1Store = defineStore('f1', () => {
         case "TimingStats":
         case "TimingAppData":
         case "TimingData":
-            // These updates are keyed by driver number in payload.Lines
             if (payload.Lines) {
                 if (!target[fieldName]) target[fieldName] = { Lines: {} }; // Initialize if missing
                 if (!target[fieldName].Lines) target[fieldName].Lines = {};
                 for (const driverNumber in payload.Lines) {
                     const driverUpdate = payload.Lines[driverNumber];
                     if (!target[fieldName].Lines[driverNumber]) {
-                        target[fieldName].Lines[driverNumber] = {}; // Create raw data entry if new
+                        target[fieldName].Lines[driverNumber] = {};
                     }
                     deepMergeObjects(target[fieldName].Lines[driverNumber], driverUpdate);
-                    affectedDriverNumbers.add(driverNumber); // Mark this driver for VM update
+                    affectedDriverNumbers.add(driverNumber); 
                 }
                 // Update other fields like Withheld, SessionType if present
                 if (payload.Withheld !== undefined) target[fieldName].Withheld = payload.Withheld;
@@ -202,10 +199,56 @@ export const useF1Store = defineStore('f1', () => {
             }
             break;
 
+        case "CarData.z":
+            { 
+                target.CarDataZ = payload;
+                const inflatedData = inflateData(payload);
+
+                if (inflatedData && inflatedData.Entries && Array.isArray(inflatedData.Entries) && inflatedData.Entries.length > 0) {
+                    const latestSnapshot = inflatedData.Entries[inflatedData.Entries.length - 1];
+                    if (latestSnapshot && latestSnapshot.Cars) {
+                        for (const [driverNumber, carEntry] of Object.entries(latestSnapshot.Cars)) {
+                            const vm = state.driversViewModelMap.get(driverNumber);
+                            if (vm && carEntry.Channels) {
+                                const channels = carEntry.Channels;
+                                vm.rpm = channels["0"] ?? vm.rpm; 
+                                vm.speed = channels["2"] ?? vm.speed;
+                                vm.gear = channels["3"] ?? vm.gear;
+                                vm.throttle = channels["4"] ?? vm.throttle;
+                                vm.brake = channels["5"] ?? vm.brake;
+                                vm.drs = channels["45"] ?? vm.drs;
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+
+        case "Position.z":
+                { 
+                    target.PositionZ = payload; 
+                    const inflatedData = inflateData(payload);
+
+                    if (inflatedData && inflatedData.Position && Array.isArray(inflatedData.Position) && inflatedData.Position.length > 0) {
+                        const latestSnapshot = inflatedData.Position[inflatedData.Position.length - 1];
+                        if (latestSnapshot && latestSnapshot.Entries) {
+
+                            for (const [driverNumber, positionEntry] of Object.entries(latestSnapshot.Entries)) {
+                                const vm = state.driversViewModelMap.get(driverNumber);
+                                if (vm) {
+                                        vm.positionStatus = positionEntry.Status ?? vm.positionStatus;
+                                        vm.posX = positionEntry.X ?? vm.posX;
+                                        vm.posY = positionEntry.Y ?? vm.posY;
+                                        vm.posZ = positionEntry.Z ?? vm.posZ;
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+
         default:
             console.warn(`Store Action: Unhandled field name in applyFeedUpdate: ${fieldName}`);
-            // If it's an unknown top-level field, maybe assign directly?
-            // Or handle potential future nested structures.
             if (target[fieldName] === undefined) {
                 target[fieldName] = payload;
             } else if (typeof target[fieldName] === 'object' && target[fieldName] !== null && typeof payload === 'object' && payload !== null) {
@@ -223,10 +266,6 @@ export const useF1Store = defineStore('f1', () => {
              // If the driver is new (no existingVM) or updated, set it in the map
              if (!existingVM || updatedVM !== existingVM) {
                 state.driversViewModelMap.set(driverNumber, updatedVM);
-             } else {
-                 // Optimization: If createOrUpdateDriverViewModel returns the exact same object instance
-                 // (meaning no actual changes were needed), we don't strictly need to .set() again.
-                 // However, .set() is generally safe.
              }
         }
     }
@@ -262,22 +301,6 @@ export const useF1Store = defineStore('f1', () => {
              // If the update is a primitive, just replace the value at the index
              array[parsedIndex] = update;
         }
-    
-        // if (typeof existing !== 'object' || existing === null) {
-        //     console.warn(`Cannot update fields of non-object/non-array element at index ${parsedIndex}. Element type: ${typeof existing}, Array: ${array}, FullUpdate: ${fullUpdate}`);
-        //     return; 
-        // }
-    
-        // // Directly assign updated fields
-        // for (const [fieldName, newValue] of Object.entries(update)) {
-        //     if (Array.isArray(existing[fieldName])) {
-        //         // Nested array, try recursive handling
-        //         applyUpdatesByMappedIndex(newValue, existing[fieldName]);
-        //     } else {
-        //         existing[fieldName] = newValue;
-        //     }
-        // }
-
     } 
   }
 
@@ -322,19 +345,16 @@ function deepMergeObjects(target, source) {
 
   return {
     state: readonly(state),
-    // Expose connection status etc.
     isConnected: readonly(computed(() => state.isConnected)),
     lastRawMessage: readonly(computed(() => state.lastRawMessage)),
 
-    driversViewModelMap: readonly(state.driversViewModelMap), // Optional: Expose the map directly (readonly)
-    sortedDriversViewModel: sortedDriversViewModel, // Expose the computed sorted array
+    driversViewModelMap: readonly(state.driversViewModelMap), 
+    sortedDriversViewModel: sortedDriversViewModel, 
 
-    setConnected, // Should remain internal? Maybe triggered by websocketService
-    // Internal actions (usually not exposed directly unless needed)
+    setConnected, 
     setInitialState,
     applyFeedUpdate,
     setLastRawMessage,
-    // Actions for components to call
     initialize,
     terminate,
   };

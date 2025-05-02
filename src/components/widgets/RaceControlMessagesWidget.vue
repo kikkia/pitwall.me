@@ -5,12 +5,12 @@ import { useF1Store } from '@/stores/f1Store';
 const f1Store = useF1Store();
 
 // TODO: Standardize this in some shared array
-const selectableCategories = ["Flag", "Other", "Drs", "SafetyCar"];
+const selectableCategories = ["Flag", "Sector", "Other", "Drs", "SafetyCar"];
 
 const props = defineProps({
   showTimestamp: { type: Boolean, default: true },
   showCategory: { type: Boolean, default: true },
-  selectedCategories: { type: Array, default: () => ["Flag", "Other", "Drs", "SafetyCar"] },
+  selectedCategories: { type: Array, default: () => ["Flag", "Sector", "Other", "Drs", "SafetyCar"] },
   messageFontSize: { type: Number, default: 90 }
 });
 
@@ -53,7 +53,7 @@ defineExpose({
   settingsDefinition
 });
 
-const categories = ["Flag", "Other", "Drs", "SafetyCar"];
+const categories = ["Flag", "Sector", "Other", "Drs", "SafetyCar"];
 
 const messages = computed(() => f1Store.state.raceData.RaceControlMessages.Messages);
 

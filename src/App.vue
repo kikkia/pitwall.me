@@ -63,7 +63,7 @@ const setWidgetRef = (id, el) => { // Keep this if WidgetContainer still uses it
   }
 };
 
-const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Drs", "SafetyCar"] };
+const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Sector", "Drs", "SafetyCar"] };
 const defaultTimingTableConfig = {showNumber: true, showBest: true, showLast: true, showGap: true, showInterval: true, showTire: true, showPitstopCount: true, messageFontSize: 90};
 
 const activeWidgets = ref([

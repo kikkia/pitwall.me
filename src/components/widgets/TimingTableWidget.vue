@@ -129,8 +129,8 @@ function getTireStyle(driver) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="driver in drivers" :key="driver.racingNumber" :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped ? 0.5 : 1 }">
-          <td>{{ driver.position }}</td>
+        <tr v-for="(driver, index) in drivers" :key="driver.racingNumber" :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped ? 0.5 : 1 }">
+          <td>{{ index + 1 }}</td>
           <td v-if="showNumber">{{ driver.racingNumber }}</td>
           <td>{{ driver.tla }}</td>
           <td v-if="showTire" :style="getTireStyle(driver)">{{ driver.currentStint?.compound?.charAt(0) || '' }}</td>

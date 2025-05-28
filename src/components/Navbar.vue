@@ -1,229 +1,244 @@
 <template>
-    <Toolbar class="app-navbar">
-      <template #start>
-        <span class="navbar-brand">Pitwall.me</span>
-      </template>
-  
-      <template #center>
-        <span class="navbar-brand">{{ eventName }}</span>
-        <Tag
-          :severity="raceStatusSeverity"
-          :value="raceStatusLabel"
-          class="connection-status-tag"
-        />
-      </template>
-  
-      <template #end>
-        <p>Datasource: </p>
-        <Tag
-          :severity="socketStatusSeverity"
-          :value="socketStatusLabel"
-          class="connection-status-tag"
-        />
-        <!-- <i :class="['pi', isConnected ? 'pi-check-circle' : 'pi-times-circle', 'ml-2']"></i> -->
-      </template>
-    </Toolbar>
-  </template>
-  
-<script setup>
-  import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
-  import Toolbar from 'primevue/toolbar';
-  import Tag from 'primevue/tag';
-  import { useF1Store } from '@/stores/f1Store';
-  
-  const f1Store = useF1Store();
+  <Toolbar class="app-navbar">
+    <template #start>
+      <span class="navbar-brand">Pitwall.me</span>
+    </template>
 
-  const countdownDisplay = ref('--:--:--'); 
-  const intervalId = ref(null);
-  const targetEndTimeMs = ref(null);
+    <template #center>
+      <span class="navbar-brand">{{ eventName }}</span>
+      <Tag
+        :severity="raceStatusSeverity"
+        :value="raceStatusLabel"
+        class="connection-status-tag"
+      />
+    </template>
 
-  const isConnected = computed(() => f1Store.state.isConnected);
-  const sessionType = computed(() => f1Store.state.raceData?.SessionInfo?.Type); 
-  const sessionData = computed(() => f1Store.state.raceData?.SessionData); 
-  const extrapolatedClock = computed(() => f1Store.state.raceData?.ExtrapolatedClock);
+    <template #end>
+      <p>Datasource: </p>
+      <Tag
+        :severity="socketStatusSeverity"
+        :value="socketStatusLabel"
+        class="connection-status-tag"
+      />
+    </template>
+  </Toolbar>
+</template>
 
-  const socketStatusSeverity = computed(() => {
-    return isConnected.value ? 'success' : 'danger';
-  });
-  
-  const socketStatusLabel = computed(() => {
-    return isConnected.value ? 'Connected' : 'Disconnected';
-  });
-  
-  const eventName = computed(() => {
-      return f1Store.state.raceData?.SessionInfo?.Meeting?.Name || 'Loading Event...';
-  })
+<script lang="ts" setup>
+import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
+import Toolbar from 'primevue/toolbar';
+import Tag from 'primevue/tag';
+import { useF1Store } from '@/stores/f1Store';
+import { storeToRefs } from 'pinia';
+import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 
-  const latestSessionStatusInfo = computed(() => {
-    const statuses = f1Store.state.raceData?.SessionData?.StatusSeries?.filter((st) => st.SessionStatus) || [];
-    return statuses.length > 0 ? statuses[statuses.length - 1] : { SessionStatus: "Unknown" };
-  })
+const f1Store = useF1Store();
+console.log('f1Store instance in Navbar:', f1Store); // <--- ADD THIS LINE
+console.log('f1Store.raceData:', f1Store.raceData); // <--- ADD THIS LINE
+console.log('f1Store.isConnected:', f1Store.isConnected);
 
-  const connect = () => {
-    f1Store.initialize();
-  };
+const countdownDisplay = ref<string>('--:--:--');
+const intervalId = ref<number | null>(null); // setTimeout/setInterval return number in browser
 
-  onMounted(() => {
-    connect();
-  });
+// Use storeToRefs for reactive access
+const { isConnected, raceData } = storeToRefs(f1Store);
 
-  const raceStatusLabel = computed(() => {
-    const statusInfo = latestSessionStatusInfo.value;
-    const active = statusInfo.SessionStatus;
-    const currentSessionType = sessionType.value;
+console.log(isConnected)
+console.log(raceData)
 
-    switch (active) {
-        case "Started":
-            if (currentSessionType === "Qualifying" || currentSessionType === "Practice") {
-                return countdownDisplay.value;
-            }
-            const lapCountData = f1Store.state.raceData?.LapCount;
-            if (lapCountData?.CurrentLap && lapCountData?.TotalLaps) {
-                return `Lap ${lapCountData.CurrentLap} / ${lapCountData.TotalLaps}`;
-            }
-            return "Race Ongoing";
-        case "Finished":
-        case "Ends":
-        case "Finalized":
-            return "Finished";
-        case "Inactive":
-            return "Waiting";
-        case "Aborted":
-            return "Aborted";
-        case "Unknown":
-             return "Not yet Started";
-        default:
-            return active;
-    }
-})
+// Derived computeds from raceData (which is now a Ref)
+const sessionType = computed<SessionInfo['Type'] | undefined>(() => raceData.value.SessionInfo?.Type);
+// const sessionDataRef = computed<SessionData | undefined>(() => raceData.value.SessionData); // Renamed to avoid conflict if used directly
+const extrapolatedClock = computed<ExtrapolatedClock | null | undefined>(() => raceData.value.ExtrapolatedClock);
 
-  const raceStatusSeverity = computed(() => {
-    const statuses = f1Store.state.raceData?.SessionData?.StatusSeries.filter((st) => st.SessionStatus);
-    if (statuses.length == 0) {
-        return "info"
-    }
-    let active = statuses[statuses.length - 1].SessionStatus
-    switch (active) {
-        case "Started":
-            return "success"
-        case "Finished":
-        case "Ends":
-        case "Finalized":
-            return "danger"
-        case "Aborted":
-            return "warn"
-        case "Inactive":
-            return "info"
-        default: 
-            return "primary"
-    }
-  })
-  
-  function timeStringToSeconds(timeStr) {
-    if (!timeStr || typeof timeStr !== 'string') return 0;
-    const parts = timeStr.split(':');
-    if (parts.length !== 3) return 0;
-    const hours = parseInt(parts[0], 10);
-    const minutes = parseInt(parts[1], 10);
-    const seconds = parseInt(parts[2], 10);
-    if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
-    return hours * 3600 + minutes * 60 + seconds;
-  }
+const socketStatusSeverity = computed<'success' | 'danger'>(() => {
+return isConnected.value ? 'success' : 'danger';
+});
 
-  function formatSecondsToTime(totalSeconds) {
-    if (totalSeconds < 0) totalSeconds = 0;
-    // floor to make sure we don't go negative
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = Math.floor(totalSeconds % 60); 
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  }
+const socketStatusLabel = computed<string>(() => {
+return isConnected.value ? 'Connected' : 'Disconnected';
+});
 
-  function stopCountdown() {
-    if (intervalId.value) {
-      clearInterval(intervalId.value);
-      intervalId.value = null;
-    }
-  }
+const eventName = computed<string>(() => {
+  return raceData.value.SessionInfo?.Meeting?.Name || 'Loading Event...';
+});
 
-  function runCountdownInterval(currentRemainingSeconds) {
-    stopCountdown(); 
+const latestSessionStatusInfo = computed<Partial<SessionStatusSeriesEntry>>(() => { // Type the return
+const statuses = raceData.value.SessionData?.StatusSeries?.filter((st) => st.SessionStatus) || [];
+return statuses.length > 0 ? statuses[statuses.length - 1] : { SessionStatus: "Unknown" };
+});
 
-    if (currentRemainingSeconds <= 0) {
+const connect = () => {
+f1Store.initialize(); // This calls the store action
+};
+
+onMounted(() => {
+connect();
+});
+
+const raceStatusLabel = computed<string>(() => {
+const statusInfo = latestSessionStatusInfo.value;
+const active = statusInfo?.SessionStatus; // Use optional chaining
+const currentSessionType = sessionType.value;
+
+switch (active) {
+    case "Started":
+        if (currentSessionType === "Qualifying" || currentSessionType === "Practice") {
+            return countdownDisplay.value;
+        }
+        // Make sure LapCount is properly typed or cast it
+        const lapCountData = raceData.value.LapCount as LapCount;
+        if (lapCountData?.CurrentLap && lapCountData?.TotalLaps) {
+            return `Lap ${lapCountData.CurrentLap} / ${lapCountData.TotalLaps}`;
+        }
+        return "Race Ongoing";
+    case "Finished":
+    case "Ends":
+    case "Finalized": // F1 uses Finalised
+        return "Finished";
+    case "Inactive":
+        return "Waiting";
+    case "Aborted":
+        return "Aborted";
+    case "Unknown":
+          return "Not yet Started";
+    default:
+        return active || "Status N/A"; // Handle undefined active
+}
+});
+
+const raceStatusSeverity = computed<'success' | 'danger' | 'warn' | 'info' | 'primary'>(() => {
+const statusInfo = latestSessionStatusInfo.value;
+const active = statusInfo?.SessionStatus; // Use optional chaining
+
+switch (active) {
+    case "Started":
+        return "success";
+    case "Finished":
+    case "Ends":
+    case "Finalised": // F1 uses Finalised
+        return "danger";
+    case "Aborted":
+        return "warn";
+    case "Inactive":
+    case "Unknown": // Grouping Unknown with Inactive for severity
+        return "info";
+    default:
+        return "primary";
+}
+});
+
+function timeStringToSeconds(timeStr: string | undefined): number {
+if (!timeStr || typeof timeStr !== 'string') return 0;
+const parts = timeStr.split(':');
+if (parts.length !== 3) return 0; // Expects HH:MM:SS
+const hours = parseInt(parts[0], 10);
+const minutes = parseInt(parts[1], 10);
+const seconds = parseInt(parts[2], 10);
+if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return 0;
+return hours * 3600 + minutes * 60 + seconds;
+}
+
+function formatSecondsToTime(totalSeconds: number): string {
+if (totalSeconds < 0) totalSeconds = 0;
+const hours = Math.floor(totalSeconds / 3600);
+const minutes = Math.floor((totalSeconds % 3600) / 60);
+const seconds = Math.floor(totalSeconds % 60);
+return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function stopCountdown() {
+if (intervalId.value !== null) { // Check against null
+  clearInterval(intervalId.value);
+  intervalId.value = null;
+}
+}
+
+function runCountdownInterval(currentRemainingSeconds: number) {
+stopCountdown();
+
+if (currentRemainingSeconds <= 0) {
+    countdownDisplay.value = '00:00:00';
+    return;
+}
+countdownDisplay.value = formatSecondsToTime(currentRemainingSeconds);
+
+let internalSeconds = currentRemainingSeconds;
+intervalId.value = window.setInterval(() => { // Use window.setInterval for browser typing
+    internalSeconds--;
+    if (internalSeconds >= 0) {
+        countdownDisplay.value = formatSecondsToTime(internalSeconds);
+    } else {
         countdownDisplay.value = '00:00:00';
+        stopCountdown();
+    }
+}, 1000);
+}
+
+watch(
+[extrapolatedClock, latestSessionStatusInfo, sessionType],
+([clockData, statusInfoNew, typeNew], [oldClockData, oldStatusInfo, oldType]) => {
+  const status = statusInfoNew?.SessionStatus;
+  if (
+    status === 'Started' &&
+    (typeNew === 'Qualifying' || typeNew === 'Practice') &&
+    clockData?.Remaining &&
+    clockData?.Utc
+  ) {
+    const initialRemainingSeconds = timeStringToSeconds(clockData.Remaining);
+    const clockTimestamp = new Date(clockData.Utc);
+    const nowTimestamp = new Date();
+
+    if (isNaN(clockTimestamp.getTime())) {
+        console.error("Invalid UTC timestamp from ExtrapolatedClock:", clockData.Utc);
+        stopCountdown();
+        countdownDisplay.value = "--:--:--";
         return;
     }
-    countdownDisplay.value = formatSecondsToTime(currentRemainingSeconds);
 
-    let internalSeconds = currentRemainingSeconds; 
-    intervalId.value = setInterval(() => {
-        internalSeconds--;
-        if (internalSeconds >= 0) {
-            countdownDisplay.value = formatSecondsToTime(internalSeconds);
-        } else {
-            countdownDisplay.value = '00:00:00';
-            stopCountdown(); 
-        }
-    }, 1000);
-  }
+    const elapsedSecondsSinceClockUpdate = (nowTimestamp.getTime() - clockTimestamp.getTime()) / 1000;
+    const currentRemainingSeconds = initialRemainingSeconds - elapsedSecondsSinceClockUpdate;
 
-  watch([extrapolatedClock, latestSessionStatusInfo, sessionType], ([clockData, statusInfo, type], [oldClockData, oldStatusInfo, oldType]) => {
-    const status = statusInfo?.SessionStatus;
-    if (
-      status === 'Started' &&
-      (type === 'Qualifying' || type === 'Practice') &&
-      clockData?.Remaining &&
-      clockData?.Utc
-    ) {
-      // Calculate accurate remaining time
-      const initialRemainingSeconds = timeStringToSeconds(clockData.Remaining);
-      const clockTimestamp = new Date(clockData.Utc);
-      const nowTimestamp = new Date(); 
+    runCountdownInterval(currentRemainingSeconds);
 
-      if (isNaN(clockTimestamp.getTime())) {
-          console.error("Invalid UTC timestamp from ExtrapolatedClock:", clockData.Utc);
-          stopCountdown();
-          countdownDisplay.value = "--:--:--";
-          return;
-      }
-
-      const elapsedSecondsSinceClockUpdate = (nowTimestamp.getTime() - clockTimestamp.getTime()) / 1000;
-      const currentRemainingSeconds = initialRemainingSeconds - elapsedSecondsSinceClockUpdate;
-
-
-      runCountdownInterval(currentRemainingSeconds);
-
-    } else {
-      stopCountdown();
-      if (status !== 'Started' || (type !== 'Qualifying' && type !== 'Practice')) {
-          countdownDisplay.value = '--:--:--';
-      } else if (status === 'Started' && (type === 'Qualifying' || type === 'Practice')) {
-          countdownDisplay.value = 'Waiting...';
-      }
-    }
-  }, { immediate: true });
-
-  onUnmounted(() => {
+  } else {
     stopCountdown();
-  });
-  </script>
-  
-  <style scoped>
-  .app-navbar {
-    padding: 0.5rem 1rem;
-    border-radius: 0;
+    if (status !== 'Started' || (typeNew !== 'Qualifying' && typeNew !== 'Practice')) {
+        countdownDisplay.value = '--:--:--';
+    } else if (status === 'Started' && (typeNew === 'Qualifying' || typeNew === 'Practice')) {
+        // This case might need refinement. If it's started but clockData is missing,
+        // what should it show?
+        countdownDisplay.value = 'Clock Syncing...'; // Or something more informative
+    }
   }
-  
-  .navbar-brand {
-    font-weight: bold;
-    font-size: 1.2rem;
-    display: inline-flex;
-    align-items: center;
-  }
-  
-  .connection-status-tag {
-    vertical-align: middle;
-    margin-left: 5px;
-  }
+},
+{ immediate: true, deep: true } // Added deep: true for objects in the watch source array
+);
 
-  </style>
+onUnmounted(() => {
+stopCountdown();
+// Consider if f1Store.terminate() should be called here.
+// If App.vue also calls terminate, you might disconnect twice.
+// Generally, the outermost component (App.vue) should manage global service lifecycle.
+// f1Store.terminate(); // Only if Navbar is solely responsible for WS lifecycle
+});
+</script>
+
+<style scoped>
+.app-navbar {
+padding: 0.5rem 1rem;
+border-radius: 0;
+}
+
+.navbar-brand {
+font-weight: bold;
+font-size: 1.2rem;
+display: inline-flex;
+align-items: center;
+}
+
+.connection-status-tag {
+vertical-align: middle;
+margin-left: 5px;
+}
+</style>

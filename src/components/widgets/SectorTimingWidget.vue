@@ -1,24 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import { timeStringToMillis } from '@/utils/formatUtils'
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-
-// Used to better sort by time
-function timeStringToMillis(timeStr: string | null | undefined): number {
-  if (!timeStr || timeStr === '-') return Infinity;
-  const parts = timeStr.split(':');
-  let millis = 0;
-  if (parts.length === 2) {
-    millis += parseInt(parts[0], 10) * 60 * 1000;
-    millis += parseFloat(parts[1]) * 1000;
-  } else if (parts.length === 1) {
-    millis += parseFloat(parts[0]) * 1000;
-  } else {
-    return Infinity; 
-  }
-  return isNaN(millis) ? Infinity : Math.round(millis);
-}
 
 const f1Store = useF1Store();
 

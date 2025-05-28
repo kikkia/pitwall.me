@@ -55,7 +55,7 @@ defineExpose({
 
 const categories = ["Flag", "Sector", "Other", "Drs", "SafetyCar"];
 
-const messages = computed(() => f1Store.state.raceData.RaceControlMessages.Messages);
+const messages = computed(() => f1Store.raceData.RaceControlMessages.Messages);
 
 const messagesContainerRef = ref<HTMLElement | null>(null);
 
@@ -63,7 +63,7 @@ const highlightedMessageId = ref<string | null>(null);
 
 
 const filteredMessages = computed(() => {
-  const allMessages = f1Store.state.raceData.RaceControlMessages.Messages || [];
+  const allMessages = f1Store.raceData.RaceControlMessages.Messages || [];
     return allMessages.filter(message => props.selectedCategories.includes(message.Category));
 });
 

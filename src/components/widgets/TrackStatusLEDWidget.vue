@@ -11,7 +11,7 @@ import { useF1Store } from '@/stores/f1Store';
 
 const f1Store = useF1Store();
 
-const trackStatus = computed(() => f1Store.state.raceData?.TrackStatus?.Message ?? 'Unknown');
+const trackStatus = computed(() => f1Store.raceData?.TrackStatus?.Message ?? 'Unknown');
 
 const flagClasses = computed(() => {
   switch (trackStatus.value) {

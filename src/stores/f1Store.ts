@@ -60,10 +60,10 @@ export const useF1Store = defineStore('f1', () => {
       let posA = parseInt(a.position || '99', 10);
       let posB = parseInt(b.position || '99', 10);
 
-      if (raceData.SessionInfo?.Type === "Race") {
-        posA = timeStringToMillis(a.gapToLeader); 
-        posB = timeStringToMillis(b.gapToLeader);
-      }
+      // if (raceData.SessionInfo?.Type === "Race") {
+      //   posA = timeStringToMillis(a.gapToLeader); 
+      //   posB = timeStringToMillis(b.gapToLeader);
+      // }
 
       if ((a.retired || a.stopped) && !(b.retired || b.stopped)) return 1;
       if (!(a.retired || a.stopped) && (b.retired || b.stopped)) return -1;
@@ -131,17 +131,17 @@ export const useF1Store = defineStore('f1', () => {
         break;
       case "TopThree": // TopThree has Lines array
          if (payload && target.TopThree) {
-             deepMergeObjects(target.TopThree, payload as Partial<TopThree>);
+            target.TopThree = deepMergeObjects(target.TopThree, payload as Partial<TopThree>);
          }
         break;
       case "SessionData":
          if (payload && target.SessionData) {
-            deepMergeObjects(target.SessionData, payload as Partial<SessionData>);
+            target.SessionData = deepMergeObjects(target.SessionData, payload as Partial<SessionData>);
          }
         break;
       case "DriverList":
         if (payload && target.DriverList) {
-            deepMergeObjects(target.DriverList, payload as Partial<DriverList>);
+            target.DriverList = deepMergeObjects(target.DriverList, payload as Partial<DriverList>);
         }
         break;
 
@@ -159,7 +159,9 @@ export const useF1Store = defineStore('f1', () => {
                     targetField.Lines[driverNumber] = {} as any; // Initialize, cast as any for broad compatibility or use specific type
                 }
                 if (driverUpdate) { // Check if driverUpdate is not undefined
-                    deepMergeObjects(targetField.Lines[driverNumber] as object, driverUpdate as object);
+                    targetField.Lines[driverNumber] = deepMergeObjects(
+                      targetField.Lines[driverNumber] as object, // This is the old state
+                      driverUpdate as object) as any; // Add 'as any' or the correct specific type
                 }
                 affectedDriverNumbers.add(driverNumber);
             }
@@ -218,7 +220,7 @@ export const useF1Store = defineStore('f1', () => {
         }
         break;
 
-      case "CarDataZ":
+      case "CarData.z":
         target.CarDataZ = payload as string;
         const inflatedCar = inflateData(payload as string);
         if (inflatedCar && 'Entries' in inflatedCar) { // Type guard for InflatedCarData
@@ -243,7 +245,7 @@ export const useF1Store = defineStore('f1', () => {
         }
         break;
 
-      case "PositionZ":
+      case "Position.z":
         target.PositionZ = payload as string;
         const inflatedPos = inflateData(payload as string);
         if (inflatedPos && 'Position' in inflatedPos) { // Type guard for InflatedPositionData
@@ -307,7 +309,7 @@ export const useF1Store = defineStore('f1', () => {
         } else if (parsedIndex < array.length) {
             const existing = array[parsedIndex];
             if (typeof update === 'object' && update !== null && typeof existing === 'object' && existing !== null && !Array.isArray(update) && !Array.isArray(existing)) {
-                deepMergeObjects(existing, update as Partial<T>);
+                array[parsedIndex] = deepMergeObjects(existing, update as Partial<T>);
             } else {
                 array[parsedIndex] = update as T; // Replace primitive or replace object with non-object
             }

@@ -124,7 +124,7 @@ export const useF1Store = defineStore('f1', () => {
       case "TrackStatus":
       case "SessionInfo":
         if (target[fieldName] && payload) {
-          deepMergeObjects(target[fieldName] as object, payload as object);
+          target[fieldName] = deepMergeObjects(target[fieldName] as object, payload as object) as RaceData[K];
         } else if (payload) {
           target[fieldName] = payload as RaceData[K]; // Cast for assignment
         }

@@ -3,10 +3,14 @@
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
   "exclude": ["src/**/__tests__/*"],
   "compilerOptions": {
+    "composite": true, // Often part of @vue/tsconfig
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-
+    "baseUrl": ".", // Ensure baseUrl is correctly set if using paths
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "verbatimModuleSyntax": true, // Add this explicitly
+    // "allowJs": false, // Consider setting this to false if you've converted all JS to TS
+    // "checkJs": false  // And this too
   }
 }

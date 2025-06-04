@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import { reactive, readonly, computed, ref } from 'vue';
 import * as f1WebSocketService from '@/services/websocketService'; 
 import * as transformer from '@/stores/f1DataTransformer';
-import { timeStringToMillis } from '@/utils/formatUtils';
 import pako from 'pako';
 
 import type {
@@ -123,6 +122,7 @@ export const useF1Store = defineStore('f1', () => {
       case "WeatherData":
       case "TrackStatus":
       case "SessionInfo":
+      case "LapCount":
         if (target[fieldName] && payload) {
           target[fieldName] = deepMergeObjects(target[fieldName] as object, payload as object) as RaceData[K];
         } else if (payload) {

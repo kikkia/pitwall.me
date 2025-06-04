@@ -268,6 +268,21 @@ export interface ValueWithLap {
 	CurrentLap?: number;
 	TotalLaps?: number;
   }
+
+  export interface CompletedLap {
+	Lap: number;
+	LapTime: string;
+	
+	Sectors: Sector[];
+	Pitted: boolean;
+	Compound: string;
+  }
+
+
+  export interface LapHistory {
+	RacingNumber: string;
+	LapHistory: CompletedLap[];
+  }
   
   export interface RaceData {
 	Heartbeat: Heartbeat | null;

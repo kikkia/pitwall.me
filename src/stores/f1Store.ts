@@ -19,6 +19,7 @@ import type {
   LapCount,
   InflatedCarData,
   InflatedPositionData,
+  LapHistory
 } from '@/types/dataTypes';
 
 
@@ -39,7 +40,8 @@ const createInitialRaceData = (): RaceData => ({
   PositionZ: '',
   TeamRadio: { Captures: [] },
   TyreStintSeries: { Stints: {} },
-  LapCount: {} 
+  LapCount: {} ,
+  LapHistoryMap: {}
 });
 
 interface F1StoreState {
@@ -58,11 +60,6 @@ export const useF1Store = defineStore('f1', () => {
     drivers.sort((a, b) => {
       let posA = parseInt(a.position || '99', 10);
       let posB = parseInt(b.position || '99', 10);
-
-      // if (raceData.SessionInfo?.Type === "Race") {
-      //   posA = timeStringToMillis(a.gapToLeader); 
-      //   posB = timeStringToMillis(b.gapToLeader);
-      // }
 
       if ((a.retired || a.stopped) && !(b.retired || b.stopped)) return 1;
       if (!(a.retired || a.stopped) && (b.retired || b.stopped)) return -1;

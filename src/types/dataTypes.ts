@@ -302,6 +302,7 @@ export interface ValueWithLap {
 	TeamRadio: TeamRadio;
 	TyreStintSeries: TyreStintSeries;
 	LapCount: LapCount;
+	LapHistoryMap: Record<string, LapHistory>
   }
   
   export interface StintViewModel {

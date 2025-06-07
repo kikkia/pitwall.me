@@ -284,6 +284,15 @@ export interface ValueWithLap {
 	LapHistory: CompletedLap[];
   }
   
+  export interface F1Event {
+    uid: string;
+    location: string;
+    summary: string;
+    description: string;
+    startTime: string; // ISO 8601 string
+    endTime: string; // ISO 8601 string
+  }
+
   export interface RaceData {
 	Heartbeat: Heartbeat | null;
 	ExtrapolatedClock: ExtrapolatedClock | null;

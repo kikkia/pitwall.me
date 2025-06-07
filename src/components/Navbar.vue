@@ -33,9 +33,6 @@ import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
-console.log('f1Store instance in Navbar:', f1Store); // <--- ADD THIS LINE
-console.log('f1Store.raceData:', f1Store.raceData); // <--- ADD THIS LINE
-console.log('f1Store.isConnected:', f1Store.isConnected);
 
 const countdownDisplay = ref<string>('--:--:--');
 const intervalId = ref<number | null>(null); // setTimeout/setInterval return number in browser
@@ -46,7 +43,6 @@ const { isConnected, raceData } = storeToRefs(f1Store);
 console.log(isConnected)
 console.log(raceData)
 
-// Derived computeds from raceData (which is now a Ref)
 const sessionType = computed<SessionInfo['Type'] | undefined>(() => raceData.value.SessionInfo?.Type);
 // const sessionDataRef = computed<SessionData | undefined>(() => raceData.value.SessionData); // Renamed to avoid conflict if used directly
 const extrapolatedClock = computed<ExtrapolatedClock | null | undefined>(() => raceData.value.ExtrapolatedClock);
@@ -63,13 +59,13 @@ const eventName = computed<string>(() => {
   return raceData.value.SessionInfo?.Meeting?.Name || 'Loading Event...';
 });
 
-const latestSessionStatusInfo = computed<Partial<SessionStatusSeriesEntry>>(() => { // Type the return
+const latestSessionStatusInfo = computed<Partial<SessionStatusSeriesEntry>>(() => { 
 const statuses = raceData.value.SessionData?.StatusSeries?.filter((st) => st.SessionStatus) || [];
 return statuses.length > 0 ? statuses[statuses.length - 1] : { SessionStatus: "Unknown" };
 });
 
 const connect = () => {
-f1Store.initialize(); // This calls the store action
+  f1Store.initialize(); 
 };
 
 onMounted(() => {
@@ -77,55 +73,54 @@ connect();
 });
 
 const raceStatusLabel = computed<string>(() => {
-const statusInfo = latestSessionStatusInfo.value;
-const active = statusInfo?.SessionStatus; // Use optional chaining
-const currentSessionType = sessionType.value;
+  const statusInfo = latestSessionStatusInfo.value;
+  const active = statusInfo?.SessionStatus; 
+  const currentSessionType = sessionType.value;
 
-switch (active) {
-    case "Started":
-        if (currentSessionType === "Qualifying" || currentSessionType === "Practice") {
-            return countdownDisplay.value;
-        }
-        // Make sure LapCount is properly typed or cast it
-        const lapCountData = raceData.value.LapCount as LapCount;
-        if (lapCountData?.CurrentLap && lapCountData?.TotalLaps) {
-            return `Lap ${lapCountData.CurrentLap} / ${lapCountData.TotalLaps}`;
-        }
-        return "Race Ongoing";
-    case "Finished":
-    case "Ends":
-    case "Finalized": // F1 uses Finalised
-        return "Finished";
-    case "Inactive":
-        return "Waiting";
-    case "Aborted":
-        return "Aborted";
-    case "Unknown":
-          return "Not yet Started";
-    default:
-        return active || "Status N/A"; // Handle undefined active
-}
+  switch (active) {
+      case "Started":
+          if (currentSessionType === "Qualifying" || currentSessionType === "Practice") {
+              return countdownDisplay.value;
+          }
+          const lapCountData = raceData.value.LapCount as LapCount;
+          if (lapCountData?.CurrentLap && lapCountData?.TotalLaps) {
+              return `Lap ${lapCountData.CurrentLap} / ${lapCountData.TotalLaps}`;
+          }
+          return "Race Ongoing";
+      case "Finished":
+      case "Ends":
+      case "Finalized": 
+          return "Finished";
+      case "Inactive":
+          return "Waiting";
+      case "Aborted":
+          return "Aborted";
+      case "Unknown":
+            return "Not yet Started";
+      default:
+          return active || "Status N/A"; 
+  }
 });
 
 const raceStatusSeverity = computed<'success' | 'danger' | 'warn' | 'info' | 'primary'>(() => {
-const statusInfo = latestSessionStatusInfo.value;
-const active = statusInfo?.SessionStatus; // Use optional chaining
+  const statusInfo = latestSessionStatusInfo.value;
+  const active = statusInfo?.SessionStatus; 
 
-switch (active) {
-    case "Started":
-        return "success";
-    case "Finished":
-    case "Ends":
-    case "Finalised": // F1 uses Finalised
-        return "danger";
-    case "Aborted":
-        return "warn";
-    case "Inactive":
-    case "Unknown": // Grouping Unknown with Inactive for severity
-        return "info";
-    default:
-        return "primary";
-}
+  switch (active) {
+      case "Started":
+          return "success";
+      case "Finished":
+      case "Ends":
+      case "Finalised": 
+          return "danger";
+      case "Aborted":
+          return "warn";
+      case "Inactive":
+      case "Unknown": // Grouping Unknown with Inactive for severity
+          return "info";
+      default:
+          return "primary";
+  }
 });
 
 function timeStringToSeconds(timeStr: string | undefined): number {
@@ -140,18 +135,18 @@ return hours * 3600 + minutes * 60 + seconds;
 }
 
 function formatSecondsToTime(totalSeconds: number): string {
-if (totalSeconds < 0) totalSeconds = 0;
-const hours = Math.floor(totalSeconds / 3600);
-const minutes = Math.floor((totalSeconds % 3600) / 60);
-const seconds = Math.floor(totalSeconds % 60);
-return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  if (totalSeconds < 0) totalSeconds = 0;
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
 function stopCountdown() {
-if (intervalId.value !== null) { // Check against null
-  clearInterval(intervalId.value);
-  intervalId.value = null;
-}
+  if (intervalId.value !== null) {
+    clearInterval(intervalId.value);
+    intervalId.value = null;
+  }
 }
 
 function runCountdownInterval(currentRemainingSeconds: number) {
@@ -164,7 +159,7 @@ if (currentRemainingSeconds <= 0) {
 countdownDisplay.value = formatSecondsToTime(currentRemainingSeconds);
 
 let internalSeconds = currentRemainingSeconds;
-intervalId.value = window.setInterval(() => { // Use window.setInterval for browser typing
+intervalId.value = window.setInterval(() => { 
     internalSeconds--;
     if (internalSeconds >= 0) {
         countdownDisplay.value = formatSecondsToTime(internalSeconds);
@@ -216,11 +211,7 @@ watch(
 );
 
 onUnmounted(() => {
-stopCountdown();
-// Consider if f1Store.terminate() should be called here.
-// If App.vue also calls terminate, you might disconnect twice.
-// Generally, the outermost component (App.vue) should manage global service lifecycle.
-// f1Store.terminate(); // Only if Navbar is solely responsible for WS lifecycle
+  stopCountdown();
 });
 </script>
 

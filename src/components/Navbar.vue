@@ -147,9 +147,7 @@ const raceStatusSeverity = computed<'success' | 'danger' | 'warn' | 'info' | 'pr
 
 watch(upcomingEvents, (newEvents) => {
   if (newEvents && newEvents.length > 0) {
-    upcomingMenuItems.value = newEvents.map(event => ({
-      label: `${event.summary} - ${event.startTimeLocal.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} ${event.startTimeLocal.toLocaleTimeString()}`,
-    }));
+    upcomingMenuItems.value = newEvents
   } else {
     upcomingMenuItems.value = [{ label: 'No upcoming sessions', disabled: true }];
   }
@@ -203,7 +201,7 @@ function runCountdownInterval(currentRemainingSeconds: number) {
   }, 1000);
 }
 
-const toggleUpcomingMenu = (event: Event) => { // {{change 11: Method to toggle the menu}}
+const toggleUpcomingMenu = (event: Event) => {
   upcomingEventsMenu.value?.toggle(event);
 };
 
@@ -238,13 +236,11 @@ watch(
     if (status !== 'Started' || (typeNew !== 'Qualifying' && typeNew !== 'Practice')) {
         countdownDisplay.value = '--:--:--';
     } else if (status === 'Started' && (typeNew === 'Qualifying' || typeNew === 'Practice')) {
-        // This case might need refinement. If it's started but clockData is missing,
-        // what should it show?
-        countdownDisplay.value = 'Clock Syncing...'; // Or something more informative
+        countdownDisplay.value = 'Clock Syncing...'; 
     }
   }
 },
-{ immediate: true, deep: true } // Added deep: true for objects in the watch source array
+{ immediate: true, deep: true } 
 );
 
 onUnmounted(() => {
@@ -270,14 +266,15 @@ onUnmounted(() => {
   margin-left: 5px;
 }
 
-:deep(.upcoming-sessions-menu) {
-  max-height: 350px; /* Set a maximum height */
-  overflow-y: auto; /* Add vertical scrolling */
-  width: 300px; /* Set a fixed width, adjust as needed */
-  /* Optional: Add some padding or fine-tune appearance */
-}
-
 .app-navbar .p-button.p-button-sm {
   vertical-align: middle;
 }
+</style>
+
+<style>
+  .upcoming-sessions-menu {
+    max-height: 350px;
+    overflow-y: auto;
+    width: 300px;
+  }
 </style>

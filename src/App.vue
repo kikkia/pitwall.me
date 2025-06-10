@@ -1,7 +1,7 @@
 <template>
   <div id="app-container">
     <Navbar />
-    <DashboardGrid ref="dashboardGridRef" class="dashboard-container">
+    <DashboardGrid ref="dashboardGridRef" class="dashboard-container" @grid-updated="handleGridUpdated" :initial-widgets="activeWidgets">
       <div
         v-for="widget in activeWidgets"
         :key="widget.id"
@@ -11,7 +11,7 @@
         :gs-w="widget.w"
         :gs-h="widget.h"
         :gs-id="widget.id"
-        :ref="el => setGridItemRef(widget.id, el)" 
+        :ref="el => setGridItemRef(widget.id, el)"
       >
         <WidgetContainer
           :widget-id="widget.id"
@@ -19,7 +19,7 @@
           @open-settings="openWidgetSettings"
         >
           <component
-            :is="widget.component"
+            :is="widgetComponentMap[widget.componentName].value"
             :ref="el => setWidgetInstanceRef(widget.id, el)"
             v-bind="widget.config"
            />
@@ -39,23 +39,19 @@
 </template>
 
 <script setup>
-import { ref, shallowRef, nextTick, onMounted, defineAsyncComponent, computed} from 'vue';
+import { ref, nextTick, onMounted, computed, watch} from 'vue';
 import Navbar from './components/Navbar.vue';
-import DashboardGrid from './components/DashboardGrid.vue'; 
+import DashboardGrid from './components/DashboardGrid.vue';
 import WidgetContainer from './components/WidgetContainer.vue';
 import WidgetSettingsDialog from './components/WidgetSettingsDialog.vue';
-
-const TimingTableWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TimingTableWidget.vue')));
-const RaceControlMessagesWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/RaceControlMessagesWidget.vue')));
-const TrackStatusLEDWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/TrackStatusLEDWidget.vue')));
-const SectorTimingWidget = shallowRef(defineAsyncComponent(() => import('@/components/widgets/SectorTimingWidget.vue')));
+import { widgetComponentMap, defaultWidgetConfigs } from './widgetRegistry';
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
 const widgetInstanceRefs = ref({});
 
-const widgetRefs = ref({}); // Keep this if WidgetContainer still uses it
-const setWidgetRef = (id, el) => { // Keep this if WidgetContainer still uses it
+const widgetRefs = ref({}); 
+const setWidgetRef = (id, el) => {
   if (el) {
     widgetRefs.value[id] = el;
   } else {
@@ -63,36 +59,34 @@ const setWidgetRef = (id, el) => { // Keep this if WidgetContainer still uses it
   }
 };
 
-const defaultRcmConfig = { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Sector", "Drs", "SafetyCar"] };
-const defaultTimingTableConfig = {showNumber: true, showBest: true, showLast: true, showGap: true, showInterval: true, showTire: true, showPitstopCount: true, messageFontSize: 90};
-const defaultSectorTimingConfig = { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90}
+const activeWidgets = ref([]);
 
-const activeWidgets = ref([
+const defaultWidgets = [
   {
     id: 'timing-1',
-    component: TimingTableWidget,
+    componentName: 'TimingTable',
     x: 0, y: 0, w: 24, h: 30,
-    config: {...defaultTimingTableConfig},
+    config: {...defaultWidgetConfigs.TimingTable},
   },
   {
     id: 'rcm-1',
-    component: RaceControlMessagesWidget,
+    componentName: 'RaceControlMessages',
     x: 24, y: 0, w: 32, h: 20,
-    config: {...defaultRcmConfig},
+    config: {...defaultWidgetConfigs.RaceControlMessages},
   },
   {
     id: 'track-status-1',
-    component: TrackStatusLEDWidget,
+    componentName: 'TrackStatusLED',
     x: 56, y: 0, w: 8, h: 4 ,
-    config: {},
+    config: {...defaultWidgetConfigs.TrackStatusLED},
   },
   {
     id: 'sector-timing',
-    component: SectorTimingWidget,
+    componentName: 'SectorTiming',
     x: 0, y: 30, w:60, h:30,
-    config: {...defaultSectorTimingConfig},
+    config: {...defaultWidgetConfigs.SectorTiming},
   }
-]);
+];
 
 const isSettingsDialogOpen = ref(false);
 const settingsTargetWidgetId = ref(null);
@@ -111,7 +105,7 @@ const currentSettingsDefinition = computed(() => {
     if (currentWidgetInstance.value?.settingsDefinition) {
         return currentWidgetInstance.value.settingsDefinition;
     }
-    return null; 
+    return null;
 });
 
 const currentWidgetConfig = computed(() => {
@@ -157,7 +151,7 @@ const removeWidget = async (widgetIdToRemove) => {
 
     delete gridItemRefs.value[widgetIdToRemove];
     delete widgetInstanceRefs.value[widgetIdToRemove];
-    delete widgetRefs.value[widgetIdToRemove]; // If using widgetRefs
+    delete widgetRefs.value[widgetIdToRemove];
 
   } else {
     console.warn(`App.vue: Widget with ID ${widgetIdToRemove} not found.`);
@@ -174,7 +168,7 @@ const openWidgetSettings = (widgetId) => {
       return;
   }
 
-  let settingsDef = widgetInstance.settingsDefinition; 
+  let settingsDef = widgetInstance.settingsDefinition;
 
   if (settingsDef && settingsDef.length > 0) {
      settingsTargetWidgetId.value = widgetId;
@@ -189,7 +183,75 @@ const openWidgetSettings = (widgetId) => {
 // called when the dialog component emits 'hide'
 const onSettingsDialogHide = () => {
     settingsTargetWidgetId.value = null;
+    saveLayoutToLocalStorage();
 }
+
+const saveLayoutToLocalStorage = () => {
+  if (activeWidgets.value.length < 1) {
+    return
+  }
+  const serializedWidgets = activeWidgets.value.map(widget => ({
+    id: widget.id,
+    componentName: widget.componentName, 
+    x: widget.x,
+    y: widget.y,
+    w: widget.w,
+    h: widget.h,
+    config: widget.config
+  }));
+  localStorage.setItem('dashboardLayout', JSON.stringify(serializedWidgets));
+  console.log('Dashboard layout saved to local storage.');
+};
+
+const loadLayoutFromLocalStorage = () => {
+  const savedLayout = localStorage.getItem('dashboardLayout');
+  if (savedLayout) {
+    try {
+      const parsedLayout = JSON.parse(savedLayout);
+      activeWidgets.value = parsedLayout.map(savedWidget => {
+        if (!widgetComponentMap[savedWidget.componentName]) {
+          console.warn(`Unknown component: ${savedWidget.componentName}. Skipping.`);
+          return null;
+        }
+        console.log(widgetComponentMap[savedWidget.componentName])
+        return {
+          ...savedWidget,
+        };
+      }).filter(Boolean);
+      console.log('Dashboard layout loaded from local storage.');
+    } catch (e) {
+      console.error('Failed to parse dashboard layout from local storage:', e);
+      activeWidgets.value = defaultWidgets;
+    }
+  } else {
+    activeWidgets.value = defaultWidgets;
+    console.log('No saved layout found, using default widgets.');
+  }
+};
+
+// Load layout on mount
+onMounted(() => {
+  loadLayoutFromLocalStorage();
+});
+
+// Watch for changes in activeWidgets (including config changes) and save
+watch(activeWidgets, () => {
+  saveLayoutToLocalStorage();
+}, { deep: true });
+
+// Handle grid-updated event from DashboardGrid
+const handleGridUpdated = (updatedItems) => {
+  updatedItems.forEach(updatedItem => {
+    const widget = activeWidgets.value.find(w => w.id === updatedItem.id);
+    if (widget) {
+      widget.x = updatedItem.x;
+      widget.y = updatedItem.y;
+      widget.w = updatedItem.w;
+      widget.h = updatedItem.h;
+    }
+  });
+  saveLayoutToLocalStorage();
+};
 
 </script>
 

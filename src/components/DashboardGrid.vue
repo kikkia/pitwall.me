@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onBeforeUnmount, watch, nextTick } from 'vue';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 
@@ -11,14 +11,21 @@ const props = defineProps({
     error: {
         type: [String, null],
         default: null
+    },
+    initialWidgets: { 
+        type: Array,
+        default: () => []
     }
 });
 
 const gridContainer = ref(null);
-let grid = null; 
+let grid = null;
+let isGridInitialized = false; 
 
-onMounted(() => {
-    if (gridContainer.value) {
+const emit = defineEmits(['grid-updated']);
+
+const setupGridstack = () => {
+    if (gridContainer.value && !isGridInitialized) {
         console.log("INIT GRIDSTACK");
         grid = GridStack.init({
             cellHeight: 20,
@@ -27,30 +34,39 @@ onMounted(() => {
             disableResize: false,
             margin: 2,
             column: innerWidth/20,
-            staticGrid: false, 
+            staticGrid: false,
             acceptWidgets: true,
         }, gridContainer.value);
 
         grid.on('change', (event, items) => {
-
+            const updatedWidgets = items.map(item => ({
+                id: item.id,
+                x: item.x,
+                y: item.y,
+                w: item.w,
+                h: item.h
+            }));
+            emit('grid-updated', updatedWidgets);
         });
-         grid.on('removed', (event, items) => {
-             console.log('GridStack removed items:', items.map(i => i.el.getAttribute('gs-id')));
-         });
-
-
-    } else {
+        grid.on('removed', (event, items) => {
+            console.log('GridStack removed items:', items.map(i => i.el.getAttribute('gs-id')));
+        });
+        isGridInitialized = true;
+    } else if (!gridContainer.value) {
         console.error("Gridstack container not found!");
     }
-});
+};
 
-onBeforeUnmount(() => {
-  if (grid) {
-    console.log("Destroying Gridstack instance");
-    grid.destroy();
-    grid = null;
-  }
-});
+// Watch for initialWidgets to be populated and then set up Gridstack
+watch(() => props.initialWidgets, (newWidgets) => {
+    if (newWidgets && newWidgets.length > 0 && !isGridInitialized) {
+        // Use nextTick to ensure DOM is updated with slotted content
+        nextTick(() => {
+            setupGridstack();
+        });
+    }
+}, { immediate: true }); // immediate: true to run on initial component mount
+
 
 const getGridInstance = () => {
   return grid;

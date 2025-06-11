@@ -75,7 +75,6 @@ export function connect(): void {
         store.setInitialState(parsedData.R as Partial<RaceData>);
       }
       else if (typeof parsedData === 'object' && parsedData !== null && 'M' in parsedData && Array.isArray(parsedData.M)) {
-        console.log("Service: Detected wrapped feed message (M array).");
         (parsedData.M as WrappedStreamMessageEntry[]).forEach((entry) => {
           if (
             entry &&

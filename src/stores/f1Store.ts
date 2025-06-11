@@ -19,7 +19,10 @@ import type {
   LapCount,
   InflatedCarData,
   InflatedPositionData,
-  LapHistory
+  LapHistory,
+  CompletedLap,
+  RaceControlMessage,
+  TeamRadioCapture
 } from '@/types/dataTypes';
 
 
@@ -198,7 +201,7 @@ export const useF1Store = defineStore('f1', () => {
                 target.RaceControlMessages.Messages.push(...rcmPayload.Messages);
             } else if (typeof rcmPayload.Messages === 'object') { // Map format {"index": message}
                 Object.values(rcmPayload.Messages).forEach(msg => {
-                    if (msg) target.RaceControlMessages.Messages.push(msg);
+                    if (msg) target.RaceControlMessages.Messages.push(msg as RaceControlMessage);
                 });
             }
         }
@@ -211,15 +214,16 @@ export const useF1Store = defineStore('f1', () => {
                 target.TeamRadio.Captures.push(...radioPayload.Captures);
             } else if (typeof radioPayload.Captures === 'object') {
                 Object.values(radioPayload.Captures).forEach(cap => {
-                    if (cap) target.TeamRadio.Captures.push(cap);
+                    if (cap) target.TeamRadio.Captures.push(cap as TeamRadioCapture);
                 });
             }
         }
         break;
 
       case "CarData.z":
-        target.CarDataZ = payload as string;
-        const inflatedCar = inflateData(payload as string);
+        const carDataZPayload = payload as any as string;
+        target.CarDataZ = carDataZPayload;
+        const inflatedCar = inflateData(carDataZPayload);
         if (inflatedCar && 'Entries' in inflatedCar) { // Type guard for InflatedCarData
             const carData = inflatedCar as InflatedCarData;
             if (carData.Entries && Array.isArray(carData.Entries) && carData.Entries.length > 0) {
@@ -243,8 +247,9 @@ export const useF1Store = defineStore('f1', () => {
         break;
 
       case "Position.z":
-        target.PositionZ = payload as string;
-        const inflatedPos = inflateData(payload as string);
+        const positionZPayload = payload as any as string;
+        target.PositionZ = positionZPayload;
+        const inflatedPos = inflateData(positionZPayload);
         if (inflatedPos && 'Position' in inflatedPos) { // Type guard for InflatedPositionData
             const posData = inflatedPos as InflatedPositionData;
             if (posData.Position && Array.isArray(posData.Position) && posData.Position.length > 0) {
@@ -261,6 +266,18 @@ export const useF1Store = defineStore('f1', () => {
                     }
                 }
             }
+        }
+        break;
+
+      case "LapHistory":
+        const lapHistoryPayload = payload as any as { RacingNumber: string; Lap: CompletedLap };
+        if (lapHistoryPayload && lapHistoryPayload.RacingNumber && lapHistoryPayload.Lap) {
+            const { RacingNumber, Lap } = lapHistoryPayload;
+            if (!target.LapHistoryMap[RacingNumber]) {
+                target.LapHistoryMap[RacingNumber] = { RacingNumber: RacingNumber, LapHistory: [] };
+            }
+            target.LapHistoryMap[RacingNumber].LapHistory.push(Lap);
+            affectedDriverNumbers.add(RacingNumber);
         }
         break;
 

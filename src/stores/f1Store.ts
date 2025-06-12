@@ -278,7 +278,6 @@ export const useF1Store = defineStore('f1', () => {
             }
             target.LapHistoryMap[RacingNumber].CompletedLaps.push(CompletedLap);
             affectedDriverNumbers.add(RacingNumber);
-            console.log(`ADDED LAP FOR: ${lapHistoryPayload.RacingNumber}`)
         }
         break;
 

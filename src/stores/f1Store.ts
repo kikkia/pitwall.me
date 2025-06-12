@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { reactive, readonly, computed, ref } from 'vue';
+import { reactive, computed, ref } from 'vue';
 import * as f1WebSocketService from '@/services/websocketService'; 
 import * as transformer from '@/stores/f1DataTransformer';
 import pako from 'pako';
@@ -270,14 +270,15 @@ export const useF1Store = defineStore('f1', () => {
         break;
 
       case "LapHistory":
-        const lapHistoryPayload = payload as any as { RacingNumber: string; Lap: CompletedLap };
-        if (lapHistoryPayload && lapHistoryPayload.RacingNumber && lapHistoryPayload.Lap) {
-            const { RacingNumber, Lap } = lapHistoryPayload;
+        const lapHistoryPayload = payload as any as { RacingNumber: string; CompletedLap: CompletedLap };
+        if (lapHistoryPayload && lapHistoryPayload.RacingNumber && lapHistoryPayload.CompletedLap) {
+            const { RacingNumber, CompletedLap } = lapHistoryPayload;
             if (!target.LapHistoryMap[RacingNumber]) {
-                target.LapHistoryMap[RacingNumber] = { RacingNumber: RacingNumber, LapHistory: [] };
+                target.LapHistoryMap[RacingNumber] = { RacingNumber: RacingNumber, CompletedLaps: [] };
             }
-            target.LapHistoryMap[RacingNumber].LapHistory.push(Lap);
+            target.LapHistoryMap[RacingNumber].CompletedLaps.push(CompletedLap);
             affectedDriverNumbers.add(RacingNumber);
+            console.log(`ADDED LAP FOR: ${lapHistoryPayload.RacingNumber}`)
         }
         break;
 

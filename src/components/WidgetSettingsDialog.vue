@@ -42,6 +42,21 @@
                 class="w-full"
              />
           </div>
+  
+          <div v-if="setting.component === 'Dropdown'" class="p-field dropdown-field">
+            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
+            <Dropdown
+              :id="`${widgetId}-${setting.id}`"
+              v-model="widgetConfig[setting.id]"
+              :options="setting.options"
+              :optionLabel="setting.props?.optionLabel || 'label'"
+              :optionValue="setting.props?.optionValue || 'value'"
+              :placeholder="setting.props?.placeholder"
+              :filter="setting.props?.filter"
+              v-bind="setting.props || {}"
+              class="w-full"
+            />
+          </div>
     
         </div>
       </div>
@@ -61,7 +76,8 @@
   import Button from 'primevue/button';
   import Checkbox from 'primevue/checkbox';
   import Slider from 'primevue/slider';
-  import MultiSelect from 'primevue/multiselect'; 
+  import MultiSelect from 'primevue/multiselect';
+  import Dropdown from 'primevue/dropdown';
   
   const props = defineProps({
     visible: {
@@ -136,5 +152,12 @@
   
   .w-full {
     width: 100%;
+  }
+  
+  .dropdown-field label {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-weight: bold;
+      font-size: 0.9em;
   }
   </style>

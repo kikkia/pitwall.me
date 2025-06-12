@@ -281,7 +281,7 @@ export interface ValueWithLap {
 
   export interface LapHistory {
 	RacingNumber: string;
-	LapHistory: CompletedLap[];
+	CompletedLaps: CompletedLap[];
   }
   
   export interface F1Event {

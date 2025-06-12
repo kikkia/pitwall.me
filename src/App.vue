@@ -83,8 +83,14 @@ const defaultWidgets = [
   {
     id: 'sector-timing',
     componentName: 'SectorTiming',
-    x: 0, y: 30, w:60, h:30,
+    x: 0, y: 30, w:38, h:30,
     config: {...defaultWidgetConfigs.SectorTiming},
+  },
+  {
+    id: 'lap-history-1',
+    componentName: 'LapHistory',
+    x: 65, y: 0, w: 21, h: 25,
+    config: {...defaultWidgetConfigs.LapHistory},
   }
 ];
 

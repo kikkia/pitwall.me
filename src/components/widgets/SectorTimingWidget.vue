@@ -23,7 +23,6 @@ const driversViewModel = computed(() => {
       bestS1TimeMillis: timeStringToMillis(driver.bestSectors[0]?.Value),
       bestS2TimeMillis: timeStringToMillis(driver.bestSectors[1]?.Value),
       bestS3TimeMillis: timeStringToMillis(driver.bestSectors[2]?.Value),
-      isOverallBestLap: driver.bestLapTime?.OverallFastest || false,
     }));
 });
 

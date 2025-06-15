@@ -108,8 +108,8 @@ export const useF1Store = defineStore('f1', () => {
   // K extends keyof RaceData makes fieldName type-safe
   // P extends RaceData[K] makes payload type-safe for that fieldName
   function applyFeedUpdate<K extends keyof RaceData>(
-    fieldName: K,
-    payload: Partial<RaceData[K]> // Use Partial for updates
+    fieldName: string,
+    payload: any // Use Partial for updates
   ) {
     const target = raceData;
     let affectedDriverNumbers = new Set<string>();
@@ -124,9 +124,9 @@ export const useF1Store = defineStore('f1', () => {
       case "SessionInfo":
       case "LapCount":
         if (target[fieldName] && payload) {
-          target[fieldName] = deepMergeObjects(target[fieldName] as object, payload as object) as RaceData[K];
+          target[fieldName as K] = deepMergeObjects(target[fieldName] as object, payload as object) as RaceData[K];
         } else if (payload) {
-          target[fieldName] = payload as RaceData[K]; // Cast for assignment
+          target[fieldName as K] = payload as RaceData[K]; // Cast for assignment
         }
         break;
       case "TopThree": // TopThree has Lines array

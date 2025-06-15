@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import type { DriverViewModel } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
 
@@ -81,7 +82,7 @@ const tableStyle = computed(() => ({
     fontSize: `${props.messageFontSize}%` 
 }));
 
-function getTireStyle(driver) {
+function getTireStyle(driver: DriverViewModel) {
   const compound = driver.currentStint?.compound;
   let color = '';
 

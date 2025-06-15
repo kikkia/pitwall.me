@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  f1-timings-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - .:/app
+      - /app/node_modules

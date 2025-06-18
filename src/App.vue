@@ -1,6 +1,6 @@
 <template>
   <div id="app-container">
-    <Navbar />
+    <Navbar @add-widget="openAddWidgetDialog" />
     <DashboardGrid ref="dashboardGridRef" class="dashboard-container" @grid-updated="handleGridUpdated" :initial-widgets="activeWidgets">
       <div
         v-for="widget in activeWidgets"
@@ -35,6 +35,11 @@
       @hide="onSettingsDialogHide"
     />
 
+    <AddWidgetDialog
+      v-model:visible="isAddWidgetDialogOpen"
+      @add-widget="handleAddWidget"
+    />
+
   </div>
 </template>
 
@@ -44,7 +49,8 @@ import Navbar from './components/Navbar.vue';
 import DashboardGrid from './components/DashboardGrid.vue';
 import WidgetContainer from './components/WidgetContainer.vue';
 import WidgetSettingsDialog from './components/WidgetSettingsDialog.vue';
-import { widgetComponentMap, defaultWidgetConfigs } from './widgetRegistry';
+import AddWidgetDialog from './components/AddWidgetDialog.vue'; // New import
+import { widgetComponentMap, defaultWidgetConfigs, widgetDisplayNames } from './widgetRegistry'; // Added widgetDisplayNames
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
@@ -96,6 +102,8 @@ const defaultWidgets = [
 
 const isSettingsDialogOpen = ref(false);
 const settingsTargetWidgetId = ref(null);
+
+const isAddWidgetDialogOpen = ref(false); // New state for add widget dialog
 
 const settingsTargetWidget = computed(() => {
     if (!settingsTargetWidgetId.value) return null;
@@ -257,6 +265,29 @@ const handleGridUpdated = (updatedItems) => {
     }
   });
   saveLayoutToLocalStorage();
+};
+
+const openAddWidgetDialog = () => {
+  isAddWidgetDialogOpen.value = true;
+};
+
+const handleAddWidget = (widgetComponentName) => {
+  const newWidgetId = `${widgetComponentName.toLowerCase()}-${Date.now()}`;
+  const newWidget = {
+    id: newWidgetId,
+    componentName: widgetComponentName,
+    x: 0, y: 0, w: 20, h: 20, // TODO: Default widget sizes
+    config: { ...defaultWidgetConfigs[widgetComponentName] },
+  };
+  activeWidgets.value.push(newWidget);
+  isAddWidgetDialogOpen.value = false;
+  nextTick(() => {
+    const grid = dashboardGridRef.value?.getGridInstance();
+    const newWidgetElement = gridItemRefs.value[newWidgetId];
+    if (grid && newWidgetElement) {
+      grid.makeWidget(newWidgetElement);
+    }
+  });
 };
 
 </script>

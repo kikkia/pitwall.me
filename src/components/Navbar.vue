@@ -12,6 +12,13 @@
         style="margin-left: 10px;"
       />
       <Menu ref="upcomingEventsMenu" id="upcoming_sessions_menu" :model="upcomingMenuItems" :popup="true" class="upcoming-sessions-menu" />
+      <Button
+        icon="pi pi-plus"
+        label="Add Widget"
+        @click="emit('add-widget')"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-left: 10px;"
+      />
     </template>
 
     <template #center>
@@ -46,6 +53,8 @@ import { useEventStore, type LocalF1Event } from '@/stores/eventStore';
 import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
+
+const emit = defineEmits(['add-widget']);
 
 const f1Store = useF1Store();
 

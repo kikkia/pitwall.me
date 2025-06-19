@@ -7,24 +7,27 @@
     :style="{ width: '50vw' }"
     :breakpoints="{ '960px': '75vw', '641px': '100vw' }"
   >
-    <div class="p-fluid">
-      <div class="p-field">
-        <label for="widgetType">Select Widget Type</label>
-        <Dropdown
-          id="widgetType"
-          v-model="selectedWidgetType"
-          :options="availableWidgetOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select a Widget"
-          class="w-full md:w-14rem"
-        />
-      </div>
+    <div class="widget-card-grid">
+      <Card
+        v-for="widget in availableWidgetOptions"
+        :key="widget.value"
+        class="widget-card"
+        @click="confirmAddWidget(widget.value)"
+      >
+        <template #title>
+          {{ widget.label }}
+        </template>
+        <template #subtitle>
+          <i class="pi pi-image widget-icon-placeholder"></i>
+        </template>
+        <template #content>
+          <p>{{ widget.description }}</p>
+        </template>
+      </Card>
     </div>
 
     <template #footer>
       <Button label="Cancel" icon="pi pi-times" class="p-button-text" @click="$emit('update:visible', false)" />
-      <Button label="Add Widget" icon="pi pi-check" @click="confirmAddWidget" :disabled="!selectedWidgetType" />
     </template>
   </Dialog>
 </template>
@@ -33,7 +36,7 @@
 import { ref, computed, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
-import Dropdown from 'primevue/dropdown';
+import Card from 'primevue/card';
 import { widgetDisplayNames, type WidgetComponentName } from '@/widgetRegistry';
 
 const props = defineProps<{
@@ -42,31 +45,69 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:visible', 'add-widget']);
 
-const selectedWidgetType = ref<WidgetComponentName | null>(null);
 
 const availableWidgetOptions = computed(() => {
+  const descriptions: Record<WidgetComponentName, string> = {
+    'TimingTable': 'Displays live timing data for all drivers, including positions, gaps, and sector times.',
+    'RaceControlMessages': 'Shows real-time messages from race control, such as flag changes and safety car deployments.',
+    'TrackStatusLED': 'Provides a visual indicator of the current track status (green, yellow, red, etc.).',
+    'SectorTiming': 'Detailed breakdown of sector and mini-sector times for selected drivers.',
+    'LapHistory': 'Visualizes lap times and historical data for individual drivers.',
+  };
+
   return Object.entries(widgetDisplayNames).map(([key, value]) => ({
     label: value,
     value: key as WidgetComponentName,
+    description: descriptions[key as WidgetComponentName] || 'No description available.',
   }));
 });
 
-watch(() => props.visible, (newVal) => {
-  if (!newVal) {
-    // Reset selected widget when dialog closes
-    selectedWidgetType.value = null;
-  }
-});
 
-const confirmAddWidget = () => {
-  if (selectedWidgetType.value) {
-    emit('add-widget', selectedWidgetType.value);
-  }
+const confirmAddWidget = (widgetType: WidgetComponentName) => {
+  emit('add-widget', widgetType);
 };
 </script>
 
 <style scoped>
-.p-fluid .p-field {
+.widget-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.widget-card {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  position: relative; 
+  overflow: hidden;
+}
+
+.widget-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+.widget-icon-placeholder {
+  font-size: 3rem;
+  color: var(--text-color-secondary);
   margin-bottom: 1rem;
+  display: block;
+  text-align: center;
+}
+</style>
+
+<style>
+
+.widget-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.05);
+  pointer-events: none;
 }
 </style>

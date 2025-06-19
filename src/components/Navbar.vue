@@ -12,25 +12,27 @@
         style="margin-left: 10px;"
       />
       <Menu ref="upcomingEventsMenu" id="upcoming_sessions_menu" :model="upcomingMenuItems" :popup="true" class="upcoming-sessions-menu" />
+    </template>
+
+    <template #center>
+      <div class="center-content">
+        <span class="navbar-brand">{{ eventName }}</span>
+        <Tag
+          :severity="raceStatusSeverity"
+          :value="raceStatusLabel"
+          class="connection-status-tag"
+        />
+      </div>
+    </template>
+
+    <template #end>
       <Button
         icon="pi pi-plus"
         label="Add Widget"
         @click="emit('add-widget')"
         class="p-button-sm p-button-text p-button-primary"
-        style="margin-left: 10px;"
+        style="margin-right: 10px;"
       />
-    </template>
-
-    <template #center>
-      <span class="navbar-brand">{{ eventName }}</span>
-      <Tag
-        :severity="raceStatusSeverity"
-        :value="raceStatusLabel"
-        class="connection-status-tag"
-      />
-    </template>
-
-    <template #end>
       <span
         :class="['connection-indicator', { 'connected': isConnected, 'disconnected': !isConnected, 'pulse-disconnected': !isConnected }]"
         :title="socketStatusLabel"
@@ -259,6 +261,19 @@ onUnmounted(() => {
 .app-navbar {
   padding: 0.5rem 1rem;
   border-radius: 0;
+}
+
+.app-navbar .p-toolbar-center {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-content {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between event name and status tag */
 }
 
 .navbar-brand {

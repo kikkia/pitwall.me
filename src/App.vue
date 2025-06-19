@@ -1,6 +1,6 @@
 <template>
   <div id="app-container">
-    <Navbar @add-widget="openAddWidgetDialog" />
+    <Navbar @add-widget="openAddWidgetDialog" @open-info-modal="isInfoModalVisible = true" />
     <DashboardGrid ref="dashboardGridRef" class="dashboard-container" @grid-updated="handleGridUpdated" :initial-widgets="activeWidgets">
       <div
         v-for="widget in activeWidgets"
@@ -39,7 +39,7 @@
       v-model:visible="isAddWidgetDialogOpen"
       @add-widget="handleAddWidget"
     />
-
+    <InfoModal v-model:visible="isInfoModalVisible" />
   </div>
   <Toast position="top-right" />
 </template>
@@ -51,8 +51,9 @@ import Navbar from './components/Navbar.vue';
 import DashboardGrid from './components/DashboardGrid.vue';
 import WidgetContainer from './components/WidgetContainer.vue';
 import WidgetSettingsDialog from './components/WidgetSettingsDialog.vue';
-import AddWidgetDialog from './components/AddWidgetDialog.vue'; // New import
-import { widgetComponentMap, defaultWidgetConfigs, widgetDisplayNames } from './widgetRegistry'; // Added widgetDisplayNames
+import AddWidgetDialog from './components/AddWidgetDialog.vue';
+import InfoModal from './components/InfoModal.vue';
+import { widgetComponentMap, defaultWidgetConfigs, widgetDisplayNames } from './widgetRegistry';
 
 const toast = useToast();
 
@@ -70,6 +71,7 @@ const setWidgetRef = (id, el) => {
 };
 
 const activeWidgets = ref([]);
+const isInfoModalVisible = ref(false);
 
 const defaultWidgets = [
   {
@@ -231,7 +233,6 @@ const loadLayoutFromLocalStorage = () => {
           console.warn(`Unknown component: ${savedWidget.componentName}. Skipping.`);
           return null;
         }
-        console.log(widgetComponentMap[savedWidget.componentName])
         return {
           ...savedWidget,
         };
@@ -249,6 +250,10 @@ const loadLayoutFromLocalStorage = () => {
 
 // Load layout on mount
 onMounted(() => {
+  const savedLayout = localStorage.getItem('dashboardLayout');
+  if (!savedLayout) {
+    isInfoModalVisible.value = true;
+  }
   loadLayoutFromLocalStorage();
 });
 

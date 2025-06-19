@@ -1,7 +1,7 @@
 <template>
   <Toolbar class="app-navbar">
     <template #start>
-      <span class="navbar-brand">Pitwall.me</span>
+      <span class="navbar-brand" @click="emit('open-info-modal')">Pitwall.me</span>
       <Button 
         icon="pi pi-calendar" 
         label="Upcoming Sessions" 
@@ -54,7 +54,7 @@ import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 
-const emit = defineEmits(['add-widget']);
+const emit = defineEmits(['add-widget', 'open-info-modal']);
 
 const f1Store = useF1Store();
 

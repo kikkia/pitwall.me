@@ -33,10 +33,11 @@
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
       />
-      <span
-        :class="['connection-indicator', { 'connected': isConnected, 'disconnected': !isConnected, 'pulse-disconnected': !isConnected }]"
+      <i
+        :class="['pi', isConnected ? 'pi-sort-alt' : 'pi-sort-alt-slash', { 'pulse-disconnected': !isConnected }]"
+        :style="{ color: isConnected ? 'green' : 'red' }"
         :title="socketStatusLabel"
-      ></span>
+      ></i>
     </template>
   </Toolbar>
 </template>
@@ -74,12 +75,7 @@ console.log(isConnected)
 console.log(raceData)
 
 const sessionType = computed<SessionInfo['Type'] | undefined>(() => raceData.value.SessionInfo?.Type);
-// const sessionDataRef = computed<SessionData | undefined>(() => raceData.value.SessionData); // Renamed to avoid conflict if used directly
 const extrapolatedClock = computed<ExtrapolatedClock | null | undefined>(() => raceData.value.ExtrapolatedClock);
-
-const socketStatusSeverity = computed<'success' | 'danger'>(() => {
-  return isConnected.value ? 'success' : 'danger';
-});
 
 const socketStatusLabel = computed<string>(() => {
   return isConnected.value ? 'Connected' : 'Disconnected';
@@ -281,23 +277,6 @@ onUnmounted(() => {
   font-size: 1.2rem;
   display: inline-flex;
   align-items: center;
-}
-
-.connection-indicator {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-left: 5px;
-  vertical-align: middle;
-}
-
-.connection-indicator.connected {
-  background-color: green;
-}
-
-.connection-indicator.disconnected {
-  background-color: red;
 }
 
 .pulse-disconnected {

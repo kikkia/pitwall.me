@@ -43,9 +43,8 @@ const settingsDefinition = ref([
     label: 'Show Categories',
     type: 'array',
     component: 'MultiSelect',
-    props: {
-      options: selectableCategories
-    }
+    options: selectableCategories,
+    props: {}
   }
 ]);
 

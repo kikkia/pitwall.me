@@ -34,8 +34,6 @@
                 :id="`${widgetId}-${setting.id}`"
                 v-model="widgetConfig[setting.id]"
                 :options="setting.options"
-                optionLabel="label" 
-                optionValue="value"
                 placeholder="Select Categories"
                 display="chip"
                 v-bind="setting.props || {}"

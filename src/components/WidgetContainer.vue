@@ -55,11 +55,11 @@ function handleSettingsClick() {
 <style scoped>
 
 .widget-container {
-  position: relative; 
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
+  position: relative;
+  background-color: var(--vt-c-black-soft);
+  border: 1px solid var(--vt-c-divider-dark-1);
   border-radius: 4px;
-  color: #212529;
+  color: var(--vt-c-text-dark-1);
   display: flex;
   flex-direction: column;
 }
@@ -85,9 +85,9 @@ function handleSettingsClick() {
   width: 24px; 
   height: 24px; 
   border-radius: 50%; 
-  border: 1px solid #adb5bd; 
-  background-color: rgba(255, 255, 255, 0.8); 
-  color: #495057; 
+  border: 1px solid var(--vt-c-divider-dark-2);
+  background-color: rgba(40, 40, 40, 0.8);
+  color: var(--vt-c-text-dark-2);
   font-size: 14px;
   line-height: 22px; 
   text-align: center;
@@ -101,8 +101,8 @@ function handleSettingsClick() {
 
 
 .widget-action-button:hover {
-  background-color: rgba(233, 236, 239, 0.9); 
-  border-color: #6c757d;
+  background-color: rgba(60, 60, 60, 0.9);
+  border-color: var(--vt-c-divider-dark-1);
 }
 
 

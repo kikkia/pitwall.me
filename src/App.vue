@@ -322,10 +322,11 @@ html, body {
 }
 
 .dashboard-container {
-  flex-grow: 1; 
+  flex-grow: 1;
   margin: 0 20px 0 0;
   overflow: auto;
-  min-width: 0; 
+  min-width: 0;
+  background-color: var(--vt-c-black); /* Darker background for the grid */
 }
 
 .grid-stack-item {
@@ -395,5 +396,8 @@ html, body {
     margin-bottom: 0.75rem;
     font-weight: bold;
     font-size: 0.9em;
+}
+.grid-stack {
+  background-color: var(--vt-c-black) !important;
 }
 </style>

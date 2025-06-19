@@ -31,12 +31,10 @@
     </template>
 
     <template #end>
-      <p>Datasource: </p>
-      <Tag
-        :severity="socketStatusSeverity"
-        :value="socketStatusLabel"
-        class="connection-status-tag"
-      />
+      <span
+        :class="['connection-indicator', { 'connected': isConnected, 'disconnected': !isConnected, 'pulse-disconnected': !isConnected }]"
+        :title="socketStatusLabel"
+      ></span>
     </template>
   </Toolbar>
 </template>
@@ -270,9 +268,37 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.connection-status-tag {
-  vertical-align: middle;
+.connection-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
   margin-left: 5px;
+  vertical-align: middle;
+}
+
+.connection-indicator.connected {
+  background-color: green;
+}
+
+.connection-indicator.disconnected {
+  background-color: red;
+}
+
+.pulse-disconnected {
+  animation: pulse-red 1.5s infinite;
+}
+
+@keyframes pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+  }
 }
 
 .app-navbar .p-button.p-button-sm {

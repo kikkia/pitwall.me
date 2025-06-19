@@ -208,7 +208,7 @@ function handleDriverSelection(event: any) {
         </Column>
         <Column field="Compound" header="Tyre" />
         <template #empty>
-          <div style="text-align: center; padding: 20px;">No lap history available for this driver.</div>
+          <div style="text-align: center; padding: 20px;">No lap history available for this driver yet.</div>
         </template>
       </DataTable>
     </div>

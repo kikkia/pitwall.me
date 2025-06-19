@@ -33,6 +33,13 @@
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
       />
+      <Button
+        icon="pi pi-cog"
+        label="Settings"
+        @click="openSettingsDialog"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-right: 10px;"
+      />
       <i
         :class="['pi', isConnected ? 'pi-sort-alt' : 'pi-sort-alt-slash', { 'pulse-disconnected': !isConnected }]"
         :style="{ color: isConnected ? 'green' : 'red' }"
@@ -40,6 +47,8 @@
       ></i>
     </template>
   </Toolbar>
+
+  <SettingsDialog :visible="settingsDialogVisible" @update:visible="settingsDialogVisible = $event" />
 </template>
 
 <script lang="ts" setup>
@@ -54,6 +63,7 @@ import { useEventStore, type LocalF1Event } from '@/stores/eventStore';
 import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
+import SettingsDialog from './SettingsDialog.vue';
 
 const emit = defineEmits(['add-widget', 'open-info-modal']);
 
@@ -67,6 +77,8 @@ const { isConnected, raceData } = storeToRefs(f1Store);
 
 const eventStore = useEventStore();
 const { upcomingEvents } = storeToRefs(eventStore);
+
+const settingsDialogVisible = ref(false);
 
 const upcomingEventsMenu = ref<InstanceType<typeof Menu> | null>(null);
 const upcomingMenuItems = ref<MenuItem[]>([]);
@@ -209,6 +221,11 @@ function runCountdownInterval(currentRemainingSeconds: number) {
 const toggleUpcomingMenu = (event: Event) => {
   upcomingEventsMenu.value?.toggle(event);
 };
+
+const openSettingsDialog = () => {
+  settingsDialogVisible.value = true;
+};
+
 
 watch(
 [extrapolatedClock, latestSessionStatusInfo, sessionType],

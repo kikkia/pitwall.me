@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeUnmount, watch, nextTick } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 

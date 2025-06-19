@@ -41,16 +41,20 @@
     />
 
   </div>
+  <Toast />
 </template>
 
 <script setup>
 import { ref, nextTick, onMounted, computed, watch} from 'vue';
+import { useToast } from 'primevue/usetoast';
 import Navbar from './components/Navbar.vue';
 import DashboardGrid from './components/DashboardGrid.vue';
 import WidgetContainer from './components/WidgetContainer.vue';
 import WidgetSettingsDialog from './components/WidgetSettingsDialog.vue';
 import AddWidgetDialog from './components/AddWidgetDialog.vue'; // New import
 import { widgetComponentMap, defaultWidgetConfigs, widgetDisplayNames } from './widgetRegistry'; // Added widgetDisplayNames
+
+const toast = useToast();
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
@@ -197,7 +201,6 @@ const openWidgetSettings = (widgetId) => {
 // called when the dialog component emits 'hide'
 const onSettingsDialogHide = () => {
     settingsTargetWidgetId.value = null;
-    saveLayoutToLocalStorage();
 }
 
 const saveLayoutToLocalStorage = () => {
@@ -215,6 +218,7 @@ const saveLayoutToLocalStorage = () => {
   }));
   localStorage.setItem('dashboardLayout', JSON.stringify(serializedWidgets));
   console.log('Dashboard layout saved to local storage.');
+  toast.add({severity:'success', summary: 'Layout Saved', detail:'Dashboard layout saved successfully!', life: 3000});
 };
 
 const loadLayoutFromLocalStorage = () => {
@@ -264,7 +268,6 @@ const handleGridUpdated = (updatedItems) => {
       widget.h = updatedItem.h;
     }
   });
-  saveLayoutToLocalStorage();
 };
 
 const openAddWidgetDialog = () => {

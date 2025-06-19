@@ -41,7 +41,7 @@
     />
 
   </div>
-  <Toast />
+  <Toast position="top-right" />
 </template>
 
 <script setup>
@@ -218,7 +218,7 @@ const saveLayoutToLocalStorage = () => {
   }));
   localStorage.setItem('dashboardLayout', JSON.stringify(serializedWidgets));
   console.log('Dashboard layout saved to local storage.');
-  toast.add({severity:'success', summary: 'Layout Saved', detail:'Dashboard layout saved successfully!', life: 3000});
+  toast.add({severity:'success', summary: 'Layout saved', life: 2000});
 };
 
 const loadLayoutFromLocalStorage = () => {
@@ -399,5 +399,8 @@ html, body {
 }
 .grid-stack {
   background-color: var(--vt-c-black) !important;
+}
+.p-toast .p-toast-message {
+  width: auto;
 }
 </style>

@@ -15,15 +15,22 @@ const props = defineProps({
     type: Number,
     default: 60, // Increased default for smoother animation
   },
+  shiftLightMode: {
+    type: String as PropType<'linear' | 'converging'>,
+    default: 'linear',
+  },
 });
 
 const emit = defineEmits(['update:widgetConfig']);
 
 const internalSelectedDriverNumber = ref(props.selectedDriverNumber);
+const internalShiftLightMode = ref(props.shiftLightMode);
 
-watch(() => props.selectedDriverNumber, (newVal) => {
-  internalSelectedDriverNumber.value = newVal;
+
+watch(() => props.shiftLightMode, (newVal) => {
+  internalShiftLightMode.value = newVal;
 });
+
 
 const availableDrivers = computed(() => {
   return Array.from(f1Store.driversViewModelMap.values())
@@ -249,6 +256,66 @@ onUnmounted(() => {
   }
 });
 
+const MAX_RPM = 12000; 
+const LIGHTS_START_RPM = MAX_RPM * 0.6; 
+
+const shiftLights = computed(() => {
+  const rpm = currentCarData.value ? currentCarData.value['0'] : 0;
+  const lights = Array(15).fill(false);
+
+  const rpmRangeForLights = MAX_RPM - LIGHTS_START_RPM;
+
+  if (internalShiftLightMode.value === 'linear') {
+    const rpmPerLightSegment = rpmRangeForLights / 15;
+    for (let i = 0; i < 15; i++) {
+      const threshold = LIGHTS_START_RPM + (i * rpmPerLightSegment);
+      if (rpm >= threshold) {
+        lights[i] = true;
+      }
+    }
+  } else if (internalShiftLightMode.value === 'converging') {
+    const numLights = lights.length;
+    const numPairs = Math.floor(numLights / 2);
+    const middleLightIndex = Math.floor(numLights / 2);
+
+    const rpmPerSegment = rpmRangeForLights / (numPairs + (numLights % 2));
+
+    for (let i = 0; i < numPairs; i++) {
+      const threshold = LIGHTS_START_RPM + (i * rpmPerSegment);
+      if (rpm >= threshold) {
+        lights[i] = true;
+        lights[numLights - 1 - i] = true;
+      }
+    }
+    if (numLights % 2 !== 0) {
+      const middleThreshold = LIGHTS_START_RPM + (numPairs * rpmPerSegment);
+      if (rpm >= middleThreshold) {
+        lights[middleLightIndex] = true;
+      }
+    }
+  }
+  return lights;
+});
+
+const getShiftLightColorClass = (index: number, lightOn: boolean) => {
+  if (!lightOn) return '';
+
+  if (internalShiftLightMode.value === 'linear') {
+    if (index < 5) return 'shift-light-green';
+    if (index >= 5 && index < 10) return 'shift-light-red';
+    if (index >= 10) return 'shift-light-blue';
+  } else if (internalShiftLightMode.value === 'converging') {
+    const numLights = 15;
+    const middle = Math.floor(numLights / 2);
+    const distance = Math.abs(index - middle);
+
+    if (distance >= 5) return 'shift-light-green';
+    if (distance >= 2 && distance <= 4) return 'shift-light-red';
+    if (distance <= 1) return 'shift-light-blue';
+  }
+  return '';
+};
+
 const settingsDefinition = computed(() => {
   return [
     {
@@ -268,6 +335,17 @@ const settingsDefinition = computed(() => {
       type: 'number',
       component: 'Slider',
       props: { min: 30, max: 120, step: 5 }
+    },
+    {
+      id: 'shiftLightMode',
+      label: 'Shift Light Mode',
+      type: 'string',
+      component: 'Dropdown',
+      options: [
+        { label: 'Linear', value: 'linear' },
+        { label: 'Converging', value: 'converging' }
+      ],
+      props: {}
     }
   ];
 });
@@ -277,6 +355,11 @@ defineExpose({ settingsDefinition });
 function handleDriverSelection(event: any) {
   internalSelectedDriverNumber.value = event.value;
   emit('update:widgetConfig', { selectedDriverNumber: event.value });
+}
+
+function handleShiftLightModeChange(event: any) {
+  internalShiftLightMode.value = event.value;
+  emit('update:widgetConfig', { shiftLightMode: event.value });
 }
 </script>
 
@@ -298,6 +381,14 @@ function handleDriverSelection(event: any) {
     <div v-else>
       <h4>Driver: {{ driverName }} ({{ internalSelectedDriverNumber }})</h4>
       <div v-if="currentCarData" class="car-data-display">
+        <div class="shift-light-bar">
+          <span
+            v-for="(light, index) in shiftLights"
+            :key="index"
+            class="shift-light"
+            :class="getShiftLightColorClass(index, light)"
+          ></span>
+        </div>
         <div class="data-row">
           <span class="data-label">RPM:</span>
           <span class="data-value">{{ currentCarData['0'].toLocaleString() }}</span>
@@ -365,6 +456,55 @@ function handleDriverSelection(event: any) {
   flex-direction: column;
   gap: 8px;
   margin-top: 10px;
+}
+
+.shift-light-bar {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  height: 8px; 
+  margin-bottom: 10px;
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.shift-light {
+  width: 8px; 
+  height: 8px; 
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1); 
+  border-radius: 50%; 
+  margin: 0 2px; 
+  transition: background-color 0.05s ease-out, box-shadow 0.05s ease-out; 
+  flex-shrink: 0; 
+}
+
+.shift-light:first-child {
+  margin-left: 0;
+}
+
+.shift-light:last-child {
+  margin-right: 0;
+}
+
+.shift-light-green {
+  background-color: #4ade80; 
+  box-shadow: 0 0 5px #4ade80;
+}
+
+.shift-light-yellow {
+  background-color: #facc15;
+  box-shadow: 0 0 5px #facc15;
+}
+
+.shift-light-red {
+  background-color: #ef4444; 
+  box-shadow: 0 0 5px #ef4444;
+}
+
+.shift-light-blue {
+  background-color: #3b82f6;
+  box-shadow: 0 0 5px #3b82f6;
 }
 
 .data-row {

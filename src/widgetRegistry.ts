@@ -5,7 +5,8 @@ export type WidgetComponentName =
   'RaceControlMessages' |
   'TrackStatusLED' |
   'SectorTiming' |
-  'LapHistory';
+  'LapHistory' |
+  'DriverCarStats';
 
 // Map component names (strings) to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -14,6 +15,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'TrackStatusLED': shallowRef(defineAsyncComponent(() => import('./components/widgets/TrackStatusLEDWidget.vue'))),
   'SectorTiming': shallowRef(defineAsyncComponent(() => import('./components/widgets/SectorTimingWidget.vue'))),
   'LapHistory': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapHistoryWidget.vue'))),
+  'DriverCarStats': shallowRef(defineAsyncComponent(() => import('./components/widgets/DriverCarStats.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -21,7 +23,8 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'RaceControlMessages': { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Sector", "Drs", "SafetyCar"] },
     'TrackStatusLED': {},
     'SectorTiming': { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90 },
-    'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 }
+    'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
+    'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 }
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -30,4 +33,5 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'TrackStatusLED': 'Track Status LED',
     'SectorTiming': 'Sector Timing',
     'LapHistory': 'Lap History',
+    'DriverCarStats': 'Driver Car Stats',
 };

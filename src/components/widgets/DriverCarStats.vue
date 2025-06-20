@@ -13,7 +13,7 @@ const props = defineProps({
   },
   interpolationRate: {
     type: Number,
-    default: 60, // Increased default for smoother animation
+    default: 60,
   },
   shiftLightMode: {
     type: String as PropType<'linear' | 'converging'>,
@@ -68,7 +68,7 @@ const latestCarData = computed<CarData | undefined>(() => {
         "3": driverViewModel.gear,
         "4": driverViewModel.throttle,
         "5": driverViewModel.brake,
-        "45": driverViewModel.drs,
+        "45": !!driverViewModel.drs ? 1 : 0,
       } as CarData;
     }
   }
@@ -88,22 +88,19 @@ const velocities = ref({
 });
 
 let animationFrameId: number | undefined;
-let dataUpdateInterval: number = 1200; // Expected interval between data updates in ms
+let dataUpdateInterval: number = 1500; // Expected interval between data updates in ms
 let lastDataReceiveTime: number = 0;
 let nextDataExpectedTime: number = 0;
 
-// Physics-based interpolation - maintains realistic motion patterns
 const linearInterpolate = (start: number, end: number, progress: number): number => {
   return start + (end - start) * progress;
 };
 
-// Calculate velocity between two data points
 const calculateVelocity = (current: number, previous: number, timeInterval: number): number => {
   if (previous === undefined || timeInterval <= 0) return 0;
   return (current - previous) / timeInterval;
 };
 
-// Predict next value using current velocity with realistic constraints
 const predictWithVelocity = (current: number, velocity: number, deltaTime: number, constraints?: {min?: number, max?: number}): number => {
   let predicted = current + (velocity * deltaTime);
   
@@ -135,26 +132,22 @@ const updateInterpolation = () => {
     const shouldPredict = timeSinceLastData > dataUpdateInterval * 0.8;
     
     if (shouldPredict && timeUntilNextData < 0) {
-      // We're past the expected next data time - use velocity-based prediction
       const predictionTime = Math.abs(timeUntilNextData);
       
-      // RPM prediction with realistic constraints
       newCarData["0"] = Math.round(predictWithVelocity(
         targetCarData.value["0"], 
         velocities.value.rpm, 
         predictionTime,
-        { min: 0, max: 18000 } // Realistic F1 RPM limits
+        { min: 0, max: 15000 }
       ));
       
-      // Speed prediction with realistic constraints
       newCarData["2"] = Math.round(predictWithVelocity(
         targetCarData.value["2"], 
         velocities.value.speed, 
         predictionTime,
-        { min: 0, max: 400 } // Realistic F1 speed limits
+        { min: 0, max: 400 }
       ));
       
-      // Throttle prediction
       newCarData["4"] = Math.round(predictWithVelocity(
         targetCarData.value["4"], 
         velocities.value.throttle, 
@@ -163,10 +156,8 @@ const updateInterpolation = () => {
       ));
       
     } else {
-      // Normal interpolation phase - use linear interpolation for constant motion
       const progress = Math.min(1, timeSinceLastData / dataUpdateInterval);
       
-      // Linear interpolation maintains constant acceleration/deceleration
       newCarData["0"] = Math.round(linearInterpolate(
         previousCarData.value["0"], 
         targetCarData.value["0"], 
@@ -186,11 +177,9 @@ const updateInterpolation = () => {
       ));
     }
 
-    // Gear - only change at specific thresholds to avoid constant switching
     const gearProgress = timeSinceLastData / dataUpdateInterval;
     newCarData["3"] = gearProgress > 0.3 ? targetCarData.value["3"] : previousCarData.value["3"];
 
-    // Brake and DRS - immediate update (binary values)
     newCarData["5"] = targetCarData.value["5"];
     newCarData["45"] = targetCarData.value["45"];
 
@@ -200,19 +189,15 @@ const updateInterpolation = () => {
   animationFrameId = requestAnimationFrame(updateInterpolation);
 };
 
-// Enhanced data watching with velocity calculation
 watch(latestCarData, (newVal, oldVal) => {
   if (newVal) {
     const now = performance.now();
     
-    // Calculate actual interval between data updates
     if (lastDataReceiveTime > 0) {
       const actualInterval = now - lastDataReceiveTime;
-      // Use exponential moving average to smooth interval estimation
       dataUpdateInterval = dataUpdateInterval * 0.7 + actualInterval * 0.3;
     }
     
-    // Calculate velocities for physics-based prediction
     if (oldVal && lastDataReceiveTime > 0) {
       const timeInterval = now - lastDataReceiveTime;
       velocities.value = {
@@ -226,12 +211,10 @@ watch(latestCarData, (newVal, oldVal) => {
     nextDataExpectedTime = now + dataUpdateInterval;
     
     if (oldVal && currentCarData.value) {
-      // Use current interpolated value as the starting point for smoother transitions
       previousCarData.value = { ...currentCarData.value };
     } else if (oldVal) {
       previousCarData.value = oldVal;
     } else {
-      // First data point
       previousCarData.value = newVal;
       currentCarData.value = newVal;
       velocities.value = { rpm: 0, speed: 0, throttle: 0 };
@@ -239,12 +222,10 @@ watch(latestCarData, (newVal, oldVal) => {
     
     targetCarData.value = newVal;
     
-    // Start animation loop if not already running
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(updateInterpolation);
     }
   } else {
-    // Clean up when no data
     previousCarData.value = undefined;
     targetCarData.value = undefined;
     currentCarData.value = undefined;
@@ -416,36 +397,41 @@ function handleSpeedUnitChange(event: any) {
             :class="getShiftLightColorClass(index, light)"
           ></span>
         </div>
-        <div class="data-row">
-          <span class="data-label">RPM:</span>
-          <span class="data-value">{{ currentCarData['0'].toLocaleString() }}</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Speed:</span>
-          <span class="data-value">
-            {{ internalSpeedUnit === 'mph' ? convertKmhToMph(currentCarData['2']).toFixed(0) : currentCarData['2'] }}
-            {{ internalSpeedUnit === 'mph' ? 'mph' : 'km/h' }}
-          </span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Gear:</span>
-          <span class="data-value">{{ currentCarData['3'] }}</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Throttle:</span>
-          <span class="data-value">{{ currentCarData['4'] }}%</span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">Braking:</span>
-          <span class="data-value" :class="{ 'active': currentCarData['5'] }">
-            {{ currentCarData['5'] ? 'Yes' : 'No' }}
-          </span>
-        </div>
-        <div class="data-row">
-          <span class="data-label">DRS:</span>
-          <span class="data-value" :class="{ 'active': currentCarData['45'] }">
-            {{ currentCarData['45'] ? 'Active' : 'Inactive' }}
-          </span>
+        <div class="main-data-grid">
+          <div class="left-column">
+            <div class="rpm-display">
+              <span class="data-label">RPM</span>
+              <span class="data-value">{{ currentCarData['0'].toLocaleString() }}</span>
+            </div>
+            <div class="throttle-indicator-container">
+              <span class="indicator-label">Throttle</span>
+              <div class="throttle-bar">
+                <div class="throttle-fill" :style="{ width: currentCarData['4'] + '%' }"></div>
+              </div>
+            </div>
+          </div>
+          <div class="gear-display">
+            <span class="data-value">{{ currentCarData['3'] }}</span>
+          </div>
+          <div class="right-column">
+            <div class="speed-display">
+              <span class="data-label">Speed</span>
+              <span class="data-value">
+                {{ internalSpeedUnit === 'mph' ? convertKmhToMph(currentCarData['2']).toFixed(0) : currentCarData['2'] }}
+                <span class="unit">{{ internalSpeedUnit === 'mph' ? 'mph' : 'km/h' }}</span>
+              </span>
+            </div>
+            <div class="brake-drs-indicators">
+              <div class="indicator-item">
+                <span class="indicator-label">Brake</span>
+                <div class="brake-indicator" :class="{ 'active': currentCarData['5'] }"></div>
+              </div>
+              <div class="indicator-item">
+                <span class="indicator-label">DRS</span>
+                <div class="drs-indicator" :class="{ 'active': currentCarData['45'] }"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       <p v-else>No car data available for this driver.</p>
@@ -455,7 +441,7 @@ function handleSpeedUnitChange(event: any) {
 
 <style scoped>
 .driver-car-stats-widget {
-  padding: 10px;
+  padding: 5px; 
   background-color: var(--widget-background-color);
   border-radius: var(--border-radius);
   color: var(--text-color);
@@ -477,36 +463,39 @@ function handleSpeedUnitChange(event: any) {
 }
 
 .driver-selection-prompt h3 {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem; 
+  font-size: 1em;
   color: var(--text-color);
 }
 
 .car-data-display {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 2px; 
+  margin-top: 0px;
+  height: 100%;
+  justify-content: flex-start;
 }
 
 .shift-light-bar {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  height: 8px; 
-  margin-bottom: 10px;
+  height: 5px;
+  margin-bottom: 0px; 
   background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.05);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .shift-light {
-  width: 8px; 
-  height: 8px; 
-  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1); 
-  border-radius: 50%; 
-  margin: 0 2px; 
-  transition: background-color 0.05s ease-out, box-shadow 0.05s ease-out; 
-  flex-shrink: 0; 
+  width: 5px; 
+  height: 5px; 
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  border-radius: 50%;
+  margin: 0 1px; 
+  transition: background-color 0.05s ease-out, box-shadow 0.05s ease-out;
+  flex-shrink: 0;
 }
 
 .shift-light:first-child {
@@ -518,46 +507,152 @@ function handleSpeedUnitChange(event: any) {
 }
 
 .shift-light-green {
-  background-color: #4ade80; 
-  box-shadow: 0 0 5px #4ade80;
+  background-color: #4ade80;
+  box-shadow: 0 0 3px #4ade80;
 }
 
 .shift-light-yellow {
   background-color: #facc15;
-  box-shadow: 0 0 5px #facc15;
+  box-shadow: 0 0 3px #facc15;
 }
 
 .shift-light-red {
-  background-color: #ef4444; 
-  box-shadow: 0 0 5px #ef4444;
+  background-color: #ef4444;
+  box-shadow: 0 0 3px #ef4444;
 }
 
 .shift-light-blue {
   background-color: #3b82f6;
-  box-shadow: 0 0 5px #3b82f6;
+  box-shadow: 0 0 3px #3b82f6;
 }
 
-.data-row {
+.main-data-grid {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; 
+  align-items: start;
+  width: 100%;
+  gap: 5px; 
+  margin-top: 0px; 
+  flex-grow: 1; 
+}
+
+.left-column,
+.right-column {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  justify-content: flex-start; 
+}
+
+.left-column {
+  align-items: flex-start;
+}
+
+.right-column {
+  align-items: flex-end;
+}
+
+.rpm-display,
+.speed-display {
+  display: flex;
+  flex-direction: column;
+  align-items: inherit;
+  margin-bottom: 2px;
+}
+
+.gear-display {
+  text-align: center;
+  font-size: 3.5em;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-color);
+  display: flex;
   align-items: center;
-  padding: 4px 0;
-  border-bottom: 1px solid rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  justify-content: center;
+  height: 100%; 
 }
 
 .data-label {
   font-weight: 500;
   opacity: 0.8;
+  font-size: 0.7em; 
+  margin-bottom: 1px; 
 }
 
 .data-value {
   font-weight: 600;
   font-family: 'Courier New', monospace;
-  transition: color 0.2s ease;
+  font-size: 1.8em;
+  line-height: 1;
+  color: var(--text-color);
 }
 
-.data-value.active {
-  color: #4ade80;
+.unit {
+  font-size: 0.3em;
+  opacity: 0.7;
+  margin-left: 3px;
+}
+
+.throttle-indicator-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  margin-top: 2px; 
+}
+
+.throttle-bar {
+  width: 100%;
+  height: 7px;
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  border-radius: 3px; 
+  overflow: hidden;
+}
+
+.throttle-fill {
+  height: 100%;
+  background: linear-gradient(to right, #4ade80, #22c55e);
+  transition: width 0.1s ease-out;
+  border-radius: 3px;
+}
+
+.brake-drs-indicators {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.indicator-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.indicator-label {
+  font-weight: 500;
+  opacity: 0.8;
+  font-size: 0.7em;
+  margin-bottom: 3px;
+}
+
+.brake-indicator,
+.drs-indicator {
+  width: 15px; 
+  height: 15px;
+  border-radius: 50%;
+  background-color: rgba(var(--text-color-rgb, 255, 255, 255), 0.1);
+  transition: background-color 0.1s ease-out, box-shadow 0.1s ease-out;
+}
+
+.brake-indicator.active {
+  background-color: #ef4444;
+  box-shadow: 0 0 5px #ef4444;
+}
+
+.drs-indicator.active {
+  background-color: #4ade80;
+  box-shadow: 0 0 5px #4ade80;
 }
 
 .w-full {

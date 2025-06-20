@@ -19,18 +19,26 @@ const props = defineProps({
     type: String as PropType<'linear' | 'converging'>,
     default: 'linear',
   },
+  speedUnit: {
+    type: String as PropType<'kmh' | 'mph'>,
+    default: 'kmh',
+  },
 });
 
 const emit = defineEmits(['update:widgetConfig']);
 
 const internalSelectedDriverNumber = ref(props.selectedDriverNumber);
 const internalShiftLightMode = ref(props.shiftLightMode);
+const internalSpeedUnit = ref(props.speedUnit);
 
 
 watch(() => props.shiftLightMode, (newVal) => {
   internalShiftLightMode.value = newVal;
 });
 
+watch(() => props.speedUnit, (newVal) => {
+  internalSpeedUnit.value = newVal;
+});
 
 const availableDrivers = computed(() => {
   return Array.from(f1Store.driversViewModelMap.values())
@@ -80,7 +88,6 @@ const velocities = ref({
 });
 
 let animationFrameId: number | undefined;
-let lastUpdateTime: number = 0;
 let dataUpdateInterval: number = 1200; // Expected interval between data updates in ms
 let lastDataReceiveTime: number = 0;
 let nextDataExpectedTime: number = 0;
@@ -346,11 +353,26 @@ const settingsDefinition = computed(() => {
         { label: 'Converging', value: 'converging' }
       ],
       props: {}
+    },
+    {
+      id: 'speedUnit',
+      label: 'Speed Unit',
+      type: 'string',
+      component: 'Dropdown',
+      options: [
+        { label: 'km/h', value: 'kmh' },
+        { label: 'mph', value: 'mph' }
+      ],
+      props: {}
     }
   ];
 });
 
 defineExpose({ settingsDefinition });
+
+function convertKmhToMph(kmh: number): number {
+  return kmh * 0.621371;
+}
 
 function handleDriverSelection(event: any) {
   internalSelectedDriverNumber.value = event.value;
@@ -360,6 +382,11 @@ function handleDriverSelection(event: any) {
 function handleShiftLightModeChange(event: any) {
   internalShiftLightMode.value = event.value;
   emit('update:widgetConfig', { shiftLightMode: event.value });
+}
+
+function handleSpeedUnitChange(event: any) {
+  internalSpeedUnit.value = event.value;
+  emit('update:widgetConfig', { speedUnit: event.value });
 }
 </script>
 
@@ -395,7 +422,10 @@ function handleShiftLightModeChange(event: any) {
         </div>
         <div class="data-row">
           <span class="data-label">Speed:</span>
-          <span class="data-value">{{ currentCarData['2'] }} km/h</span>
+          <span class="data-value">
+            {{ internalSpeedUnit === 'mph' ? convertKmhToMph(currentCarData['2']).toFixed(0) : currentCarData['2'] }}
+            {{ internalSpeedUnit === 'mph' ? 'mph' : 'km/h' }}
+          </span>
         </div>
         <div class="data-row">
           <span class="data-label">Gear:</span>

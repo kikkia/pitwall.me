@@ -8,7 +8,7 @@
     @update:visible="emit('update:visible', $event)"
   >
     <p>
-      Fully customizable live timing, make your own pit wall. 
+      Fully customizable live timing, make your own pit wall. This is still very early on in development. Feel free to report bugs or suggest things to the github.
     </p>
     <h3>How to get started:</h3>
     <ol>
@@ -42,5 +42,4 @@ const openLink = (url: string) => {
 </script>
 
 <style scoped>
-/* Add any specific styles for your modal here */
 </style>

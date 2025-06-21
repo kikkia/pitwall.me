@@ -37,7 +37,7 @@ import { computed } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
-import { widgetDisplayNames, type WidgetComponentName } from '@/widgetRegistry';
+import { widgetDisplayNames, widgetDescriptions, type WidgetComponentName } from '@/widgetRegistry';
 
 const props = defineProps<{
   visible: boolean;
@@ -47,19 +47,10 @@ const emit = defineEmits(['update:visible', 'add-widget']);
 
 
 const availableWidgetOptions = computed(() => {
-  const descriptions: Record<WidgetComponentName, string> = {
-    'TimingTable': 'Displays live timing data for all drivers, including positions, gaps, and sector times.',
-    'RaceControlMessages': 'Shows real-time messages from race control, such as flag changes and safety car deployments.',
-    'TrackStatusLED': 'Provides a visual indicator of the current track status (green, yellow, red, etc.).',
-    'SectorTiming': 'Detailed breakdown of sector and mini-sector times for selected drivers.',
-    'LapHistory': 'Visualizes lap times and historical data for individual drivers.',
-    'DriverCarStats': 'Provides live statistics from a given drivers car'
-  };
-
   return Object.entries(widgetDisplayNames).map(([key, value]) => ({
     label: value,
     value: key as WidgetComponentName,
-    description: descriptions[key as WidgetComponentName] || 'No description available.',
+    description: widgetDescriptions[key as WidgetComponentName] || 'No description available.',
   }));
 });
 

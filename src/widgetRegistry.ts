@@ -35,3 +35,12 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'LapHistory': 'Lap History',
     'DriverCarStats': 'Driver Car Stats',
 };
+
+export const widgetDescriptions: Record<WidgetComponentName, string> = {
+    'TimingTable': 'Displays live timing data for all drivers, including positions, gaps, and sector times.',
+    'RaceControlMessages': 'Shows real-time messages from race control, such as flag changes and safety car deployments.',
+    'TrackStatusLED': 'Provides a visual indicator of the current track status (green, yellow, red, etc.).',
+    'SectorTiming': 'Detailed breakdown of sector and mini-sector times for selected drivers.',
+    'LapHistory': 'Visualizes lap times and historical data for individual drivers.',
+    'DriverCarStats': 'Provides live statistics from a given drivers car'
+};

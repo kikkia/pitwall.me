@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { computed } from 'vue';
 import Dialog from 'primevue/dialog';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
@@ -53,6 +53,7 @@ const availableWidgetOptions = computed(() => {
     'TrackStatusLED': 'Provides a visual indicator of the current track status (green, yellow, red, etc.).',
     'SectorTiming': 'Detailed breakdown of sector and mini-sector times for selected drivers.',
     'LapHistory': 'Visualizes lap times and historical data for individual drivers.',
+    'DriverCarStats': 'Provides live statistics from a given drivers car'
   };
 
   return Object.entries(widgetDisplayNames).map(([key, value]) => ({

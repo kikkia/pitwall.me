@@ -206,7 +206,7 @@ function handleDriverSelection(event: any) {
             {{ slotProps.data.Pitted ? 'P' : '' }}
           </template>
         </Column>
-        <Column field="Compound" header="Tyre" />
+        <Column field="TyreCompound" header="Tyre" />
         <template #empty>
           <div style="text-align: center; padding: 20px;">No lap history available for this driver yet.</div>
         </template>

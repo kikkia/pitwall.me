@@ -275,7 +275,7 @@ export interface ValueWithLap {
 	
 	Sectors: Sector[];
 	Pitted: boolean;
-	Compound: string;
+	TyreCompound: string;
   }
 
 

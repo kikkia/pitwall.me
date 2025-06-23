@@ -5,6 +5,9 @@
     <div v-if="eventStore.isLoading">Loading sessions...</div>
     <div v-else-if="eventStore.error" class="error-message">{{ eventStore.error }}</div>
     <div v-else>
+      <div v-if="isRaceWeek" class="race-week-banner">
+        It's Race Week!
+      </div>
       <div v-if="nextEvent" class="next-event-countdown">
         <h2>Next Event: {{ nextEvent.summary }}</h2>
         <p>Starts in: {{ countdown }}</p>
@@ -51,13 +54,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, onUnmounted } from 'vue';
+import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useEventStore, type LocalF1Event } from '@/stores/eventStore';
 import { fetchEvents } from '@/services/eventService';
 import Navbar from '@/components/Navbar.vue';
 import Card from 'primevue/card';
 import Dialog from 'primevue/dialog';
+import confetti from 'canvas-confetti';
 
 const eventStore = useEventStore();
 const countdown = ref('');
@@ -125,6 +129,24 @@ const nextUpcomingRaceWeekendName = computed(() => {
     }
   }
   return closestUpcomingRace ? closestUpcomingRace.raceName : null;
+});
+
+const isRaceWeek = computed(() => {
+  if (!nextUpcomingRaceWeekendName.value) {
+    return false;
+  }
+
+  const nextRaceWeekendSessions = eventStore.allEventsGroupedByLocation[nextUpcomingRaceWeekendName.value];
+  if (!nextRaceWeekendSessions || nextRaceWeekendSessions.length === 0) {
+    return false;
+  }
+
+  const firstSessionStartTime = nextRaceWeekendSessions[0].startTimeLocal;
+  const now = new Date();
+  const oneWeekFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  // Check if the first session starts within the next 7 days
+  return firstSessionStartTime > now && firstSessionStartTime <= oneWeekFromNow;
 });
 
 const getRaceWeekendDates = (sessions: LocalF1Event[]): string => {
@@ -234,6 +256,16 @@ onMounted(async () => {
 onUnmounted(() => {
   if (countdownInterval) {
     clearInterval(countdownInterval);
+  }
+});
+
+watch(isRaceWeek, (newValue) => {
+  if (newValue) {
+    confetti({
+      particleCount: 300,
+      spread: 170,
+      origin: { y: 0.1 }
+    });
   }
 });
 
@@ -437,5 +469,27 @@ h1 {
   0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 
   70% { box-shadow: 0 0 0 20px rgba(33, 150, 243, 0); }
   100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); }
+}
+
+.race-week-banner {
+  background: linear-gradient(120deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: rainbow-text 6s ease infinite;
+  padding: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 1.8em; 
+  font-weight: bold;
+  border-radius: var(--border-radius);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5); 
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes rainbow-text {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 </style>

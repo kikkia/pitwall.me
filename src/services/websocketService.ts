@@ -1,5 +1,6 @@
 import { useF1Store } from '@/stores/f1Store';
-import type { RaceData } from '@/types/dataTypes'; 
+import { useSettingsStore } from '@/stores/settingsStore';
+import type { RaceData } from '@/types/dataTypes';
 
 type DirectFeedUpdateMessage = [keyof RaceData, Partial<RaceData[keyof RaceData]>];
 
@@ -24,12 +25,78 @@ let websocket: WebSocket | null = null;
 let connectionAttemptTimer: number | null = null; 
 const RECONNECT_DELAY = 5000;
 
+const PROCESSING_INTERVAL_MS = 100;
+
+interface QueuedMessage {
+  timestamp: number;
+  data: ParsedWebSocketData;
+}
+
+let messageQueue: QueuedMessage[] = [];
+let processingInterval: number | null = null;
+
 function getStore() {
   try {
     return useF1Store();
   } catch (error) {
     console.error("Pinia store not available yet. Ensure Pinia is initialized before the service connects.", error);
     throw new Error("Pinia store not ready for WebSocket service.");
+  }
+}
+
+function applyParsedData(parsedData: ParsedWebSocketData, store: ReturnType<typeof useF1Store>): void {
+  if (typeof parsedData === 'object' && parsedData !== null && 'R' in parsedData && typeof parsedData.R === 'object') {
+    console.log("Service: Detected initial state message (R object).");
+    store.setInitialState(parsedData.R as Partial<RaceData>);
+  }
+  else if (typeof parsedData === 'object' && parsedData !== null && 'M' in parsedData && Array.isArray(parsedData.M)) {
+    (parsedData.M as WrappedStreamMessageEntry[]).forEach((entry) => {
+      if (
+        entry &&
+        entry.H === "Streaming" &&
+        entry.M === "feed" &&
+        Array.isArray(entry.A) &&
+        entry.A.length >= 2 &&
+        typeof entry.A[0] === 'string'
+      ) {
+        const fieldName = entry.A[0] as keyof RaceData;
+        const payload = entry.A[1];
+        store.applyFeedUpdate(fieldName, payload);
+      } else {
+        console.warn("Service: Unrecognized entry in wrapped feed message:", entry);
+      }
+    });
+  }
+  else if (
+    Array.isArray(parsedData) &&
+    parsedData.length >= 2 &&
+    typeof parsedData[0] === 'string' &&
+    Object.keys(store.raceData).includes(parsedData[0])
+  ) {
+    console.log(`Service: Detected direct update message for field: ${parsedData[0]}`);
+    const [fieldName, payload] = parsedData as DirectFeedUpdateMessage;
+    store.applyFeedUpdate(fieldName, payload);
+  }
+  else {
+    console.warn('Service: Received unknown WebSocket message format:', parsedData);
+  }
+}
+
+function processMessageQueue(): void {
+  const f1Store = getStore();
+  const settingsStore = useSettingsStore();
+  const now = Date.now();
+  const messageDelayMs = settingsStore.websocketDelay * 1000;
+
+  while (messageQueue.length > 0 && now - messageQueue[0].timestamp >= messageDelayMs) {
+    const message = messageQueue.shift();
+    if (message) {
+      try {
+        applyParsedData(message.data, f1Store);
+      } catch (e) {
+        console.error("Service: Failed to process queued WebSocket message:", e, message.data);
+      }
+    }
   }
 }
 
@@ -60,56 +127,21 @@ export function connect(): void {
       console.error("Error accessing store on WebSocket open (should not happen if initial getStore succeeded):", error);
       disconnect(); 
     }
-    // Note: No initial message sent here, we wait for the server to send the state
+
+    if (processingInterval === null) {
+      processingInterval = window.setInterval(processMessageQueue, PROCESSING_INTERVAL_MS);
+      console.log(`Service: Started message processing interval (every ${PROCESSING_INTERVAL_MS}ms).`);
+    }
   };
 
   websocket.onmessage = (event: MessageEvent) => {
     try {
-      // Re-fetch store in case of HMR or other scenarios where instance might change,
-      // though typically it shouldn't for a standard session.
-      store = getStore();
       const parsedData: ParsedWebSocketData = JSON.parse(event.data as string);
-
-      if (typeof parsedData === 'object' && parsedData !== null && 'R' in parsedData && typeof parsedData.R === 'object') {
-        console.log("Service: Detected initial state message (R object).");
-        store.setInitialState(parsedData.R as Partial<RaceData>);
-      }
-      else if (typeof parsedData === 'object' && parsedData !== null && 'M' in parsedData && Array.isArray(parsedData.M)) {
-        (parsedData.M as WrappedStreamMessageEntry[]).forEach((entry) => {
-          if (
-            entry &&
-            entry.H === "Streaming" &&
-            entry.M === "feed" &&
-            Array.isArray(entry.A) &&
-            entry.A.length >= 2 &&
-            typeof entry.A[0] === 'string' 
-          ) {
-            const fieldName = entry.A[0] as keyof RaceData;
-            const payload = entry.A[1];
-            store.applyFeedUpdate(fieldName, payload);
-          } else {
-            console.warn("Service: Unrecognized entry in wrapped feed message:", entry);
-          }
-        });
-      }
-      else if (
-        Array.isArray(parsedData) &&
-        parsedData.length >= 2 &&
-        typeof parsedData[0] === 'string' &&
-        Object.keys(store.raceData).includes(parsedData[0])
-      ) {
-        console.log(`Service: Detected direct update message for field: ${parsedData[0]}`);
-        const [fieldName, payload] = parsedData as DirectFeedUpdateMessage;
-        store.applyFeedUpdate(fieldName, payload);
-      }
-      else {
-        console.warn('Service: Received unknown WebSocket message format:', parsedData);
-      }
-
+      messageQueue.push({ timestamp: Date.now(), data: parsedData });
     } catch (e) {
-      console.error("Service: Failed to process WebSocket message:", e, event.data);
+      console.error("Service: Failed to parse WebSocket message:", e, event.data);
       try {
-        store = getStore(); 
+        store = getStore();
       } catch(storeError) {
         console.error("Could not update store with parse error message.", storeError);
       }
@@ -130,6 +162,12 @@ export function connect(): void {
     }
     websocket = null;
 
+    if (processingInterval !== null) {
+      clearInterval(processingInterval);
+      processingInterval = null;
+      console.log("Service: Cleared message processing interval.");
+    }
+
     if (event.code !== 1000 && !connectionAttemptTimer) {
       console.log(`Service: Attempting to reconnect in ${RECONNECT_DELAY / 1000} seconds...`);
       connectionAttemptTimer = window.setTimeout(() => {
@@ -144,6 +182,12 @@ export function disconnect(): void {
   if (connectionAttemptTimer !== null) {
     clearTimeout(connectionAttemptTimer);
     connectionAttemptTimer = null;
+  }
+
+  if (processingInterval !== null) {
+    clearInterval(processingInterval);
+    processingInterval = null;
+    console.log("Service: Cleared message processing interval on manual disconnect.");
   }
   if (websocket) {
     console.log("Service: Closing WebSocket connection manually.");

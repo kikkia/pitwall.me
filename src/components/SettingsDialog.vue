@@ -61,6 +61,6 @@ const saveSettings = () => {
 
 <style scoped>
 .save-button {
-  margin-top: 1rem; /* Add top margin for spacing */
+  margin-top: 1rem;
 }
 </style>

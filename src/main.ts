@@ -13,12 +13,13 @@ import MultiSelect from 'primevue/multiselect';
 import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';
 import App from './App.vue'
-
+import router from './router';
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
+app.use(router)
 app.use(PrimeVue, {
     theme: {
         preset: Aura

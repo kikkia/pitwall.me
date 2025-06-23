@@ -13,6 +13,11 @@ const router = createRouter({
       name: 'Dashboard',
       component: DashboardPage,
     },
+    {
+      path: '/season',
+      name: 'Season',
+      component: () => import('../views/SeasonPage.vue'),
+    },
   ],
 });
 

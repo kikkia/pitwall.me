@@ -2,16 +2,13 @@
   <Toolbar class="app-navbar">
     <template #start>
       <span class="navbar-brand" @click="emit('open-info-modal')">Pitwall.me</span>
-      <Button 
-        icon="pi pi-calendar" 
-        label="Upcoming Sessions" 
-        @click="toggleUpcomingMenu" 
-        aria-haspopup="true" 
-        aria-controls="upcoming_sessions_menu"
+      <Button
+        icon="pi pi-calendar"
+        label="Upcoming Sessions"
+        @click="goToSeasonPage"
         class="p-button-sm p-button-text p-button-secondary"
         style="margin-left: 10px;"
       />
-      <Menu ref="upcomingEventsMenu" id="upcoming_sessions_menu" :model="upcomingMenuItems" :popup="true" class="upcoming-sessions-menu" />
     </template>
 
     <template #center>
@@ -32,6 +29,7 @@
         @click="emit('add-widget')"
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
+        v-if="showAddWidgetButton"
       />
       <Button
         icon="pi pi-cog"
@@ -53,20 +51,27 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
-import Menu from 'primevue/menu';
-import type { MenuItem } from 'primevue/menuitem';
 import Toolbar from 'primevue/toolbar';
 import Tag from 'primevue/tag';
 import { useF1Store } from '@/stores/f1Store';
-import { useEventStore, type LocalF1Event } from '@/stores/eventStore';
+import { useEventStore } from '@/stores/eventStore';
 import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 import SettingsDialog from './SettingsDialog.vue';
 
+const props = defineProps({
+  showAddWidgetButton: {
+    type: Boolean,
+    default: true
+  }
+});
+
 const emit = defineEmits(['add-widget', 'open-info-modal']);
 
+const router = useRouter();
 const f1Store = useF1Store();
 
 const countdownDisplay = ref<string>('--:--:--');
@@ -76,12 +81,8 @@ const intervalId = ref<number | null>(null); // setTimeout/setInterval return nu
 const { isConnected, raceData } = storeToRefs(f1Store);
 
 const eventStore = useEventStore();
-const { upcomingEvents } = storeToRefs(eventStore);
 
 const settingsDialogVisible = ref(false);
-
-const upcomingEventsMenu = ref<InstanceType<typeof Menu> | null>(null);
-const upcomingMenuItems = ref<MenuItem[]>([]);
 
 console.log(isConnected)
 console.log(raceData)
@@ -162,15 +163,6 @@ const raceStatusSeverity = computed<'success' | 'danger' | 'warn' | 'info' | 'pr
   }
 });
 
-watch(upcomingEvents, (newEvents) => {
-  if (newEvents && newEvents.length > 0) {
-    upcomingMenuItems.value = newEvents
-  } else {
-    upcomingMenuItems.value = [{ label: 'No upcoming sessions', disabled: true }];
-  }
-}, { immediate: true, deep: true });
-
-
 function timeStringToSeconds(timeStr: string | undefined): number {
   if (!timeStr || typeof timeStr !== 'string') return 0;
   const parts = timeStr.split(':');
@@ -207,7 +199,7 @@ function runCountdownInterval(currentRemainingSeconds: number) {
   countdownDisplay.value = formatSecondsToTime(currentRemainingSeconds);
 
   let internalSeconds = currentRemainingSeconds;
-  intervalId.value = window.setInterval(() => { 
+  intervalId.value = window.setInterval(() => {
     internalSeconds--;
     if (internalSeconds >= 0) {
         countdownDisplay.value = formatSecondsToTime(internalSeconds);
@@ -218,8 +210,8 @@ function runCountdownInterval(currentRemainingSeconds: number) {
   }, 1000);
 }
 
-const toggleUpcomingMenu = (event: Event) => {
-  upcomingEventsMenu.value?.toggle(event);
+const goToSeasonPage = () => {
+  router.push('/season');
 };
 
 const openSettingsDialog = () => {
@@ -315,12 +307,4 @@ onUnmounted(() => {
 .app-navbar .p-button.p-button-sm {
   vertical-align: middle;
 }
-</style>
-
-<style>
-  .upcoming-sessions-menu {
-    max-height: 350px;
-    overflow-y: auto;
-    width: 300px;
-  }
 </style>

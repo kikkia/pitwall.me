@@ -78,6 +78,33 @@ export const useEventStore = defineStore('eventStore', {
       }
 
       return menuItems;
+    },
+    allEventsGroupedByLocation: (state): Record<string, LocalF1Event[]> => {
+      // Group all events by race name (weekend)
+      const groupedEvents = state.events.reduce((acc, event) => {
+        const raceName = extractRaceName(event.summary);
+        if (!acc[raceName]) {
+          acc[raceName] = [];
+        }
+        acc[raceName].push(event);
+        return acc;
+      }, {} as Record<string, LocalF1Event[]>);
+
+      // Sort race weekends chronologically based on the first event in each group
+      const sortedRaceWeekends = Object.entries(groupedEvents).sort(([, eventsA], [, eventsB]) => {
+          const firstEventA = eventsA[0];
+          const firstEventB = eventsB[0];
+          
+          return firstEventA.startTimeLocal.getTime() - firstEventB.startTimeLocal.getTime();
+      });
+
+      const sortedGroupedEvents: Record<string, LocalF1Event[]> = {};
+      sortedRaceWeekends.forEach(([raceName, events]) => {
+        // Sort sessions within each weekend chronologically
+        sortedGroupedEvents[raceName] = events.sort((a, b) => a.startTimeLocal.getTime() - b.startTimeLocal.getTime());
+      });
+
+      return sortedGroupedEvents;
     }
   }
 });

@@ -25,6 +25,7 @@
     "@tsconfig/node22": "^22.0.1",
     "@types/node": "^22.14.0",
     "@types/pako": "^2.0.3",
+    "@types/vue-router": "^2.0.0",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",
     "npm-run-all2": "^7.0.2",

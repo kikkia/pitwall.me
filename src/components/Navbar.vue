@@ -5,7 +5,7 @@
       <Button
         icon="pi pi-calendar"
         label="Upcoming Sessions"
-        @click="goToSeasonPage"
+        @click="goToSchedulePage"
         class="p-button-sm p-button-text p-button-secondary"
         style="margin-left: 10px;"
       />
@@ -210,8 +210,8 @@ function runCountdownInterval(currentRemainingSeconds: number) {
   }, 1000);
 }
 
-const goToSeasonPage = () => {
-  router.push('/season');
+const goToSchedulePage = () => {
+  router.push('/schedule');
 };
 
 const openSettingsDialog = () => {

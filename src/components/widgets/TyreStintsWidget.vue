@@ -83,7 +83,7 @@ const chartData = computed(() => {
   // Since stint data uses tyre age not session lap, we need to sequentiually keep track of laps over stints
   let stintStartLap = minLap
 
-  selectedDriverTyreStints.value.forEach(stint => {
+  selectedDriverTyreStints.value.slice().reverse().forEach(stint => {
     const data: (number | null)[] = [];
     const stintLaps = lapHistoryForSelectedDriver.value.filter(lap =>
       lap.Lap >= stintStartLap && lap.Lap < stintStartLap + (stint.TotalLaps - stint.StartLaps)
@@ -120,6 +120,7 @@ const chartData = computed(() => {
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: false,
+  animation: false,
   plugins: {
     legend: {
       labels: {
@@ -281,8 +282,7 @@ function getTyreCompoundClass(compound: string): string {
           :sortOrder="-1"
           rowHover
         >
-          <Column field="StartLaps" header="Start Lap" :style="{ width: '80px' }" />
-          <Column field="TotalLaps" header="Laps" :style="{ width: '60px' }" />
+          <Column field="TotalLaps" header="Tyre Age" :style="{ width: '60px' }" />
           <Column field="Compound" header="Tyre">
             <template #body="slotProps">
               <span :class="['tyre-compound-indicator', getTyreCompoundClass(slotProps.data.Compound)]">

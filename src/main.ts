@@ -12,6 +12,7 @@ import Button from 'primevue/button';
 import MultiSelect from 'primevue/multiselect';
 import ToastService from 'primevue/toastservice';
 import Toast from 'primevue/toast';
+import Chart from 'primevue/chart';
 import App from './App.vue'
 import router from './router';
 
@@ -32,5 +33,6 @@ app.component('Slider', Slider);
 app.component('Button', Button); 
 app.component('MultiSelect', MultiSelect);
 app.component('Toast', Toast);
+app.component('Chart', Chart);
 
 app.mount('#app')

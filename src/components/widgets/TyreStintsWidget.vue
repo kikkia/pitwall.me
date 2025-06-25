@@ -86,7 +86,7 @@ const chartData = computed(() => {
   }
 
   // Since stint data uses tyre age not session lap, we need to sequentiually keep track of laps over stints
-  let stintStartLap = minLap
+  let stintStartLap = 0
 
   selectedDriverTyreStints.value.slice().reverse().forEach(stint => {
     const data: (number | null)[] = [];

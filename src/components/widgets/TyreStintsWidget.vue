@@ -5,6 +5,7 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart'; 
+import Tag from 'primevue/tag';
 import type { StintData, CompletedLap } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
@@ -48,6 +49,10 @@ const selectedDriverTyreStints = computed<StintData[]>(() => {
   const stints = f1Store.raceData.TyreStintSeries.Stints[internalSelectedDriverNumber.value];
   return stints ? stints.slice().reverse() : []; // Reverse to show latest stint at top
 });
+
+const isCurrentStint = (stint: StintData): boolean => {
+ return selectedDriverTyreStints.value.length > 0 && stint === selectedDriverTyreStints.value[0];
+};
 
 const lapHistoryForSelectedDriver = computed<CompletedLap[]>(() => {
   if (!internalSelectedDriverNumber.value) {
@@ -282,7 +287,11 @@ function getTyreCompoundClass(compound: string): string {
           :sortOrder="-1"
           rowHover
         >
-          <Column field="TotalLaps" header="Tyre Age" :style="{ width: '60px' }" />
+          <Column field="TotalLaps" header="Tyre Age" :style="{ width: '60px' }">
+            <template #body="slotProps">
+              {{ slotProps.data.TotalLaps }}
+            </template>
+          </Column>
           <Column field="Compound" header="Tyre">
             <template #body="slotProps">
               <span :class="['tyre-compound-indicator', getTyreCompoundClass(slotProps.data.Compound)]">
@@ -293,6 +302,7 @@ function getTyreCompoundClass(compound: string): string {
           <Column field="New" header="New">
             <template #body="slotProps">
               {{ slotProps.data.New === 'true' ? '✅' : '' }}
+              <Tag v-if="isCurrentStint(slotProps.data)" severity="success" value="Current"></Tag>
             </template>
           </Column>
           <template #empty>
@@ -396,5 +406,15 @@ function getTyreCompoundClass(compound: string): string {
 
 .w-full {
   width: 100%;
+}
+
+.current-indicator {
+ background-color: #27AE60; /* Green color from the image */
+ color: #fff;
+ padding: 2px 6px;
+ border-radius: 4px;
+ font-size: 0.7em;
+ margin-left: 5px;
+ white-space: nowrap;
 }
 </style>

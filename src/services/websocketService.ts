@@ -20,7 +20,7 @@ interface WrappedFeedMessage {
 type ParsedWebSocketData = Partial<RaceData> | DirectFeedUpdateMessage | WrappedFeedMessage | string | { [key: string]: any };
 
 
-const WS_URL = import.meta.env.VITE_WS_PROXY_URL || 'ws://localhost:8080/ws';
+const WS_URL = import.meta.env.VITE_WS_PROXY_URL;
 let websocket: WebSocket | null = null;
 let connectionAttemptTimer: number | null = null; 
 const RECONNECT_DELAY = 5000;

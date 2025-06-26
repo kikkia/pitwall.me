@@ -90,6 +90,9 @@ const chartData = computed(() => {
 
   selectedDriverTyreStints.value.slice().reverse().forEach(stint => {
     const data: (number | null)[] = [];
+    const pointBackgroundColors: string[] = [];
+    const pointRadii: number[] = [];
+
     const stintLaps = lapHistoryForSelectedDriver.value.filter(lap =>
       lap.Lap >= stintStartLap && lap.Lap <= stintStartLap + (stint.TotalLaps - stint.StartLaps)
     );
@@ -98,18 +101,29 @@ const chartData = computed(() => {
       const lap = stintLaps.find(l => l.Lap === lapNumber);
       if (lap && lap.LapTime) {
         data.push(parseLapTime(lap.LapTime));
+        if (lap.Pitted) {
+          pointBackgroundColors.push('#2196F3');
+          pointRadii.push(5);
+        } else {
+          pointBackgroundColors.push(stintColors[stint.Compound] || '#FFFFFF');
+          pointRadii.push(3);
+        }
       } else {
         data.push(null);
+        pointBackgroundColors.push("")
+        pointRadii.push(0)
       }
     });
 
     datasets.push({
       label: `${formatTyreCompound(stint.Compound)} (${stintStartLap}-${stintStartLap + stint.TotalLaps - stint.StartLaps})`,
       data: data,
-      borderColor: stintColors[stint.Compound] || '#FFFFFF', // Default to white if color not found
+      borderColor: stintColors[stint.Compound] || "#FFFFFF",
       fill: false,
       tension: 0.1,
-      spanGaps: true
+      spanGaps: true,
+      pointBackgroundColor: pointBackgroundColors,
+      pointRadius: pointRadii
     });
 
     // Increment stint start

@@ -16,13 +16,15 @@ const props = defineProps({
     default: null
   },
   messageFontSize: { type: Number, default: 90 },
-  displayMode: { type: String, default: 'list' }
+  displayMode: { type: String, default: 'list' },
+  ignorePittedLaps: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:widgetConfig']);
 
 const internalSelectedDriverNumber = ref(props.selectedDriverNumber);
 const internalDisplayMode = ref(props.displayMode);
+const internalIgnorePittedLaps = ref(props.ignorePittedLaps);
 
 watch(() => props.selectedDriverNumber, (newVal) => {
   internalSelectedDriverNumber.value = newVal;
@@ -30,6 +32,10 @@ watch(() => props.selectedDriverNumber, (newVal) => {
 
 watch(() => props.displayMode, (newVal) => {
   internalDisplayMode.value = newVal;
+});
+
+watch(() => props.ignorePittedLaps, (newVal) => {
+  internalIgnorePittedLaps.value = newVal;
 });
 
 const availableDrivers = computed(() => {
@@ -100,18 +106,24 @@ const chartData = computed(() => {
     labels.forEach(lapNumber => {
       const lap = stintLaps.find(l => l.Lap === lapNumber);
       if (lap && lap.LapTime) {
-        data.push(parseLapTime(lap.LapTime));
-        if (lap.Pitted) {
-          pointBackgroundColors.push('#2196F3');
-          pointRadii.push(5);
+        if (internalIgnorePittedLaps.value && lap.Pitted) {
+          data.push(null);
+          pointBackgroundColors.push('transparent');
+          pointRadii.push(0);
         } else {
-          pointBackgroundColors.push(stintColors[stint.Compound] || '#FFFFFF');
-          pointRadii.push(3);
+          data.push(parseLapTime(lap.LapTime));
+          if (lap.Pitted) {
+            pointBackgroundColors.push('#2196F3');
+            pointRadii.push(5); 
+          } else {
+            pointBackgroundColors.push(stintColors[stint.Compound] || '#FFFFFF');
+            pointRadii.push(3);
+          }
         }
       } else {
         data.push(null);
-        pointBackgroundColors.push("")
-        pointRadii.push(0)
+        pointBackgroundColors.push('transparent');
+        pointRadii.push(0);
       }
     });
 
@@ -228,6 +240,12 @@ const settingsDefinition = computed(() => {
       props: {
         placeholder: "Select Display Mode"
       }
+    },
+    { 
+      id: 'ignorePittedLaps', 
+      label: 'Ignore Pitted Laps', 
+      type: 'boolean', 
+      component: 'Checkbox' 
     }
   ];
 });
@@ -241,11 +259,6 @@ const tableStyle = computed(() => ({
 function handleDriverSelection(event: any) {
   internalSelectedDriverNumber.value = event.value;
   emit('update:widgetConfig', { selectedDriverNumber: event.value });
-}
-
-function handleDisplayModeSelection(event: any) {
-  internalDisplayMode.value = event.value;
-  emit('update:widgetConfig', { displayMode: event.value });
 }
 
 function formatTyreCompound(compound: string): string {

@@ -129,7 +129,7 @@ const currentSettingsDefinition = computed(() => {
 });
 
 const currentWidgetConfig = computed(() => {
-    return settingsTargetWidget.value?.config || null;
+    return settingsTargetWidget.value?.config || {};
 });
 
 

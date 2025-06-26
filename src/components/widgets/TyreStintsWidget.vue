@@ -91,7 +91,7 @@ const chartData = computed(() => {
   selectedDriverTyreStints.value.slice().reverse().forEach(stint => {
     const data: (number | null)[] = [];
     const stintLaps = lapHistoryForSelectedDriver.value.filter(lap =>
-      lap.Lap >= stintStartLap && lap.Lap < stintStartLap + (stint.TotalLaps - stint.StartLaps)
+      lap.Lap >= stintStartLap && lap.Lap <= stintStartLap + (stint.TotalLaps - stint.StartLaps)
     );
 
     labels.forEach(lapNumber => {

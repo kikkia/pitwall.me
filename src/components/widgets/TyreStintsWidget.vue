@@ -53,7 +53,7 @@ const selectedDriverTyreStints = computed<StintData[]>(() => {
     return [];
   }
   const stints = f1Store.raceData.TyreStintSeries.Stints[internalSelectedDriverNumber.value];
-  return stints ? stints.slice().reverse() : []; // Reverse to show latest stint at top
+  return stints.slice().reverse();
 });
 
 const isCurrentStint = (stint: StintData): boolean => {
@@ -326,9 +326,10 @@ function getTyreCompoundClass(compound: string): string {
               </span>
             </template>
           </Column>
-          <Column field="New" header="New">
+          <Column header="Status">
             <template #body="slotProps">
-              {{ slotProps.data.New === 'true' ? '✅' : '' }}
+              <Tag v-if="slotProps.data.New === 'true'" severity="success" value="New" class="mr-1"></Tag>
+              <Tag v-if="slotProps.data.StartLaps > 0" severity="warn" :value="`Used: ${slotProps.data.StartLaps} laps`" class="mr-1"></Tag>
               <Tag v-if="isCurrentStint(slotProps.data)" severity="success" value="Current"></Tag>
             </template>
           </Column>
@@ -433,6 +434,10 @@ function getTyreCompoundClass(compound: string): string {
 
 .w-full {
   width: 100%;
+}
+
+.mr-1 {
+  margin-right: 0.25rem; /* 4px */
 }
 
 .current-indicator {

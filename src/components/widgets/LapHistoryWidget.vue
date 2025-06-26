@@ -241,7 +241,7 @@ function handleDriverSelection(event: any) {
 
 .lap-history-content {
   flex-grow: 1;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .lap-history-widget :deep(.p-datatable .p-datatable-thead > tr > th) {

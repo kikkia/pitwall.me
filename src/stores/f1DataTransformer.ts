@@ -49,6 +49,12 @@ export function createOrUpdateDriverViewModel(
     posX: 0,
     posY: 0,
     posZ: 0,
+    isQualifying: false,
+    isKnockedOut: false,
+    isCutoff: false,
+    qualifyingTime: null,
+    gapToNextElimination: '',
+    gapToPole: '',
   });
 
   const driverInfo = raceData.DriverList?.[racingNumber] || null;
@@ -88,6 +94,15 @@ export function createOrUpdateDriverViewModel(
     vm.retired = timingDataLine.Retired;
     vm.stopped = timingDataLine.Stopped;
     vm.sectors = timingDataLine.Sectors as Sector[];
+
+    // Qualifying specific data
+    vm.isQualifying = raceData.SessionInfo?.Type === 'Qualifying';
+    vm.isKnockedOut = timingDataLine.KnockedOut || false;
+    vm.isCutoff = timingDataLine.Cutoff || false;
+    vm.qualifyingTime = timingDataLine.BestLapTime; 
+    vm.gapToNextElimination = timingDataLine.IntervalToPositionAhead?.Value || ''; // TODO
+    vm.gapToPole = timingDataLine.GapToLeader || ''; // TODO
+
   } else {
     vm.position = '';
     vm.gapToLeader = '';
@@ -100,6 +115,12 @@ export function createOrUpdateDriverViewModel(
     vm.retired = false;
     vm.stopped = false;
     vm.sectors = [];
+    vm.isQualifying = raceData.SessionInfo?.Type === 'Qualifying';
+    vm.isKnockedOut = false;
+    vm.isCutoff = false;
+    vm.qualifyingTime = null;
+    vm.gapToNextElimination = '';
+    vm.gapToPole = '';
   }
 
   if (timingStatsLine) {

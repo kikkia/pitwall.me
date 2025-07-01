@@ -328,7 +328,7 @@ export interface ValueWithLap {
 	teamName: string;
 	teamColour: string;
 	headshotUrl: string;
-  
+	
 	position: string;
 	gapToLeader: string;
 	gapToAhead: string;
@@ -342,12 +342,12 @@ export interface ValueWithLap {
 	sectors: Sector[];
 	bestSectors: Sector[];
 	numberOfPitStops: number;
-  
+	
 	personalBestLap: ValueWithLap | null;
-  
+	
 	currentStint: StintViewModel | null;
 	stintHistory: StintViewModel[];
-  
+	
 	rpm: number;
 	speed: number;
 	gear: number;
@@ -358,4 +358,12 @@ export interface ValueWithLap {
 	posX: number;
 	posY: number;
 	posZ: number;
-  }
+
+	// Qualifying specific
+	isQualifying: boolean;
+	isKnockedOut: boolean;
+	isCutoff: boolean;
+	qualifyingTime: ValueWithLap | null;
+	gapToNextElimination: string;
+	gapToPole: string;
+}

@@ -2,10 +2,24 @@
 import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
 import type { DriverViewModel } from '@/types/dataTypes';
+import { formatLapTime } from '@/utils/formatUtils';
 
 const f1Store = useF1Store();
 
-const drivers = computed(() => f1Store.sortedDriversViewModel.filter((driver) => driver.racingNumber != "_kf"));
+const isQualifying = computed(() => f1Store.currentSessionType.value === 'Qualifying');
+const currentQualifyingPart = computed(() => f1Store.currentQualifyingPart.value);
+
+const drivers = computed(() => {
+  let filteredDrivers = f1Store.sortedDriversViewModel.filter((driver) => driver.racingNumber !== "_kf");
+
+  if (isQualifying.value) {
+    // In qualifying, we might want to sort by best lap time for active drivers,
+    // and then by position for knocked out drivers.
+    // For now, we'll stick to the store's sorted order, which is by position.
+    // Additional sorting logic can be added here if needed for specific quali views.
+  }
+  return filteredDrivers;
+});
 
 const props = defineProps({
   showNumber: { type: Boolean, default: true },
@@ -122,28 +136,42 @@ function getTireStyle(driver: DriverViewModel) {
           <th v-if="showNumber">#</th>
           <th></th>
           <th v-if="showTire"></th>
-          <th v-if="showBest">Best Lap</th>
-          <th v-if="showLast">Last Lap</th>
-          <th v-if="showGap">Gap</th>
-          <th v-if="showInterval">Interval</th>
-          <th v-if="showPitstopCount">Pits</th>
+          <th v-if="isQualifying">Time</th>
+          <th v-else-if="showBest">Best Lap</th>
+          <th v-if="showLast && !isQualifying">Last Lap</th>
+          <th v-if="isQualifying">Gap to Pole</th>
+          <th v-else-if="showGap">Gap</th>
+          <th v-if="isQualifying">Gap to Next Elim.</th>
+          <th v-else-if="showInterval">Interval</th>
+          <th v-if="showPitstopCount && !isQualifying">Pits</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(driver, index) in drivers" :key="driver.racingNumber" :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped ? 0.5 : 1 }">
-          <td>{{ index + 1 }}</td>
+        <tr v-for="(driver, index) in drivers" :key="driver.racingNumber" :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped || driver.retired || driver.isKnockedOut ? 0.5 : 1 }">
+          <td>
+            <template v-if="isQualifying">
+              <span v-if="driver.isKnockedOut" class="knocked-out-pos">OUT</span>
+              <span v-else-if="driver.isCutoff" class="cutoff-pos">CUT</span>
+              <span v-else>{{ driver.position }}</span>
+            </template>
+            <template v-else>
+              {{ driver.position }}
+            </template>
+          </td>
           <td v-if="showNumber">{{ driver.racingNumber }}</td>
           <td>{{ driver.tla }}</td>
           <td v-if="showTire" :style="getTireStyle(driver)">{{ driver.currentStint?.compound?.charAt(0) || '' }}</td>
-          <td v-if="showBest">{{ driver.bestLapTime?.Value || '-' }}</td>
-          <td v-if="showLast">{{ driver.lastLapTime?.Value || '-' }}</td>
-          <td v-if="showGap">{{ driver.gapToLeader || '-' }}</td>
-          <td v-if="showInterval">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : (driver.gapToAhead || '-')) }}</td>
-          <td v-if="showPitstopCount">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
+          <td v-if="isQualifying">{{ driver.qualifyingTime?.Value || '-' }}</td>
+          <td v-else-if="showBest">{{ driver.bestLapTime?.Value || '-' }}</td>
+          <td v-if="showLast && !isQualifying">{{ driver.lastLapTime?.Value || '-' }}</td>
+          <td v-if="isQualifying">{{ driver.gapToPole || '-' }}</td>
+          <td v-if="isQualifying">{{ driver.gapToNextElimination || '-' }}</td>
+          <td v-else-if="showInterval">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : (driver.gapToAhead || '-')) }}</td>
+          <td v-if="showPitstopCount && !isQualifying">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
         </tr>
         <!-- Empty state -->
          <tr v-if="drivers.length === 0">
-            <td colspan="8" style="text-align: center;">Waiting for timing data...</td>
+            <td :colspan="isQualifying ? 7 : 8" style="text-align: center;">Waiting for timing data...</td>
         </tr>
       </tbody>
     </table>
@@ -151,10 +179,20 @@ function getTireStyle(driver: DriverViewModel) {
 </template>
 
 <style scoped>
-  table { width: 100%; border-collapse: collapse; } 
+  table { width: 100%; border-collapse: collapse; }
   th, td { padding: 2px 4px; text-align: left; border-bottom: 1px solid #444; white-space: nowrap; }
   th { background-color: #333; color: #eee; font-weight: bold; }
   td { background-color: #222; color: #ddd; }
   tr:nth-child(even) td { background-color: #282828; }
-  tr[style*="opacity: 0.5"] td { color: #888; } 
+  tr[style*="opacity: 0.5"] td { color: #888; }
+
+  .knocked-out-pos {
+    color: #FF6347; /* Tomato */
+    font-weight: bold;
+  }
+
+  .cutoff-pos {
+    color: #FFA500; /* Orange */
+    font-weight: bold;
+  }
 </style>

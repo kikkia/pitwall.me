@@ -51,12 +51,16 @@ interface F1StoreState {
   isConnected: boolean;
   raceData: RaceData;
   driversViewModelMap: Map<string, DriverViewModel>;
+  currentSessionType: 'Race' | 'Qualifying' | 'Practice' | '';
+  currentQualifyingPart: number;
 }
 
 export const useF1Store = defineStore('f1', () => {
   const isConnected = ref(false);
   const raceData = reactive<RaceData>(createInitialRaceData());
   const driversViewModelMap = reactive<Map<string, DriverViewModel>>(new Map<string, DriverViewModel>());
+  const currentSessionType = ref<'Race' | 'Qualifying' | 'Practice' | ''>('');
+  const currentQualifyingPart = ref<number>(0);
 
   const sortedDriversViewModel = computed<DriverViewModel[]>(() => {
     const drivers = Array.from(driversViewModelMap.values());
@@ -71,6 +75,10 @@ export const useF1Store = defineStore('f1', () => {
     return drivers;
   });
 
+  const isQualifyingActive = computed<boolean>(() => {
+    return currentSessionType.value === 'Qualifying' && currentQualifyingPart.value > 0;
+  });
+
   // === ACTIONS ===
 
   function setConnected(status: boolean) {
@@ -83,6 +91,8 @@ export const useF1Store = defineStore('f1', () => {
   function setInitialState(initialDataR: Partial<RaceData>) {
     console.log("Store Action: Setting initial state...");
     Object.assign(raceData, createInitialRaceData(), initialDataR);
+    currentSessionType.value = raceData.SessionInfo?.Type || '';
+    currentQualifyingPart.value = raceData.TimingData?.SessionPart || 0;
 
     driversViewModelMap.clear();
     const newMap = transformer.buildDriverViewModels(raceData); // Use direct raceData
@@ -121,12 +131,20 @@ export const useF1Store = defineStore('f1', () => {
       case "ExtrapolatedClock":
       case "WeatherData":
       case "TrackStatus":
-      case "SessionInfo":
       case "LapCount":
         if (target[fieldName] && payload) {
           target[fieldName as K] = deepMergeObjects(target[fieldName] as object, payload as object) as RaceData[K];
         } else if (payload) {
           target[fieldName as K] = payload as RaceData[K]; // Cast for assignment
+        }
+        break;
+      case "SessionInfo":
+        if (target.SessionInfo && payload) {
+          target.SessionInfo = deepMergeObjects(target.SessionInfo, payload as object);
+          currentSessionType.value = target.SessionInfo.Type;
+        } else if (payload) {
+          target.SessionInfo = payload;
+          currentSessionType.value = target.SessionInfo?.Type || '';
         }
         break;
       case "TopThree": // TopThree has Lines array
@@ -152,6 +170,12 @@ export const useF1Store = defineStore('f1', () => {
         if (typedPayloadLines) {
             const targetField = target[fieldName] as TimingData | TimingStats | TimingAppData; // Help TS
             if (!targetField.Lines) targetField.Lines = {};
+
+            // Update SessionPart for TimingData
+            if ((payload as Partial<TimingData>).SessionPart !== undefined) {
+              (target[fieldName] as TimingData).SessionPart = (payload as Partial<TimingData>).SessionPart!;
+              currentQualifyingPart.value = (payload as Partial<TimingData>).SessionPart!;
+            }
 
             for (const driverNumber in typedPayloadLines) {
                 const driverUpdate = typedPayloadLines[driverNumber];
@@ -377,6 +401,8 @@ export const useF1Store = defineStore('f1', () => {
     get isConnected() { return isConnected; },
     get raceData() { return raceData as Readonly<RaceData>; }, // Expose as readonly
     get driversViewModelMap() { return driversViewModelMap as ReadonlyMap<string, DriverViewModel>; },
+    get currentSessionType() { return currentSessionType; },
+    get currentQualifyingPart() { return currentQualifyingPart; },
     
     sortedDriversViewModel,
 

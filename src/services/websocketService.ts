@@ -77,6 +77,9 @@ function applyParsedData(parsedData: ParsedWebSocketData, store: ReturnType<type
     const [fieldName, payload] = parsedData as DirectFeedUpdateMessage;
     store.applyFeedUpdate(fieldName, payload);
   }
+  else if (typeof parsedData === 'object' && parsedData !== null && Object.keys(parsedData).length === 0) {
+    // Ignore empty object heartbeats from F1, do not warn
+  }
   else {
     console.warn('Service: Received unknown WebSocket message format:', parsedData);
   }

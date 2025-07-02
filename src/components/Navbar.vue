@@ -233,6 +233,8 @@ watch(
     const clockTimestamp = new Date(clockData.Utc);
     const nowTimestamp = new Date();
 
+    console.log("recived clock: " + clockTimestamp.toISOString())
+
     if (isNaN(clockTimestamp.getTime())) {
         console.error("Invalid UTC timestamp from ExtrapolatedClock:", clockData.Utc);
         stopCountdown();

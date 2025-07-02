@@ -53,7 +53,7 @@ const selectedDriverTyreStints = computed<StintData[]>(() => {
     return [];
   }
   const stints = f1Store.raceData.TyreStintSeries.Stints[internalSelectedDriverNumber.value];
-  return stints.slice().reverse();
+  return stints ? stints.slice().reverse() : [];
 });
 
 const isCurrentStint = (stint: StintData): boolean => {

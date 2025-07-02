@@ -7,7 +7,8 @@ export type WidgetComponentName =
   'SectorTiming' |
   'LapHistory' |
   'DriverCarStats' |
-  'TyreStints';
+  'TyreStints' |
+  'TrackMap';
 
 // Map component names (strings) to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -18,6 +19,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'LapHistory': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapHistoryWidget.vue'))),
   'DriverCarStats': shallowRef(defineAsyncComponent(() => import('./components/widgets/DriverCarStats.vue'))),
   'TyreStints': shallowRef(defineAsyncComponent(() => import('./components/widgets/TyreStintsWidget.vue'))),
+  'TrackMap': shallowRef(defineAsyncComponent(() => import('./components/widgets/TrackMapWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -27,7 +29,8 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'SectorTiming': { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90 },
     'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
     'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 },
-    'TyreStints': { selectedDriverNumber: null, messageFontSize: 90, displayMode: 'both' }
+    'TyreStints': { selectedDriverNumber: null, messageFontSize: 90, displayMode: 'both' },
+    'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: []}
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -38,6 +41,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'LapHistory': 'Lap History',
     'DriverCarStats': 'Driver Car Stats',
     'TyreStints': 'Tyre Stints',
+    'TrackMap': 'Track Map',
 };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -47,5 +51,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'SectorTiming': 'Detailed breakdown of sector and mini-sector times for selected drivers.',
     'LapHistory': 'Visualizes lap times and historical data for individual drivers.',
     'DriverCarStats': 'Provides live statistics from a given drivers car',
-    'TyreStints': 'Displays tyre stint history for a selected driver.'
+    'TyreStints': 'Displays tyre stint history for a selected driver.',
+    'TrackMap': 'Shows a map of the track and the positions of the drivers.'
 };

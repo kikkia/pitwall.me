@@ -1,0 +1,46 @@
+<template>
+    <g :style="groupStyle" :class="{ 'opacity-50': pit || (hasFocusedDrivers && !isFocused) }">
+        <circle r="180" :style="{ fill: color ? `#${color}` : '#a1a1aa' }" stroke="white" stroke-width="20" />
+        <text
+            font-weight="bold"
+            font-size="300"
+            style="transform: translateX(250px) translateY(-100px)"
+            fill="white"
+            v-if="!hasFocusedDrivers || isFocused"
+        >
+            {{ name }}
+        </text>
+    </g>
+</template>
+
+<script setup lang="ts">
+import { computed } from 'vue';
+import { rotate } from '@/utils/mapUtils';
+
+const props = defineProps<{
+    name: string;
+    color?: string;
+    pit: boolean;
+    pos: { X: number; Y: number; Z: number };
+    rotation: number;
+    centerX: number;
+    centerY: number;
+    isFocused: boolean;
+    hasFocusedDrivers: boolean;
+}>();
+
+const rotatedPos = computed(() => {
+    return rotate(props.pos.X, props.pos.Y, props.rotation, props.centerX, props.centerY);
+});
+
+const groupStyle = computed(() => ({
+    transform: `translate(${rotatedPos.value.x}px, ${rotatedPos.value.y}px)`,
+    transition: 'transform 1s linear',
+}));
+</script>
+
+<style scoped>
+.opacity-50 {
+    opacity: 0.50;
+}
+</style>

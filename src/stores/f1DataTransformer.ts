@@ -9,7 +9,8 @@ import type {
   StintData,
   ValueWithLap,
   Sector,
-} from '@/types/dataTypes'; 
+} from '@/types/dataTypes';
+import { timeStringToMillis } from '@/utils/formatUtils';
 
 export function createOrUpdateDriverViewModel(
   racingNumber: string,
@@ -53,8 +54,8 @@ export function createOrUpdateDriverViewModel(
     isKnockedOut: false,
     isCutoff: false,
     qualifyingTime: null,
-    gapToNextElimination: '',
-    gapToPole: '',
+    qualiInterval: '',
+    qualiGap: '',
   });
 
   const driverInfo = raceData.DriverList?.[racingNumber] || null;
@@ -100,8 +101,8 @@ export function createOrUpdateDriverViewModel(
     vm.isKnockedOut = timingDataLine.KnockedOut || false;
     vm.isCutoff = timingDataLine.Cutoff || false;
     vm.qualifyingTime = timingDataLine.BestLapTime; 
-    vm.gapToNextElimination = timingDataLine.IntervalToPositionAhead?.Value || ''; // TODO
-    vm.gapToPole = timingDataLine.GapToLeader || ''; // TODO
+    vm.qualiInterval = timingDataLine.IntervalToPositionAhead?.Value || ''; 
+    vm.qualiGap = timingDataLine.GapToLeader || ''; 
 
   } else {
     vm.position = '';
@@ -119,8 +120,8 @@ export function createOrUpdateDriverViewModel(
     vm.isKnockedOut = false;
     vm.isCutoff = false;
     vm.qualifyingTime = null;
-    vm.gapToNextElimination = '';
-    vm.gapToPole = '';
+    vm.qualiInterval = '';
+    vm.qualiGap = '';
   }
 
   if (timingStatsLine) {
@@ -168,3 +169,81 @@ export function buildDriverViewModels(raceData: RaceData): Map<string, DriverVie
 export const sortByBasePos = (driverA: DriverViewModel, driverB: DriverViewModel): number => {
   return parseInt(driverA.position, 10) - parseInt(driverB.position, 10);
 };
+
+export function calculateQualifyingGaps(
+  driverViewModels: Map<string, DriverViewModel>,
+  raceData: RaceData
+): void {
+  const currentQualifyingPart = raceData.TimingData?.SessionPart;
+  if (!currentQualifyingPart) {
+    return;
+  }
+
+  const sortedDrivers = Array.from(driverViewModels.values()).sort(sortByBasePos);
+
+  let safePosition: number | null = null;
+  let eliminationStartPos: number | null = null;
+
+  if (currentQualifyingPart === 1) {
+    safePosition = 15;
+    eliminationStartPos = 16;
+  } else if (currentQualifyingPart === 2) {
+    safePosition = 10;
+    eliminationStartPos = 11;
+  } else {
+    return; 
+  }
+
+  const safeDriver = sortedDrivers.find(d => parseInt(d.position, 10) === safePosition);
+  const safeDriverTimeMillis = safeDriver?.qualifyingTime?.Value
+    ? timeStringToMillis(safeDriver.qualifyingTime.Value)
+    : Infinity;
+
+  const leader = sortedDrivers.find(d => parseInt(d.position, 10) === 1);
+  const leaderTimeMillis = leader?.qualifyingTime?.Value
+      ? timeStringToMillis(leader.qualifyingTime.Value)
+      : Infinity;
+
+
+  if (safeDriverTimeMillis === Infinity || leaderTimeMillis === Infinity) {
+    return;
+  }
+
+  for (const driver of sortedDrivers) {
+    const driverPositionNum = parseInt(driver.position, 10);
+
+    if (driver.isKnockedOut) {
+      continue
+    }
+
+    const driverTimeMillis = driver.qualifyingTime?.Value
+        ? timeStringToMillis(driver.qualifyingTime.Value)
+        : Infinity;
+    if (driverPositionNum >= eliminationStartPos!) {
+      driver.qualiGap = getQualiGap(driverTimeMillis, safeDriverTimeMillis)
+    } else {
+      driver.qualiGap = getQualiGap(driverTimeMillis, leaderTimeMillis)
+    }
+
+    if (driverPositionNum > 1) {
+      const driverAhead = sortedDrivers.find(d => parseInt(d.position, 10) === driverPositionNum - 1);
+      const driverAheadMillis = driverAhead?.qualifyingTime?.Value
+        ? timeStringToMillis(driverAhead.qualifyingTime.Value)
+        : Infinity;
+      driver.qualiInterval = getQualiGap(driverTimeMillis, driverAheadMillis)
+    }
+  }
+}
+
+function getQualiGap(driverTimeMillis: number, targetDriverMillis: number): string {
+  if (driverTimeMillis !== Infinity) {
+    const gapMillis = driverTimeMillis - targetDriverMillis;
+    if (gapMillis > 0) {
+      return `+${(gapMillis / 1000).toFixed(3)}`;
+    } else {
+      return '0.000';
+    }
+  } else {
+    return '-';
+  }
+}

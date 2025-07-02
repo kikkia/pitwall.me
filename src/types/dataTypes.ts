@@ -364,6 +364,6 @@ export interface ValueWithLap {
 	isKnockedOut: boolean;
 	isCutoff: boolean;
 	qualifyingTime: ValueWithLap | null;
-	gapToNextElimination: string;
-	gapToPole: string;
+	qualiInterval: string;
+	qualiGap: string;
 }

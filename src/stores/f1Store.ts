@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { reactive, computed, ref } from 'vue';
 import * as f1WebSocketService from '@/services/websocketService'; 
 import * as transformer from '@/stores/f1DataTransformer';
+import { calculateQualifyingGaps } from '@/stores/f1DataTransformer';
 import pako from 'pako';
 
 import type {
@@ -96,7 +97,11 @@ export const useF1Store = defineStore('f1', () => {
 
     driversViewModelMap.clear();
     const newMap = transformer.buildDriverViewModels(raceData); // Use direct raceData
-    newMap.forEach((value, key) => driversViewModelMap.set(key, value));    console.log("Store Action: Initial state applied.");
+    newMap.forEach((value, key) => driversViewModelMap.set(key, value));
+    if (currentSessionType.value === 'Qualifying') {
+      calculateQualifyingGaps(driversViewModelMap, raceData);
+    }
+    console.log("Store Action: Initial state applied.");
   }
 
   function inflateData(base64String: string): InflatedCarData | InflatedPositionData | null {
@@ -325,6 +330,9 @@ export const useF1Store = defineStore('f1', () => {
         if (!existingVM || updatedVM !== existingVM) { // Check if VM actually changed
             driversViewModelMap.set(driverNumber, updatedVM);
         }
+      }
+      if (currentSessionType.value === 'Qualifying') {
+        calculateQualifyingGaps(driversViewModelMap, raceData);
       }
     }
   }

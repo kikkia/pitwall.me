@@ -20,6 +20,24 @@ const drivers = computed(() => {
   return filteredDrivers;
 });
 
+const driversWithEliminationStatus = computed(() => {
+  return drivers.value.map(driver => {
+    let isAtRisk = false;
+    if (isQualifying.value) {
+      const driverPositionNum = parseInt(driver.position);
+      if (currentQualifyingPart.value === 1) {
+        isAtRisk = driverPositionNum >= 16 && driverPositionNum <= 20;
+      } else if (currentQualifyingPart.value === 2) {
+        isAtRisk = driverPositionNum >= 11 && driverPositionNum <= 15;
+      }
+    }
+    return {
+      ...driver,
+      isAtRiskOfElimination: isAtRisk
+    };
+  });
+});
+
 const props = defineProps({
   showNumber: { type: Boolean, default: true },
   showBest: { type: Boolean, default: true },
@@ -164,11 +182,15 @@ function getTireStyle(driver: DriverViewModel) {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(driver, index) in drivers" :key="driver.racingNumber" :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped || driver.retired || driver.isKnockedOut ? 0.5 : 1 }">
+        <tr
+          v-for="(driver, index) in driversWithEliminationStatus"
+          :key="driver.racingNumber"
+          :class="{ 'at-risk-elimination': driver.isAtRiskOfElimination }"
+          :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped || driver.retired || driver.isKnockedOut ? 0.5 : 1 }"
+        >
           <td>
             <template v-if="isQualifying">
               <span v-if="driver.isKnockedOut" class="knocked-out-pos">OUT</span>
-              <span v-else-if="driver.isCutoff" class="cutoff-pos">CUT</span>
               <span v-else>{{ driver.position }}</span>
             </template>
             <template v-else>
@@ -181,8 +203,8 @@ function getTireStyle(driver: DriverViewModel) {
           <td v-if="isQualifying">{{ driver.qualifyingTime?.Value || '-' }}</td>
           <td v-else-if="showBest">{{ driver.bestLapTime?.Value || '-' }}</td>
           <td v-if="showLast && !isQualifying">{{ driver.lastLapTime?.Value || '-' }}</td>
-          <td v-if="isQualifying">{{ driver.gapToPole || '-' }}</td>
-          <td v-if="isQualifying">{{ driver.gapToNextElimination || '-' }}</td>
+          <td v-if="isQualifying">{{ driver.qualiGap || '-' }}</td>
+          <td v-if="isQualifying">{{ driver.qualiInterval || '-' }}</td>
           <td v-else-if="showInterval">{{ driver.gapToAhead || '-' }}</td>
           <td v-if="showPitstopCount && !isQualifying">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
           <td v-if="isQualifying">{{ driver.inPit ? "In Pits" : '' }}</td>
@@ -212,5 +234,9 @@ function getTireStyle(driver: DriverViewModel) {
   .cutoff-pos {
     color: #FFA500; /* Orange */
     font-weight: bold;
+  }
+
+  .at-risk-elimination td {
+    background-color: #4a2a2a !important;
   }
 </style>

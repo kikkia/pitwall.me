@@ -101,6 +101,8 @@ const chartData = computed(() => {
 
     const stintLaps = lapHistoryForSelectedDriver.value.filter(lap =>
       lap.Lap >= stintStartLap && lap.Lap <= stintStartLap + (stint.TotalLaps - stint.StartLaps)
+    ).filter(lap => 
+      lap.LapTime !== "N/A"
     );
 
     labels.forEach(lapNumber => {

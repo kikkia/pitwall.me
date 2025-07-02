@@ -227,12 +227,7 @@ function getTireStyle(driver: DriverViewModel) {
   tr[style*="opacity: 0.5"] td { color: #888; }
 
   .knocked-out-pos {
-    color: #FF6347; /* Tomato */
-    font-weight: bold;
-  }
-
-  .cutoff-pos {
-    color: #FFA500; /* Orange */
+    color: #FF6347; 
     font-weight: bold;
   }
 

@@ -8,22 +8,40 @@ import Column from 'primevue/column';
 const f1Store = useF1Store();
 
 const driversViewModel = computed(() => {
+  const isQualifying = f1Store.currentSessionType === 'Qualifying';
+  const currentQualifyingPart = f1Store.currentQualifyingPart;
+
   return f1Store.sortedDriversViewModel
     .filter((driver) => driver.racingNumber != "_kf")
-    .map(driver => ({
-      ...driver,
-      lastLapTimeMillis: timeStringToMillis(driver.lastLapTime?.Value),
-      bestLapTimeMillis: timeStringToMillis(driver.bestLapTime?.Value),
-      lastS1TimeMillis: timeStringToMillis(driver.sectors?.[0]?.Value),
-      lastS2TimeMillis: timeStringToMillis(driver.sectors?.[1]?.Value),
-      lastS3TimeMillis: timeStringToMillis(driver.sectors?.[2]?.Value),
-      bestS1TimeValue: driver.bestSectors[0]?.Value || null,
-      bestS2TimeValue: driver.bestSectors[1]?.Value || null,
-      bestS3TimeValue: driver.bestSectors[2]?.Value || null, 
-      bestS1TimeMillis: timeStringToMillis(driver.bestSectors[0]?.Value),
-      bestS2TimeMillis: timeStringToMillis(driver.bestSectors[1]?.Value),
-      bestS3TimeMillis: timeStringToMillis(driver.bestSectors[2]?.Value),
-    }));
+    .map(driver => {
+      let isAtRisk = false;
+      if (isQualifying) {
+        const driverPositionNum = parseInt(driver.position);
+        if (currentQualifyingPart === 1) {
+          isAtRisk = driverPositionNum >= 16 && driverPositionNum <= 20;
+        } else if (currentQualifyingPart === 2) {
+          isAtRisk = driverPositionNum >= 11 && driverPositionNum <= 15;
+        }
+      }
+      return {
+        ...driver,
+        lastLapTimeMillis: timeStringToMillis(driver.lastLapTime?.Value),
+        bestLapTimeMillis: timeStringToMillis(driver.bestLapTime?.Value),
+        lastS1TimeMillis: timeStringToMillis(driver.sectors?.[0]?.Value),
+        lastS2TimeMillis: timeStringToMillis(driver.sectors?.[1]?.Value),
+        lastS3TimeMillis: timeStringToMillis(driver.sectors?.[2]?.Value),
+        bestS1TimeValue: driver.bestSectors[0]?.Value || null,
+        bestS2TimeValue: driver.bestSectors[1]?.Value || null,
+        bestS3TimeValue: driver.bestSectors[2]?.Value || null,
+        bestS1TimeMillis: timeStringToMillis(driver.bestSectors[0]?.Value),
+        bestS2TimeMillis: timeStringToMillis(driver.bestSectors[1]?.Value),
+        bestS3TimeMillis: timeStringToMillis(driver.bestSectors[2]?.Value),
+        isAtRiskOfElimination: isAtRisk,
+        isKnockedOut: driver.isKnockedOut,
+        isCutoff: driver.isCutoff,
+        isQualifying: isQualifying,
+      };
+    });
 });
 
 
@@ -105,14 +123,23 @@ function getBestTimeClass(timeData: any | null | undefined): string {
       sortMode="multiple"
       removableSort
       rowHover
+      :rowClass="(data: any) => ({
+        'at-risk-elimination': data.isAtRiskOfElimination,
+        'disabled-driver': data.stopped || data.retired || data.isKnockedOut
+      })"
     >
       <Column field="tla" header="Driver" sortable :style="{ width: '50px' }" frozen>
          <template #body="slotProps">
-            <span class="driver-tla" :style="{ borderLeft: `4px solid #${slotProps.data.teamColour}`, paddingLeft: '4px' }">
-              {{ slotProps.data.tla }}
+            <span v-if="slotProps.data.isQualifying">
+              <span v-if="slotProps.data.isKnockedOut" class="knocked-out-pos">{{ slotProps.data.position }}</span>
+              <span v-else class="driver-pos">{{ slotProps.data.position }}</span>
             </span>
-         </template>
-       </Column>
+            <span v-else class="driver-pos">{{ slotProps.data.position }}</span>
+             <span class="driver-tla" :style="{ borderLeft: `4px solid #${slotProps.data.teamColour}`, paddingLeft: '4px' }">
+               {{ slotProps.data.tla }}
+             </span>
+          </template>
+        </Column>
 
        <Column :style="{ width: '5px' }" />
 
@@ -265,9 +292,10 @@ function getBestTimeClass(timeData: any | null | undefined): string {
      background-color: #3a3a3a;
    }
 
-  .sector-timing-table :deep(.p-datatable .p-datatable-tbody > tr[data-driver-stopped="true"] > td) {
-      opacity: 0.5; color: #888;
-  }
+  .sector-timing-table :deep(.p-datatable .p-datatable-tbody > tr.disabled-driver > td) {
+       opacity: 0.5;
+       color: #888;
+   }
 
 
   .time-cell-content {
@@ -348,5 +376,19 @@ function getBestTimeClass(timeData: any | null | undefined): string {
   .driver-tla { display: inline-block; font-weight: bold; }
 
   .p-datatable-sm { width: 100%; }
+
+  .knocked-out-pos {
+    color: #FF6347; 
+    font-weight: bold;
+    margin-right: 5px;
+  }
+
+  .driver-pos {
+    margin-right: 5px;
+  }
+
+  .sector-timing-table :deep(.p-datatable .p-datatable-tbody > tr.at-risk-elimination > td) {
+    background-color: #4a2a2a !important;
+  }
 
 </style>

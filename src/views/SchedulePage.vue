@@ -2,6 +2,9 @@
   <Navbar @open-info-modal="handleOpenInfoModal" @add-widget="handleAddWidget" :showAddWidgetButton="false" />
   <div class="season-page">
     <h1>Upcoming Sessions</h1>
+    <div class="view-toggle">
+      <ToggleButton v-model="showCalendar" onLabel="Calendar View" offLabel="Card View" onIcon="pi pi-calendar" offIcon="pi pi-list" />
+    </div>
     <div v-if="eventStore.isLoading">Loading sessions...</div>
     <div v-else-if="eventStore.error" class="error-message">{{ eventStore.error }}</div>
     <div v-else>
@@ -13,7 +16,7 @@
         <p>Starts in: {{ countdown }}</p>
       </div>
 
-      <div class="race-weekend-cards-container">
+      <div v-if="!showCalendar" class="race-weekend-cards-container">
         <Card v-for="(group, raceName) in groupedEvents" :key="raceName"
               :class="['race-weekend-card', getEventStatus(group), { 'pulse-blue': raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent }]"
               @click="openSessionDetails(raceName, group)">
@@ -25,6 +28,15 @@
             <div v-else-if="getEventStatus(group) === 'ongoing'" class="event-label ongoing-label">ONGOING</div>
             <div v-else-if="raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent" class="event-label up-next-label">UP NEXT</div>
           </Card>
+      </div>
+      <div v-else class="calendar-container">
+        <Calendar inline @date-select="onDateSelect" class="large-calendar">
+          <template #date="slotProps">
+            <div :class="{'event-day': isSession(slotProps.date)}">
+                {{ slotProps.date.day }}
+            </div>
+          </template>
+        </Calendar>
       </div>
     </div>
   </div>
@@ -62,6 +74,8 @@ import Navbar from '@/components/Navbar.vue';
 import Card from 'primevue/card';
 import Dialog from 'primevue/dialog';
 import confetti from 'canvas-confetti';
+import Calendar from 'primevue/calendar';
+import ToggleButton from 'primevue/togglebutton';
 
 const eventStore = useEventStore();
 const countdown = ref('');
@@ -70,6 +84,42 @@ let countdownInterval: number | undefined;
 const sessionDetailsDialogVisible = ref(false);
 const selectedRaceName = ref('');
 const selectedSessions = ref<LocalF1Event[]>([]);
+
+const showCalendar = ref(false);
+
+const sessionDates = computed(() => {
+  const dates = new Set<number>(); 
+  eventStore.events.forEach(event => {
+    const d = event.startTimeLocal;
+    const dateKey = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    dates.add(dateKey);
+  });
+  return dates;
+});
+
+const isSession = (date: { day: number, month: number, year: number }) => {
+  const calendarDateKey = Date.UTC(date.year, date.month, date.day);
+  return sessionDates.value.has(calendarDateKey);
+};
+
+const onDateSelect = (date: Date) => {
+  if (!date) return;
+  const clickedDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+
+  for (const raceName in groupedEvents.value) {
+    const group = groupedEvents.value[raceName];
+    const sessionsForDate = group.filter(session => {
+        const sessionDate = new Date(Date.UTC(session.startTimeLocal.getFullYear(), session.startTimeLocal.getMonth(), session.startTimeLocal.getDate()));
+        return sessionDate.getTime() === clickedDate.getTime();
+    });
+
+    if (sessionsForDate.length > 0) {
+      const sortedSessions = sessionsForDate.sort((a, b) => a.startTimeLocal.getTime() - b.startTimeLocal.getTime());
+      openSessionDetails(raceName, sortedSessions);
+      return;
+    }
+  }
+};
 
 const openSessionDetails = (raceName: string, sessions: LocalF1Event[]) => {
   selectedRaceName.value = raceName;
@@ -285,6 +335,42 @@ const handleAddWidget = () => {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+.view-toggle {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+.calendar-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.large-calendar {
+  width: 100%;
+  font-size: 1.2rem;
+}
+
+:deep(.p-datepicker table td > span),
+:deep(.p-datepicker table td > div) {
+    width: 3.5rem;
+    height: 3.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.event-day {
+  background-color: rgba(76, 175, 80, 0.5);
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .session-details-dialog .p-dialog-header {

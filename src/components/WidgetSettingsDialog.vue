@@ -13,17 +13,17 @@
           <div v-if="setting.component === 'Checkbox'" class="p-field-checkbox">
             <Checkbox
               :inputId="`${widgetId}-${setting.id}`"
-              v-model="widgetConfig[setting.id]"
+              v-model="localWidgetConfig[setting.id]"
               :binary="true"
             />
             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
           </div>
   
           <div v-if="setting.component === 'Slider'" class="p-field slider-field">
-            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}: {{ widgetConfig[setting.id] }}</label>
+            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}: {{ localWidgetConfig[setting.id] }}</label>
             <Slider
               :id="`${widgetId}-${setting.id}`"
-              v-model="widgetConfig[setting.id]"
+              v-model="localWidgetConfig[setting.id]"
               v-bind="setting.props || {}"
             />
           </div>
@@ -32,7 +32,7 @@
              <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
              <MultiSelect
                 :id="`${widgetId}-${setting.id}`"
-                v-model="widgetConfig[setting.id]"
+                v-model="localWidgetConfig[setting.id]"
                 :options="setting.options"
                 placeholder="Select Categories"
                 display="chip"
@@ -45,7 +45,7 @@
             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
             <Dropdown
               :id="`${widgetId}-${setting.id}`"
-              v-model="widgetConfig[setting.id]"
+              v-model="localWidgetConfig[setting.id]"
               :options="setting.options"
               :optionLabel="setting.props?.optionLabel || 'label'"
               :optionValue="setting.props?.optionValue || 'value'"
@@ -70,6 +70,7 @@
   </template>
   
   <script setup>
+  import { ref, watch } from 'vue';
   import Dialog from 'primevue/dialog';
   import Button from 'primevue/button';
   import Checkbox from 'primevue/checkbox';
@@ -89,26 +90,32 @@
     settingsDefinition: {
       default: () => [],
     },
-    widgetConfig: { 
+    widgetConfig: {
       type: Object,
       default: () => ({}),
     },
   });
   
-  const emit = defineEmits(['update:visible', 'hide']); // update:visible is crucial for v-model
+  const emit = defineEmits(['update:visible', 'hide', 'save']); // update:visible is crucial for v-model
+  
+  const localWidgetConfig = ref({});
+  
+  // When the dialog becomes visible, create a local copy of the widget configuration.
+  // This prevents immediate saving on the parent component and avoids toast spam.
+  watch(() => props.visible, (newValue) => {
+    if (newValue) {
+      localWidgetConfig.value = JSON.parse(JSON.stringify(props.widgetConfig));
+    }
+  }, { immediate: true });
   
   const closeDialog = () => {
     emit('update:visible', false);
   };
   
   const handleDialogHide = () => {
+      emit('save', localWidgetConfig.value);
       emit('hide');
   }
-  
-  const saveSettings = () => {
-    emit('save', props.widgetConfig);
-    closeDialog();
-  };
   
   </script>
   

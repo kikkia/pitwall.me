@@ -44,6 +44,7 @@
       :settings-definition="currentSettingsDefinition"
       :widget-config="currentWidgetConfig"
       @hide="onSettingsDialogHide"
+      @save="handleWidgetSettingsSave"
     />
 
     <AddWidgetDialog
@@ -179,6 +180,7 @@ const removeWidget = async (widgetIdToRemove) => {
     }
 
     activeWidgets.value.splice(widgetIndex, 1);
+    saveLayoutToLocalStorage();
 
     delete gridItemRefs.value[widgetIdToRemove];
     delete widgetInstanceRefs.value[widgetIdToRemove];
@@ -215,6 +217,15 @@ const openWidgetSettings = (widgetId) => {
 const onSettingsDialogHide = () => {
     settingsTargetWidgetId.value = null;
 }
+
+const handleWidgetSettingsSave = (newConfig) => {
+  if (!settingsTargetWidgetId.value) return;
+  const widget = activeWidgets.value.find(w => w.id === settingsTargetWidgetId.value);
+  if (widget) {
+    widget.config = newConfig;
+    saveLayoutToLocalStorage();
+  }
+};
 
 const saveLayoutToLocalStorage = () => {
   if (activeWidgets.value.length < 1) {
@@ -273,12 +284,6 @@ onMounted(() => {
   }
 });
 
-// Watch for changes in activeWidgets (including config changes) and save
-watch(activeWidgets, () => {
-  if (isEditMode.value) {
-    saveLayoutToLocalStorage();
-  }
-}, { deep: true });
 
 // Watch for changes in edit mode and save to local storage
 watch(isEditMode, (newValue) => {
@@ -296,6 +301,7 @@ const handleGridUpdated = (updatedItems) => {
       widget.h = updatedItem.h;
     }
   });
+  saveLayoutToLocalStorage();
 };
 
 const openAddWidgetDialog = () => {

@@ -44,6 +44,7 @@
                 :number="corner.number"
                 :x="corner.labelPos.x"
                 :y="corner.labelPos.y"
+                :font-size="cornerNumberFontSize"
             />
             <template v-if="centerX && centerY && driversViewModelMap">
                 <SafetyCar
@@ -55,6 +56,8 @@
                     :centerY="centerY"
                     :color="safetyCar.color"
                     :useSafetyCarColors="useSafetyCarColors"
+                    :name-tag-font-size="nameTagFontSize"
+                    :car-dot-size="carDotSize"
                 />
                 <CarDot
                     v-for="driver in activeDrivers"
@@ -68,6 +71,8 @@
                     :centerY="centerY"
                     :is-focused="isDriverFocused(driver.tla)"
                     :has-focused-drivers="focusedDrivers.length > 0"
+                    :name-tag-font-size="nameTagFontSize"
+                    :car-dot-size="carDotSize"
                 />
             </template>
         </svg>
@@ -100,16 +105,25 @@ const props = withDefaults(defineProps<{
     showCornerNumbers?: boolean;
     useSafetyCarColors?: boolean;
     focusedDrivers?: string[];
+    cornerNumberFontSize?: number;
+    nameTagFontSize?: number;
+    carDotSize?: number;
 }>(), {
     showCornerNumbers: true,
     useSafetyCarColors: true,
-    focusedDrivers: () => []
+    focusedDrivers: () => [],
+    cornerNumberFontSize: 100,
+    nameTagFontSize: 100,
+    carDotSize: 100
 });
 
 const settingsDefinition = ref([
   { id: 'showCornerNumbers', label: 'Show corner numbers', type: 'boolean', component: 'Checkbox' },
   { id: 'useSafetyCarColors', label: 'Show safety car', type: 'boolean', component: 'Checkbox' },
   { id: 'focusedDrivers', label: 'Focused Drivers', type: 'array', options: computed(() => Array.from(f1Store.driversViewModelMap.values()).map(d => d.tla)), component: 'MultiSelect' },
+  { id: 'cornerNumberFontSize', label: 'Corner Number Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 200, step: 10 } },
+  { id: 'nameTagFontSize', label: 'Name Tag Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 200, step: 10 } },
+  { id: 'carDotSize', label: 'Car Dot Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 200, step: 10 } },
 ]);
 
 defineExpose({ settingsDefinition });

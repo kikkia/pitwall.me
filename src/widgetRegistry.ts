@@ -32,7 +32,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
     'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 },
     'TyreStints': { selectedDriverNumber: null, messageFontSize: 90, displayMode: 'both' },
-    'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: []},
+    'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100 },
     'LapCompare': {}
 };
 

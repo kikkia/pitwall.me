@@ -9,6 +9,8 @@
         :color="useSafetyCarColors ? color : 'DDD'"
         :is-focused="false"
         :has-focused-drivers="false"
+        :name-tag-font-size="nameTagFontSize"
+        :car-dot-size="carDotSize"
     />
 </template>
 
@@ -23,5 +25,7 @@ defineProps<{
     centerY: number;
     color: string;
     useSafetyCarColors: boolean;
+    nameTagFontSize: number;
+    carDotSize: number;
 }>();
 </script>

@@ -1,9 +1,9 @@
 <template>
     <g :style="groupStyle" :class="{ 'opacity-50': pit || (hasFocusedDrivers && !isFocused) }">
-        <circle r="180" :style="{ fill: color ? `#${color}` : '#a1a1aa' }" stroke="white" stroke-width="20" />
+        <circle :r="1.8 * carDotSize" :style="{ fill: color ? `#${color}` : '#a1a1aa' }" stroke="white" stroke-width="20" />
         <text
             font-weight="bold"
-            font-size="300"
+            :font-size="`${4 * nameTagFontSize}px`"
             style="transform: translateX(250px) translateY(-100px)"
             fill="white"
             v-if="!hasFocusedDrivers || isFocused"
@@ -27,6 +27,8 @@ const props = defineProps<{
     centerY: number;
     isFocused: boolean;
     hasFocusedDrivers: boolean;
+    nameTagFontSize: number;
+    carDotSize: number;
 }>();
 
 const rotatedPos = computed(() => {

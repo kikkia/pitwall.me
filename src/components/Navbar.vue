@@ -24,6 +24,13 @@
 
     <template #end>
       <Button
+        :icon="editMode ? 'pi pi-lock-open' : 'pi pi-lock'"
+        :severity="editMode ? 'success' : 'danger'"
+        @click="emit('toggle-edit-mode')"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-right: 10px;"
+      />
+      <Button
         icon="pi pi-plus"
         label="Add Widget"
         @click="emit('add-widget')"
@@ -66,10 +73,14 @@ const props = defineProps({
   showAddWidgetButton: {
     type: Boolean,
     default: true
+  },
+  editMode: {
+    type: Boolean,
+    default: false
   }
 });
 
-const emit = defineEmits(['add-widget', 'open-info-modal']);
+const emit = defineEmits(['add-widget', 'open-info-modal', 'toggle-edit-mode']);
 
 const router = useRouter();
 const f1Store = useF1Store();

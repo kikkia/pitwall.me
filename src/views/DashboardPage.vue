@@ -1,7 +1,18 @@
 <template>
   <div id="app-container">
-    <Navbar @add-widget="openAddWidgetDialog" @open-info-modal="isInfoModalVisible = true" />
-    <DashboardGrid ref="dashboardGridRef" class="dashboard-container" @grid-updated="handleGridUpdated" :initial-widgets="activeWidgets">
+    <Navbar
+      @add-widget="openAddWidgetDialog"
+      @open-info-modal="isInfoModalVisible = true"
+      @toggle-edit-mode="handleToggleEditMode"
+      :edit-mode="isEditMode"
+    />
+    <DashboardGrid
+      ref="dashboardGridRef"
+      class="dashboard-container"
+      @grid-updated="handleGridUpdated"
+      :initial-widgets="activeWidgets"
+      :edit-mode="isEditMode"
+    >
       <div
         v-for="widget in activeWidgets"
         :key="widget.id"
@@ -72,6 +83,7 @@ const setWidgetRef = (id, el) => {
 
 const activeWidgets = ref([]);
 const isInfoModalVisible = ref(false);
+const isEditMode = ref(false);
 
 const defaultWidgets = [
   {
@@ -254,12 +266,24 @@ onMounted(() => {
     isInfoModalVisible.value = true;
   }
   loadLayoutFromLocalStorage();
+
+  const savedEditMode = localStorage.getItem('dashboardEditMode');
+  if (savedEditMode) {
+    isEditMode.value = JSON.parse(savedEditMode);
+  }
 });
 
 // Watch for changes in activeWidgets (including config changes) and save
 watch(activeWidgets, () => {
-  saveLayoutToLocalStorage();
+  if (isEditMode.value) {
+    saveLayoutToLocalStorage();
+  }
 }, { deep: true });
+
+// Watch for changes in edit mode and save to local storage
+watch(isEditMode, (newValue) => {
+  localStorage.setItem('dashboardEditMode', JSON.stringify(newValue));
+});
 
 // Handle grid-updated event from DashboardGrid
 const handleGridUpdated = (updatedItems) => {
@@ -295,6 +319,15 @@ const handleAddWidget = (widgetComponentName) => {
       grid.makeWidget(newWidgetElement);
     }
   });
+};
+
+const handleToggleEditMode = () => {
+  isEditMode.value = !isEditMode.value;
+  if (isEditMode.value) {
+    toast.add({ severity: 'info', summary: 'Layout unlocked', life: 2000 });
+  } else {
+    toast.add({ severity: 'info', summary: 'Layout locked', life: 2000 });
+  }
 };
 
 </script>

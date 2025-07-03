@@ -2,6 +2,8 @@
 import { ref, watch, nextTick } from 'vue';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { storeToRefs } from 'pinia';
 
 const props = defineProps({
     loading: {
@@ -15,12 +17,19 @@ const props = defineProps({
     initialWidgets: { 
         type: Array,
         default: () => []
+    },
+    editMode: {
+        type: Boolean,
+        default: false
     }
 });
 
 const gridContainer = ref(null);
 let grid = null;
-let isGridInitialized = false; 
+let isGridInitialized = false;
+
+const settingsStore = useSettingsStore();
+const { gridFloat } = storeToRefs(settingsStore);
 
 const emit = defineEmits(['grid-updated']);
 
@@ -29,12 +38,12 @@ const setupGridstack = () => {
         console.log("INIT GRIDSTACK");
         grid = GridStack.init({
             cellHeight: 20,
-            float: true,
+            float: gridFloat.value,
             animate: true,
-            disableResize: false,
+            disableResize: !props.editMode,
             margin: 2,
             column: innerWidth/20,
-            staticGrid: false,
+            staticGrid: !props.editMode,
             acceptWidgets: true,
         }, gridContainer.value);
 
@@ -67,6 +76,17 @@ watch(() => props.initialWidgets, (newWidgets) => {
     }
 }, { immediate: true }); // immediate: true to run on initial component mount
 
+watch(() => props.editMode, (isEditing) => {
+    if (grid) {
+        grid.setStatic(!isEditing);
+    }
+});
+
+watch(gridFloat, (newFloatValue) => {
+  if (grid) {
+    grid.float(newFloatValue);
+  }
+});
 
 const getGridInstance = () => {
   return grid;

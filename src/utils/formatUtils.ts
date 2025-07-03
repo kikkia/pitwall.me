@@ -33,3 +33,64 @@ export function timeStringToMillis(timeStr: string | null | undefined): number {
 
   return isNaN(millis) ? Infinity : Math.round(millis);
 }
+
+/**
+ * Converts milliseconds to a formatted lap time string (MM:SS.ms or S.ms).
+ * @param millis The time in milliseconds.
+ * @returns Formatted time string.
+ */
+export function formatLapTime(millis: number | null | undefined): string {
+  if (millis === null || millis === undefined || millis === Infinity) {
+    return '-';
+  }
+  const totalSeconds = millis / 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  const ms = Math.round((totalSeconds - Math.floor(totalSeconds)) * 1000);
+
+  const formattedMinutes = minutes > 0 ? `${minutes}:` : '';
+  const formattedSeconds = minutes > 0 ? String(seconds).padStart(2, '0') : String(seconds);
+  const formattedMs = String(ms).padStart(3, '0');
+
+  return `${formattedMinutes}${formattedSeconds}.${formattedMs}`;
+}
+
+/**
+ * Converts milliseconds to a formatted sector time string (S.ms).
+ * @param millis The time in milliseconds.
+ * @returns Formatted time string.
+ */
+export function formatSectorTime(millis: number | null | undefined): string {
+  if (millis === null || millis === undefined || millis === Infinity) {
+    return '-';
+  }
+  const totalSeconds = millis / 1000;
+  const seconds = Math.floor(totalSeconds);
+  const ms = Math.round((totalSeconds - seconds) * 1000);
+
+  const formattedSeconds = String(seconds);
+  const formattedMs = String(ms).padStart(3, '0');
+
+  return `${formattedSeconds}.${formattedMs}`;
+}
+
+/**
+ * Formats a time difference in milliseconds.
+ * @param diffMillis The difference in milliseconds.
+ * @returns Formatted diff string (e.g., "+1.234", "-0.500", "0.000").
+ */
+export function formatDiff(diffMillis: number | null | undefined): string {
+  if (diffMillis === null || diffMillis === undefined || isNaN(diffMillis)) {
+    return '-';
+  }
+  const sign = diffMillis >= 0 ? '+' : '-';
+  const absMillis = Math.abs(diffMillis);
+  const totalSeconds = absMillis / 1000;
+  const seconds = Math.floor(totalSeconds);
+  const ms = Math.round((totalSeconds - seconds) * 1000);
+
+  const formattedSeconds = String(seconds);
+  const formattedMs = String(ms).padStart(3, '0');
+
+  return `${sign}${formattedSeconds}.${formattedMs}`;
+}

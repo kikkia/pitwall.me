@@ -3,7 +3,6 @@ import { computed, ref, watch } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
-import Dropdown from 'primevue/dropdown';
 import Chart from 'primevue/chart'; 
 import Tag from 'primevue/tag';
 import type { StintData, CompletedLap } from '@/types/dataTypes';
@@ -21,7 +20,16 @@ const props = defineProps({
 
 const emit = defineEmits(['update:widgetConfig']);
 
-const totalRaceLaps = computed(() => f1Store.raceData.LapCount.TotalLaps || 57);
+const totalRaceLaps = computed(() => {
+  const lapHistories = Object.values(f1Store.raceData.LapHistoryMap);
+  if (lapHistories.length > 0) {
+    const maxLaps = Math.max(...lapHistories.map(h => h.CompletedLaps.length));
+    if (maxLaps > 0) {
+      return maxLaps;
+    }
+  }
+  return 10; // Just some random default
+});
 
 const allDriversData = computed(() => {
   if (!f1Store.raceData.TyreStintSeries?.Stints) {
@@ -459,10 +467,6 @@ function getTyreCompoundClass(compound: string): string {
   font-size: 0.9em;
 }
 
-.stint-label {
-  /* The pill itself provides padding */
-}
-
 .graph-view {
   display: flex;
   flex-direction: column;
@@ -514,11 +518,11 @@ function getTyreCompoundClass(compound: string): string {
 }
 
 .mr-1 {
-  margin-right: 0.25rem; /* 4px */
+  margin-right: 0.25rem;
 }
 
 .current-indicator {
- background-color: #27AE60; /* Green color from the image */
+ background-color: #27AE60;
  color: #fff;
  padding: 2px 6px;
  border-radius: 4px;

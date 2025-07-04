@@ -107,13 +107,21 @@
       localWidgetConfig.value = JSON.parse(JSON.stringify(props.widgetConfig));
     }
   }, { immediate: true });
+
+  // Watch for changes in the local config and emit save events without showing a toast.
+  watch(localWidgetConfig, (newConfig) => {
+    if (props.visible) {
+      emit('save', newConfig, false);
+    }
+  }, { deep: true });
   
   const closeDialog = () => {
     emit('update:visible', false);
   };
   
   const handleDialogHide = () => {
-      emit('save', localWidgetConfig.value);
+      // On dialog hide, we do one final save and this time we want to show the toast.
+      emit('save', localWidgetConfig.value, true);
       emit('hide');
   }
   

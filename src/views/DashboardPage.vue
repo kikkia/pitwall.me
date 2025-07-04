@@ -218,22 +218,22 @@ const onSettingsDialogHide = () => {
     settingsTargetWidgetId.value = null;
 }
 
-const handleWidgetSettingsSave = (newConfig) => {
+const handleWidgetSettingsSave = (newConfig, showToast = true) => {
   if (!settingsTargetWidgetId.value) return;
   const widget = activeWidgets.value.find(w => w.id === settingsTargetWidgetId.value);
   if (widget) {
     widget.config = newConfig;
-    saveLayoutToLocalStorage();
+    saveLayoutToLocalStorage(showToast);
   }
 };
 
-const saveLayoutToLocalStorage = () => {
+const saveLayoutToLocalStorage = (showToast = true) => {
   if (activeWidgets.value.length < 1) {
     return
   }
   const serializedWidgets = activeWidgets.value.map(widget => ({
     id: widget.id,
-    componentName: widget.componentName, 
+    componentName: widget.componentName,
     x: widget.x,
     y: widget.y,
     w: widget.w,
@@ -242,7 +242,9 @@ const saveLayoutToLocalStorage = () => {
   }));
   localStorage.setItem('dashboardLayout', JSON.stringify(serializedWidgets));
   console.log('Dashboard layout saved to local storage.');
-  toast.add({severity:'success', summary: 'Layout saved', life: 2000});
+  if (showToast) {
+    toast.add({severity:'success', summary: 'Layout saved', life: 2000});
+  }
 };
 
 const loadLayoutFromLocalStorage = () => {

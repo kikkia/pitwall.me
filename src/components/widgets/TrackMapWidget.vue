@@ -121,9 +121,9 @@ const settingsDefinition = ref([
   { id: 'showCornerNumbers', label: 'Show corner numbers', type: 'boolean', component: 'Checkbox' },
   { id: 'useSafetyCarColors', label: 'Show safety car', type: 'boolean', component: 'Checkbox' },
   { id: 'focusedDrivers', label: 'Focused Drivers', type: 'array', options: computed(() => Array.from(f1Store.driversViewModelMap.values()).map(d => d.tla)), component: 'MultiSelect' },
-  { id: 'cornerNumberFontSize', label: 'Corner Number Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 200, step: 10 } },
-  { id: 'nameTagFontSize', label: 'Name Tag Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 200, step: 10 } },
-  { id: 'carDotSize', label: 'Car Dot Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 200, step: 10 } },
+  { id: 'cornerNumberFontSize', label: 'Corner Number Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
+  { id: 'nameTagFontSize', label: 'Name Tag Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
+  { id: 'carDotSize', label: 'Car Dot Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
 ]);
 
 defineExpose({ settingsDefinition });

@@ -55,10 +55,12 @@
       </div>
     </div>
   <template #footer>
-    <Button label="Save" @click="saveSettings" class="save-button" />
+    <div class="flex justify-content-between w-full">
+        <ImportExport @close-settings="closeDialog" />
+        <Button label="Save" @click="saveSettings" class="save-button" />
+    </div>
   </template>
 </Dialog>
-
 <Dialog v-model:visible="isAddPageDialogVisible" modal header="Add New Page" :style="{ width: '25vw' }">
     <div class="p-field">
         <label for="new-page-name">Page Name</label>
@@ -83,6 +85,7 @@ import Column from 'primevue/column';
 import InputText from 'primevue/inputtext';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { storeToRefs } from 'pinia';
+import ImportExport from './ImportExport.vue';
 
 defineOptions({
   components: {
@@ -92,7 +95,8 @@ defineOptions({
     Dropdown,
     DataTable,
     Column,
-    InputText
+    InputText,
+    ImportExport
   }
 });
 
@@ -159,8 +163,11 @@ const saveSettings = () => {
   settingsStore.setGridFloat(localGridFloat.value);
   emit('update:visible', false);
 };
-</script>
 
+const closeDialog = () => {
+    emit('update:visible', false);
+}
+</script>
 <style scoped>
 .save-button {
   margin-top: 1rem;
@@ -169,5 +176,10 @@ const saveSettings = () => {
 .page-management {
   display: flex;
   flex-direction: column;
+}
+
+:deep(.p-dialog-footer) {
+    display: flex;
+    justify-content: space-between;
 }
 </style>

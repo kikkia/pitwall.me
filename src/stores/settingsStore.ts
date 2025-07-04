@@ -41,6 +41,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const pages = ref<{ id: string; name: string }[]>([{ id: 'default', name: 'Default' }]);
   const activePageId = ref<string>('default');
   const layouts = ref<Record<string, any[]>>({ 'default': defaultLayout });
+  const layoutVersion = ref(0);
 
   const DASHBOARD_SETTINGS_KEY = 'dashboardSettings';
 
@@ -70,7 +71,8 @@ export const useSettingsStore = defineStore('settings', () => {
       gridFloat: gridFloat.value,
       pages: pages.value,
       activePageId: activePageId.value,
-      layouts: layouts.value
+      layouts: layouts.value,
+      layoutVersion: layoutVersion.value
     };
     localStorage.setItem(DASHBOARD_SETTINGS_KEY, JSON.stringify(settings));
   }, { deep: true });
@@ -122,6 +124,37 @@ export const useSettingsStore = defineStore('settings', () => {
     gridFloat.value = float;
   }
 
+  function exportSettings() {
+    return {
+      websocketDelay: websocketDelay.value,
+      gridFloat: gridFloat.value,
+      pages: pages.value,
+      activePageId: activePageId.value,
+      layouts: layouts.value,
+    };
+  }
+
+  function importSettings(settings: any, merge: boolean) {
+    if (merge) {
+      // Merge pages
+      const existingPageNames = new Set(pages.value.map(p => p.name));
+      for (const newPage of settings.pages) {
+        if (!existingPageNames.has(newPage.name)) {
+          pages.value.push(newPage);
+          layouts.value[newPage.id] = settings.layouts[newPage.id];
+        }
+      }
+    } else {
+      // Replace settings
+      websocketDelay.value = settings.websocketDelay ?? 0;
+      gridFloat.value = settings.gridFloat ?? true;
+      pages.value = settings.pages ?? [{ id: 'default', name: 'Default' }];
+      layouts.value = settings.layouts ?? { 'default': defaultLayout };
+      activePageId.value = settings.pages[0]?.id || 'default';
+      layoutVersion.value++;
+    }
+  }
+
   return {
     websocketDelay,
     gridFloat,
@@ -134,6 +167,9 @@ export const useSettingsStore = defineStore('settings', () => {
     removePage,
     renamePage,
     setActivePageId,
-    updateLayout
+    updateLayout,
+    exportSettings,
+    importSettings,
+    layoutVersion
   };
 });

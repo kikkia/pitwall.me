@@ -7,7 +7,7 @@
       :edit-mode="isEditMode"
     />
     <DashboardGrid
-      :key="activePageId"
+      :key="`${activePageId}-${layoutVersion}`"
       ref="dashboardGridRef"
       class="dashboard-container"
       @grid-updated="handleGridUpdated"
@@ -86,7 +86,7 @@ const setWidgetRef = (id, el) => {
 };
 
 const settingsStore = useSettingsStore();
-const { activePageId, layouts } = storeToRefs(settingsStore);
+const { activePageId, layouts, layoutVersion } = storeToRefs(settingsStore);
 
 const activeWidgets = computed(() => layouts.value[activePageId.value] || []);
 

@@ -29,6 +29,7 @@
         @click="emit('toggle-edit-mode')"
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
+        v-if="showDashboardButtons"
       />
       <Button
         icon="pi pi-plus"
@@ -36,7 +37,7 @@
         @click="emit('add-widget')"
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
-        v-if="showAddWidgetButton"
+        v-if="showDashboardButtons"
       />
       <Button
         icon="pi pi-cog"
@@ -70,7 +71,7 @@ import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStat
 import SettingsDialog from './SettingsDialog.vue';
 
 const props = defineProps({
-  showAddWidgetButton: {
+  showDashboardButtons: {
     type: Boolean,
     default: true
   },

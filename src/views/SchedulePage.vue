@@ -1,5 +1,5 @@
 <template>
-  <Navbar @open-info-modal="handleOpenInfoModal" @add-widget="handleAddWidget" :showAddWidgetButton="false" />
+  <Navbar @open-info-modal="handleOpenInfoModal" @add-widget="handleAddWidget" :show-dashboard-buttons="false" />
   <div class="season-page">
     <h1>Upcoming Sessions</h1>
     <div class="view-toggle">

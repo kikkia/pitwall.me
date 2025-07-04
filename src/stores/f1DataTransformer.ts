@@ -57,7 +57,6 @@ export function createOrUpdateDriverViewModel(
     qualifyingTime: null,
     qualiInterval: '',
     qualiGap: '',
-    bestSpeeds: null,
   });
 
   const driverInfo = raceData.DriverList?.[racingNumber] || null;

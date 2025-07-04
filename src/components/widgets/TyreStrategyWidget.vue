@@ -16,22 +16,50 @@ const props = defineProps({
     default: null
   },
   messageFontSize: { type: Number, default: 90 },
-  displayMode: { type: String, default: 'list' },
   ignorePittedLaps: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['update:widgetConfig']);
 
-const internalSelectedDriverNumber = ref(props.selectedDriverNumber);
-const internalDisplayMode = ref(props.displayMode);
+const totalRaceLaps = computed(() => f1Store.raceData.LapCount.TotalLaps || 57);
+
+const allDriversData = computed(() => {
+  if (!f1Store.raceData.TyreStintSeries?.Stints) {
+    return [];
+  }
+
+  return f1Store.sortedDriversViewModel
+    .filter(driver => driver.racingNumber !== "_kf" && f1Store.raceData.TyreStintSeries.Stints[driver.racingNumber])
+    .map(driver => {
+      const stints = f1Store.raceData.TyreStintSeries.Stints[driver.racingNumber] || [];
+      return {
+        ...driver,
+        stints: stints.map(stint => ({
+          ...stint,
+          width: ((stint.TotalLaps - stint.StartLaps) / totalRaceLaps.value) * 100,
+          stintLaps: stint.TotalLaps - stint.StartLaps,
+        })),
+      };
+    });
+});
+
+const handleRowClick = (event: any) => {
+  const driverNumber = event.data.racingNumber;
+  internalSelectedDriverNumber.value = driverNumber;
+  emit('update:widgetConfig', { selectedDriverNumber: driverNumber });
+};
+
+const goBack = () => {
+  internalSelectedDriverNumber.value = null;
+  emit('update:widgetConfig', { selectedDriverNumber: null });
+};
+
+
+const internalSelectedDriverNumber = ref<string | null>(props.selectedDriverNumber);
 const internalIgnorePittedLaps = ref(props.ignorePittedLaps);
 
 watch(() => props.selectedDriverNumber, (newVal) => {
   internalSelectedDriverNumber.value = newVal;
-});
-
-watch(() => props.displayMode, (newVal) => {
-  internalDisplayMode.value = newVal;
 });
 
 watch(() => props.ignorePittedLaps, (newVal) => {
@@ -229,20 +257,6 @@ const settingsDefinition = computed(() => {
       id: 'messageFontSize', label: 'Font Size (%)', type: 'number', component: 'Slider',
       props: { min: 50, max: 150, step: 10 }
     },
-    {
-      id: 'displayMode',
-      label: 'Display Mode',
-      type: 'string',
-      component: 'Dropdown',
-      options: [
-        { label: 'List', value: 'list' },
-        { label: 'Graph', value: 'graph' },
-        { label: 'Both', value: 'both' }
-      ],
-      props: {
-        placeholder: "Select Display Mode"
-      }
-    },
     { 
       id: 'ignorePittedLaps', 
       label: 'Ignore Pitted Laps', 
@@ -258,10 +272,6 @@ const tableStyle = computed(() => ({
     fontSize: `${props.messageFontSize}%`
 }));
 
-function handleDriverSelection(event: any) {
-  internalSelectedDriverNumber.value = event.value;
-  emit('update:widgetConfig', { selectedDriverNumber: event.value });
-}
 
 function formatTyreCompound(compound: string): string {
   switch (compound) {
@@ -289,24 +299,40 @@ function getTyreCompoundClass(compound: string): string {
 
 <template>
   <div class="widget tyre-stints-widget" :style="tableStyle">
-    <div v-if="!internalSelectedDriverNumber" class="driver-selection-prompt">
-      <h3>Select a driver to view tyre stints</h3>
-      <Dropdown
-        v-model="internalSelectedDriverNumber"
-        :options="availableDrivers"
-        optionLabel="label"
-        optionValue="value"
-        placeholder="Select a Driver"
-        :filter="true"
-        class="w-full"
-        @change="handleDriverSelection"
-      />
+    <div v-if="!internalSelectedDriverNumber" class="driver-list-timeline">
+      <div
+        v-for="driver in allDriversData"
+        :key="driver.racingNumber"
+        class="driver-row"
+        @click="handleRowClick({ data: driver })"
+        :style="{ opacity: driver.stopped || driver.retired ? 0.5 : 1 }"
+      >
+        <div class="driver-info">
+          <span class="position">{{ driver.position }}</span>
+          <span class="tla" :style="{ color: '#' + driver.teamColour }">{{ driver.tla }}</span>
+        </div>
+        <div class="stint-timeline">
+          <div
+            v-for="(stint, index) in driver.stints"
+            :key="index"
+            class="stint-segment"
+            :style="{ width: stint.width + '%' }"
+          >
+            <div class="stint-line" :class="getTyreCompoundClass(stint.Compound)"></div>
+            <div class="stint-pill" :class="getTyreCompoundClass(stint.Compound)">
+              <span class="stint-label">{{ formatTyreCompound(stint.Compound) }}</span>
+              <span class="stint-laps">{{ stint.stintLaps }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div v-else class="tyre-stints-content">
-      <div v-if="internalDisplayMode === 'graph' || internalDisplayMode === 'both'" class="tyre-stints-graph">
+    <div v-else class="graph-view">
+      <button @click="goBack" class="back-button">Back to Driver List</button>
+      <div class="tyre-stints-graph">
         <Chart type="line" :data="chartData" :options="chartOptions" />
       </div>
-      <div v-if="internalDisplayMode === 'list' || internalDisplayMode === 'both'" class="tyre-stints-list">
+      <div class="tyre-stints-list">
         <DataTable
           :value="selectedDriverTyreStints"
           responsiveLayout="scroll"
@@ -316,23 +342,19 @@ function getTyreCompoundClass(compound: string): string {
           :sortOrder="-1"
           rowHover
         >
-          <Column field="TotalLaps" header="Tyre Age" :style="{ width: '60px' }">
-            <template #body="slotProps">
-              {{ slotProps.data.TotalLaps }}
-            </template>
-          </Column>
+          <Column field="TotalLaps" header="Tyre Age" :style="{ width: '60px' }" />
           <Column field="Compound" header="Tyre">
-            <template #body="slotProps">
-              <span :class="['tyre-compound-indicator', getTyreCompoundClass(slotProps.data.Compound)]">
-                {{ formatTyreCompound(slotProps.data.Compound) }}
+            <template #body="stintSlotProps">
+              <span :class="['tyre-compound-indicator', getTyreCompoundClass(stintSlotProps.data.Compound)]">
+                {{ formatTyreCompound(stintSlotProps.data.Compound) }}
               </span>
             </template>
           </Column>
           <Column header="Status">
-            <template #body="slotProps">
-              <Tag v-if="slotProps.data.New === 'true'" severity="success" value="New" class="mr-1"></Tag>
-              <Tag v-if="slotProps.data.StartLaps > 0" severity="warn" :value="`Used: ${slotProps.data.StartLaps} laps`" class="mr-1"></Tag>
-              <Tag v-if="isCurrentStint(slotProps.data)" severity="success" value="Current"></Tag>
+            <template #body="stintSlotProps">
+              <Tag v-if="stintSlotProps.data.New === 'true'" severity="success" value="New" class="mr-1"></Tag>
+              <Tag v-if="stintSlotProps.data.StartLaps > 0" severity="warn" :value="`Used: ${stintSlotProps.data.StartLaps} laps`" class="mr-1"></Tag>
+              <Tag v-if="isCurrentStint(stintSlotProps.data)" severity="success" value="Current"></Tag>
             </template>
           </Column>
           <template #empty>
@@ -351,69 +373,122 @@ function getTyreCompoundClass(compound: string): string {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  font-family: 'Formula1', sans-serif;
 }
 
-.driver-selection-prompt {
+.driver-list-timeline {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  gap: 2px;
+  overflow-y: auto;
   height: 100%;
+}
+
+.driver-row {
+  display: flex;
+  align-items: center;
+  background-color: #1a1a1a;
+  padding: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.driver-row:hover {
+  background-color: #2c2c2c;
+}
+
+.driver-info {
+  display: flex;
+  align-items: center;
+  width: 100px;
+}
+
+.position {
+  width: 30px;
   text-align: center;
-  color: #ddd;
+  font-weight: bold;
 }
 
-.driver-selection-prompt h3 {
-  margin-bottom: 1rem;
-  color: #eee;
+.tla {
+  font-weight: bold;
 }
 
-.tyre-stints-content {
+.stint-timeline {
+  display: flex;
   flex-grow: 1;
-  overflow: auto;
+  height: 20px;
+  align-items: center;
+}
+
+.stint-segment {
+  position: relative;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.stint-line {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tyre-soft.stint-line { background-color: #E74C3C; }
+.tyre-medium.stint-line { background-color: #F1C40F; }
+.tyre-hard.stint-line { background-color: #FFFFFF; }
+.tyre-intermediate.stint-line { background-color: #27AE60; }
+.tyre-wet.stint-line { background-color: #2d04e4; }
+
+.stint-pill {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: black;
+  font-weight: bold;
+  font-size: 0.8em;
+}
+
+.stint-laps {
+  font-size: 0.9em;
+}
+
+.stint-label {
+  /* The pill itself provides padding */
+}
+
+.graph-view {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.back-button {
+  margin-bottom: 10px;
+  padding: 5px 10px;
+  background-color: #444;
+  color: #eee;
+  border: 1px solid #666;
+  cursor: pointer;
 }
 
 .tyre-stints-graph {
-  flex-grow: 0;
-  padding: 0;
+  flex-grow: 1;
+  min-height: 150px;
 }
 
 .tyre-stints-list {
   flex-grow: 1;
-  margin-top: 0;
-}
-
-.tyre-stints-widget :deep(.p-datatable .p-datatable-thead > tr > th) {
-  background-color: #333;
-  color: #eee;
-  font-weight: bold;
-  padding: 4px 6px;
-  border: none;
-  border-bottom: 1px solid #555;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.tyre-stints-widget :deep(.p-datatable .p-datatable-tbody > tr > td) {
-  background-color: #222;
-  color: #ddd;
-  padding: 1px 4px;
-  border: none;
-  border-bottom: 1px solid #444;
-  white-space: nowrap;
-  vertical-align: middle;
-  height: 2.9em;
-  line-height: 1.1;
-}
-
-.tyre-stints-widget :deep(.p-datatable .p-datatable-tbody > tr:nth-child(even) > td) {
-  background-color: #282828;
-}
-
-.tyre-stints-widget :deep(.p-datatable .p-datatable-tbody > tr.p-datatable-row-hover > td) {
-  background-color: #3a3a3a;
+  margin-top: 10px;
+  overflow-y: auto;
 }
 
 .tyre-compound-indicator {

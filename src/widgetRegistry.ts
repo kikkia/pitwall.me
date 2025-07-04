@@ -7,7 +7,7 @@ export type WidgetComponentName =
   'SectorTiming' |
   'LapHistory' |
   'DriverCarStats' |
-  'TyreStints' |
+  'TyreStrategy' |
   'TrackMap' |
   'LapCompare' |
   'SpeedTrap' |
@@ -21,7 +21,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'SectorTiming': shallowRef(defineAsyncComponent(() => import('./components/widgets/SectorTimingWidget.vue'))),
   'LapHistory': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapHistoryWidget.vue'))),
   'DriverCarStats': shallowRef(defineAsyncComponent(() => import('./components/widgets/DriverCarStats.vue'))),
-  'TyreStints': shallowRef(defineAsyncComponent(() => import('./components/widgets/TyreStintsWidget.vue'))),
+  'TyreStrategy': shallowRef(defineAsyncComponent(() => import('./components/widgets/TyreStrategyWidget.vue'))),
   'TrackMap': shallowRef(defineAsyncComponent(() => import('./components/widgets/TrackMapWidget.vue'))),
   'LapCompare': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapCompareWidget.vue'))),
   'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
@@ -35,7 +35,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'SectorTiming': { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90 },
     'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
     'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 },
-    'TyreStints': { selectedDriverNumber: null, messageFontSize: 90, displayMode: 'both' },
+    'TyreStrategy': { selectedDriverNumber: null, messageFontSize: 90, ignorePittedLaps: false },
     'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100 },
     'LapCompare': { selectedDrivers: [] },
     'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' },
@@ -49,7 +49,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'SectorTiming': 'Sector Timing',
     'LapHistory': 'Lap History',
     'DriverCarStats': 'Driver Car Stats',
-    'TyreStints': 'Tyre Stints',
+    'TyreStrategy': 'Tyre Strategy',
     'TrackMap': 'Track Map',
     'LapCompare': 'Lap Compare',
     'SpeedTrap': 'Speed Trap',
@@ -63,7 +63,7 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'SectorTiming': 'Detailed breakdown of sector and mini-sector times for selected drivers.',
     'LapHistory': 'Visualizes lap times and historical data for individual drivers.',
     'DriverCarStats': 'Provides live statistics from a given drivers car',
-    'TyreStints': 'Displays tyre stint history for a selected driver.',
+    'TyreStrategy': 'Displays a graphical overview of each driver\'s tyre strategy throughout the race.',
     'TrackMap': 'Shows a map of the track and the positions of the drivers.',
     'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
     'SpeedTrap': 'Displays speed trap data for all drivers.',

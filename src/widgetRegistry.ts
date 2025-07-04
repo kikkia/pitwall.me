@@ -10,7 +10,8 @@ export type WidgetComponentName =
   'TyreStints' |
   'TrackMap' |
   'LapCompare' |
-  'SpeedTrap';
+  'SpeedTrap' |
+  'Battle';
 
 // Map component names (strings) to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -24,6 +25,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'TrackMap': shallowRef(defineAsyncComponent(() => import('./components/widgets/TrackMapWidget.vue'))),
   'LapCompare': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapCompareWidget.vue'))),
   'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
+  'Battle': shallowRef(defineAsyncComponent(() => import('./components/widgets/BattleWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -36,7 +38,8 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'TyreStints': { selectedDriverNumber: null, messageFontSize: 90, displayMode: 'both' },
     'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100 },
     'LapCompare': { selectedDrivers: [] },
-    'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' }
+    'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' },
+    'Battle': { threshold: 1.5, messageFontSize: 90, battleForPosition: 1, auto: false }
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -50,6 +53,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'TrackMap': 'Track Map',
     'LapCompare': 'Lap Compare',
     'SpeedTrap': 'Speed Trap',
+    'Battle': 'Battle for Position',
 };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -62,5 +66,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'TyreStints': 'Displays tyre stint history for a selected driver.',
     'TrackMap': 'Shows a map of the track and the positions of the drivers.',
     'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
-    'SpeedTrap': 'Displays speed trap data for all drivers.'
+    'SpeedTrap': 'Displays speed trap data for all drivers.',
+    'Battle': 'Automatically detects and focuses on close on-track battles for position.'
 };

@@ -23,6 +23,17 @@
     </template>
 
     <template #end>
+      <Menu ref="pageMenu" id="page-menu" :model="pageMenuItems" :popup="true" />
+      <Button
+        :label="activePageName"
+        icon="pi pi-chevron-down"
+        iconPos="right"
+        @click="togglePageMenu"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-right: 10px;"
+        aria-haspopup="true"
+        aria-controls="page-menu"
+      />
       <Button
         :icon="editMode ? 'pi pi-lock-open' : 'pi pi-lock'"
         :severity="editMode ? 'success' : 'danger'"
@@ -63,12 +74,15 @@ import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import Tag from 'primevue/tag';
+import Menu from 'primevue/menu';
 import { useF1Store } from '@/stores/f1Store';
 import { useEventStore } from '@/stores/eventStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 import SettingsDialog from './SettingsDialog.vue';
+import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
   showDashboardButtons: {
@@ -85,6 +99,37 @@ const emit = defineEmits(['add-widget', 'open-info-modal', 'toggle-edit-mode']);
 
 const router = useRouter();
 const f1Store = useF1Store();
+const settingsStore = useSettingsStore();
+const toast = useToast();
+
+const { pages, activePageId } = storeToRefs(settingsStore);
+
+const pageMenu = ref<any>(null);
+const togglePageMenu = (event: Event) => {
+  pageMenu.value.toggle(event);
+};
+
+const activePageName = computed(() => {
+  const activePage = pages.value.find(p => p.id === activePageId.value);
+  return activePage ? activePage.name : 'Pages';
+});
+
+const pageMenuItems = computed(() =>
+  pages.value.map((page) => ({
+    label: page.name,
+    command: () => {
+      if (page.id !== activePageId.value) {
+        settingsStore.setActivePageId(page.id);
+      }
+    },
+  }))
+);
+
+watch(activePageId, (newId) => {
+  if (newId) {
+    settingsStore.setActivePageId(newId);
+  }
+});
 
 const countdownDisplay = ref<string>('--:--:--');
 const intervalId = ref<number | null>(null); // setTimeout/setInterval return number in browser
@@ -292,7 +337,7 @@ onUnmounted(() => {
 .center-content {
   display: flex;
   align-items: center;
-  gap: 10px; /* Space between event name and status tag */
+  gap: 10px;
 }
 
 .navbar-brand {
@@ -322,3 +367,4 @@ onUnmounted(() => {
   vertical-align: middle;
 }
 </style>
+

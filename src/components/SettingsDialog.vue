@@ -30,19 +30,57 @@
           optionValue="value"
         />
       </div>
+      <div class="p-field" style="margin-top: 20px;">
+        <label for="pages">Manage Pages</label>
+        <div class="page-management">
+          <DataTable :value="localPages" editMode="cell" @cell-edit-complete="onCellEditComplete" class="p-datatable-sm">
+            <template #header>
+                <div class="flex justify-content-between align-items-center">
+                    <h5 class="m-0">Pages</h5>
+                    <Button label="Add Page" icon="pi pi-plus" class="p-button-sm" @click="openAddPageDialog" />
+                </div>
+            </template>
+            <Column field="name" header="Name" style="width: 70%">
+                <template #editor="{ data, field }">
+                    <InputText v-model="data[field]" autofocus />
+                </template>
+            </Column>
+            <Column header="Actions" style="width: 30%">
+                <template #body="slotProps">
+                    <Button icon="pi pi-trash" class="p-button-text p-button-danger" @click="deletePage(slotProps.data)" />
+                </template>
+            </Column>
+          </DataTable>
+        </div>
+      </div>
     </div>
   <template #footer>
     <Button label="Save" @click="saveSettings" class="save-button" />
   </template>
 </Dialog>
+
+<Dialog v-model:visible="isAddPageDialogVisible" modal header="Add New Page" :style="{ width: '25vw' }">
+    <div class="p-field">
+        <label for="new-page-name">Page Name</label>
+        <InputText id="new-page-name" v-model="newPageName" @keyup.enter="addPage" />
+    </div>
+    <template #footer>
+        <Button label="Cancel" icon="pi pi-times" @click="isAddPageDialogVisible = false" class="p-button-text" />
+        <Button label="Add" icon="pi pi-check" @click="addPage" autofocus />
+    </template>
+</Dialog>
+
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import Button from 'primevue/button';
 import Dialog from 'primevue/dialog';
 import InputNumber from 'primevue/inputnumber';
 import Dropdown from 'primevue/dropdown';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import InputText from 'primevue/inputtext';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { storeToRefs } from 'pinia';
 
@@ -51,9 +89,17 @@ defineOptions({
     Button,
     Dialog,
     InputNumber,
-    Dropdown
+    Dropdown,
+    DataTable,
+    Column,
+    InputText
   }
 });
+
+interface Page {
+  id: string;
+  name: string;
+}
 
 interface Props {
   visible: boolean;
@@ -63,9 +109,45 @@ const props = defineProps<Props>();
 const emit = defineEmits(['update:visible']);
 
 const settingsStore = useSettingsStore();
-const { websocketDelay, gridFloat } = storeToRefs(settingsStore);
+const { websocketDelay, gridFloat, pages } = storeToRefs(settingsStore);
 const localWebsocketDelay = ref(websocketDelay.value);
 const localGridFloat = ref(gridFloat.value);
+const localPages = ref([...pages.value]);
+
+const isAddPageDialogVisible = ref(false);
+const newPageName = ref('');
+
+
+watch(pages, (newPages) => {
+  localPages.value = [...newPages];
+}, { deep: true });
+
+const openAddPageDialog = () => {
+  isAddPageDialogVisible.value = true;
+  newPageName.value = '';
+};
+
+const addPage = () => {
+  if (newPageName.value.trim()) {
+    settingsStore.addPage(newPageName.value.trim());
+    isAddPageDialogVisible.value = false;
+  }
+};
+
+const onCellEditComplete = (event: any) => {
+    let { data, newValue, field } = event;
+    if (newValue.trim().length > 0) {
+        settingsStore.renamePage(data.id, newValue);
+    }
+};
+
+const deletePage = (page: Page) => {
+  if (localPages.value.length > 1) {
+    settingsStore.removePage(page.id);
+  } else {
+    alert('You cannot delete the last page.');
+  }
+};
 
 const gravityOptions = ref([
   { name: 'On (no gravity)', value: true },
@@ -82,5 +164,10 @@ const saveSettings = () => {
 <style scoped>
 .save-button {
   margin-top: 1rem;
+}
+
+.page-management {
+  display: flex;
+  flex-direction: column;
 }
 </style>

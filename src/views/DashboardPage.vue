@@ -7,6 +7,7 @@
       :edit-mode="isEditMode"
     />
     <DashboardGrid
+      :key="activePageId"
       ref="dashboardGridRef"
       class="dashboard-container"
       @grid-updated="handleGridUpdated"
@@ -57,8 +58,10 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, computed, watch} from 'vue';
+import { ref, nextTick, onMounted, computed, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { storeToRefs } from 'pinia';
 import Navbar from '../components/Navbar.vue';
 import DashboardGrid from '../components/DashboardGrid.vue';
 import WidgetContainer from '../components/WidgetContainer.vue';
@@ -82,42 +85,13 @@ const setWidgetRef = (id, el) => {
   }
 };
 
-const activeWidgets = ref([]);
+const settingsStore = useSettingsStore();
+const { activePageId, layouts } = storeToRefs(settingsStore);
+
+const activeWidgets = computed(() => layouts.value[activePageId.value] || []);
+
 const isInfoModalVisible = ref(false);
 const isEditMode = ref(false);
-
-const defaultWidgets = [
-  {
-    id: 'timing-1',
-    componentName: 'TimingTable',
-    x: 0, y: 0, w: 24, h: 30,
-    config: {...defaultWidgetConfigs.TimingTable},
-  },
-  {
-    id: 'rcm-1',
-    componentName: 'RaceControlMessages',
-    x: 24, y: 0, w: 32, h: 20,
-    config: {...defaultWidgetConfigs.RaceControlMessages},
-  },
-  {
-    id: 'track-status-1',
-    componentName: 'TrackStatusLED',
-    x: 56, y: 0, w: 8, h: 4 ,
-    config: {...defaultWidgetConfigs.TrackStatusLED},
-  },
-  {
-    id: 'sector-timing',
-    componentName: 'SectorTiming',
-    x: 0, y: 30, w:38, h:30,
-    config: {...defaultWidgetConfigs.SectorTiming},
-  },
-  {
-    id: 'lap-history-1',
-    componentName: 'LapHistory',
-    x: 65, y: 0, w: 21, h: 25,
-    config: {...defaultWidgetConfigs.LapHistory},
-  }
-];
 
 const isSettingsDialogOpen = ref(false);
 const settingsTargetWidgetId = ref(null);
@@ -180,7 +154,7 @@ const removeWidget = async (widgetIdToRemove) => {
     }
 
     activeWidgets.value.splice(widgetIndex, 1);
-    saveLayoutToLocalStorage();
+    updateLayout();
 
     delete gridItemRefs.value[widgetIdToRemove];
     delete widgetInstanceRefs.value[widgetIdToRemove];
@@ -223,63 +197,18 @@ const handleWidgetSettingsSave = (newConfig, showToast = true) => {
   const widget = activeWidgets.value.find(w => w.id === settingsTargetWidgetId.value);
   if (widget) {
     widget.config = newConfig;
-    saveLayoutToLocalStorage(showToast);
+    updateLayout(showToast);
   }
 };
 
-const saveLayoutToLocalStorage = (showToast = true) => {
-  if (activeWidgets.value.length < 1) {
-    return
-  }
-  const serializedWidgets = activeWidgets.value.map(widget => ({
-    id: widget.id,
-    componentName: widget.componentName,
-    x: widget.x,
-    y: widget.y,
-    w: widget.w,
-    h: widget.h,
-    config: widget.config
-  }));
-  localStorage.setItem('dashboardLayout', JSON.stringify(serializedWidgets));
-  console.log('Dashboard layout saved to local storage.');
-  if (showToast) {
+const updateLayout = (showToast = true) => {
+  settingsStore.updateLayout(activeWidgets.value);
+   if (showToast) {
     toast.add({severity:'success', summary: 'Layout saved', life: 2000});
   }
-};
+}
 
-const loadLayoutFromLocalStorage = () => {
-  const savedLayout = localStorage.getItem('dashboardLayout');
-  if (savedLayout) {
-    try {
-      const parsedLayout = JSON.parse(savedLayout);
-      activeWidgets.value = parsedLayout.map(savedWidget => {
-        if (!widgetComponentMap[savedWidget.componentName]) {
-          console.warn(`Unknown component: ${savedWidget.componentName}. Skipping.`);
-          return null;
-        }
-        return {
-          ...savedWidget,
-        };
-      }).filter(Boolean);
-      console.log('Dashboard layout loaded from local storage.');
-    } catch (e) {
-      console.error('Failed to parse dashboard layout from local storage:', e);
-      activeWidgets.value = defaultWidgets;
-    }
-  } else {
-    activeWidgets.value = defaultWidgets;
-    console.log('No saved layout found, using default widgets.');
-  }
-};
-
-// Load layout on mount
 onMounted(() => {
-  const savedLayout = localStorage.getItem('dashboardLayout');
-  if (!savedLayout) {
-    isInfoModalVisible.value = true;
-  }
-  loadLayoutFromLocalStorage();
-
   const savedEditMode = localStorage.getItem('dashboardEditMode');
   if (savedEditMode) {
     isEditMode.value = JSON.parse(savedEditMode);
@@ -303,7 +232,7 @@ const handleGridUpdated = (updatedItems) => {
       widget.h = updatedItem.h;
     }
   });
-  saveLayoutToLocalStorage();
+  updateLayout();
 };
 
 const openAddWidgetDialog = () => {
@@ -318,7 +247,7 @@ const handleAddWidget = (widgetComponentName) => {
     x: 0, y: 0, w: 20, h: 20, // TODO: Default widget sizes
     config: { ...defaultWidgetConfigs[widgetComponentName] },
   };
-  activeWidgets.value.push(newWidget);
+  layouts.value[activePageId.value].push(newWidget);
   isAddWidgetDialogOpen.value = false;
   nextTick(() => {
     const grid = dashboardGridRef.value?.getGridInstance();

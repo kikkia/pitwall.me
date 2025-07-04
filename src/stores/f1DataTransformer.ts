@@ -36,6 +36,7 @@ export function createOrUpdateDriverViewModel(
     stopped: false,
     sectors: [],
     bestSectors: [],
+    bestSpeeds: null,
     numberOfPitStops: 0,
     personalBestLap: null,
     currentStint: null,
@@ -56,6 +57,7 @@ export function createOrUpdateDriverViewModel(
     qualifyingTime: null,
     qualiInterval: '',
     qualiGap: '',
+    bestSpeeds: null,
   });
 
   const driverInfo = raceData.DriverList?.[racingNumber] || null;
@@ -127,9 +129,11 @@ export function createOrUpdateDriverViewModel(
   if (timingStatsLine) {
     vm.personalBestLap = timingStatsLine.PersonalBestLapTime;
     vm.bestSectors = timingStatsLine.BestSectors as Sector[];
+    vm.bestSpeeds = timingStatsLine.BestSpeeds;
   } else {
     vm.personalBestLap = null;
     vm.bestSectors = [];
+    vm.bestSpeeds = null;
   }
 
   const mapStintToViewModel = (stint: StintData): StintViewModel => ({

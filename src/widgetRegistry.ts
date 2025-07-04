@@ -9,7 +9,8 @@ export type WidgetComponentName =
   'DriverCarStats' |
   'TyreStints' |
   'TrackMap' |
-  'LapCompare';
+  'LapCompare' |
+  'SpeedTrap';
 
 // Map component names (strings) to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -22,6 +23,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'TyreStints': shallowRef(defineAsyncComponent(() => import('./components/widgets/TyreStintsWidget.vue'))),
   'TrackMap': shallowRef(defineAsyncComponent(() => import('./components/widgets/TrackMapWidget.vue'))),
   'LapCompare': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapCompareWidget.vue'))),
+  'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -33,7 +35,8 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 },
     'TyreStints': { selectedDriverNumber: null, messageFontSize: 90, displayMode: 'both' },
     'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100 },
-    'LapCompare': {}
+    'LapCompare': { selectedDrivers: [] },
+    'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' }
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -46,6 +49,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'TyreStints': 'Tyre Stints',
     'TrackMap': 'Track Map',
     'LapCompare': 'Lap Compare',
+    'SpeedTrap': 'Speed Trap',
 };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -57,5 +61,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'DriverCarStats': 'Provides live statistics from a given drivers car',
     'TyreStints': 'Displays tyre stint history for a selected driver.',
     'TrackMap': 'Shows a map of the track and the positions of the drivers.',
-    'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.'
+    'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
+    'SpeedTrap': 'Displays speed trap data for all drivers.'
 };

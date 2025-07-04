@@ -33,10 +33,10 @@ export interface ValueWithLap {
   }
   
   export interface BestSpeedsMap {
-	I1: SpeedEntry;
-	I2: SpeedEntry;
-	FL: SpeedEntry;
-	ST: SpeedEntry;
+	I1: SpeedEntry; // Intermediate 1
+	I2: SpeedEntry; // Intermediate 2
+	FL: SpeedEntry; // Finish Line
+	ST: SpeedEntry; // Speed trap
   }
   
   export interface StintData {
@@ -341,6 +341,7 @@ export interface ValueWithLap {
 	stopped: boolean;
 	sectors: Sector[];
 	bestSectors: Sector[];
+	bestSpeeds: BestSpeedsMap | null;
 	numberOfPitStops: number;
 	
 	personalBestLap: ValueWithLap | null;

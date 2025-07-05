@@ -5,6 +5,15 @@ import type { DriverViewModel } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
 
+const props = defineProps({
+  messageFontSize: { type: Number, default: 90 },
+  showI1: { type: Boolean, default: true },
+  showI2: { type: Boolean, default: true },
+  showFL: { type: Boolean, default: true },
+  showST: { type: Boolean, default: true },
+  sortBy: { type: String, default: 'ST' }
+});
+
 const drivers = computed(() => {
   return f1Store.sortedDriversViewModel
     .filter((driver) => driver.racingNumber !== "_kf" && driver.bestSpeeds)
@@ -34,16 +43,7 @@ watch(drivers, (newDrivers: DriverViewModel[], oldDrivers: DriverViewModel[]) =>
   }
 }, { deep: true });
 
-const props = defineProps({
-  messageFontSize: { type: Number, default: 90 },
-  showI1: { type: Boolean, default: true },
-  showI2: { type: Boolean, default: true },
-  showFL: { type: Boolean, default: true },
-  showST: { type: Boolean, default: true },
-  sortBy: { type: String, default: 'ST' }
-});
-
-const settingsDefinition = ref([
+const settingsDefinition = computed(() => [
   {
     id: 'messageFontSize',
     label: 'Message Font Size (%)',
@@ -123,8 +123,8 @@ const tableColspan = computed(() => {
           <td v-if="showFL">{{ driver.bestSpeeds?.FL?.Value || '-' }}</td>
           <td v-if="showST">{{ driver.bestSpeeds?.ST?.Value || '-' }}</td>
         </tr>
-        <!-- Empty state -->
-         <tr v-if="drivers.length === 0">
+
+        <tr v-if="drivers.length === 0">
             <td :colspan="tableColspan" style="text-align: center;">Waiting for speed data...</td>
         </tr>
       </tbody>

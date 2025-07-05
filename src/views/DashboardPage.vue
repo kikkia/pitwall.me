@@ -54,13 +54,12 @@
     />
     <InfoModal v-model:visible="isInfoModalVisible" />
   </div>
-  <Toast position="top-right" />
 </template>
 
 <script setup>
 import { ref, nextTick, onMounted, computed, watch } from 'vue';
-import { useToast } from 'primevue/usetoast';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useUiStore } from '@/stores/uiStore';
 import { storeToRefs } from 'pinia';
 import Navbar from '../components/Navbar.vue';
 import DashboardGrid from '../components/DashboardGrid.vue';
@@ -70,7 +69,7 @@ import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import InfoModal from '../components/InfoModal.vue';
 import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '../widgetRegistry';
 
-const toast = useToast();
+const uiStore = useUiStore();
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
@@ -204,7 +203,7 @@ const handleWidgetSettingsSave = (newConfig, showToast = true) => {
 const updateLayout = (showToast = true) => {
   settingsStore.updateLayout(activeWidgets.value);
    if (showToast) {
-    toast.add({severity:'success', summary: 'Layout saved', life: 2000});
+    uiStore.showToast('Layout saved', 'success', 2000);
   }
 }
 
@@ -262,9 +261,9 @@ const handleAddWidget = (widgetComponentName) => {
 const handleToggleEditMode = () => {
   isEditMode.value = !isEditMode.value;
   if (isEditMode.value) {
-    toast.add({ severity: 'info', summary: 'Layout unlocked', life: 2000 });
+    uiStore.showToast('Layout unlocked', 'info', 2000);
   } else {
-    toast.add({ severity: 'info', summary: 'Layout locked', life: 2000 });
+    uiStore.showToast('Layout locked', 'info', 2000);
   }
 };
 

@@ -1,11 +1,41 @@
 <template>
   <router-view />
+  <Toast position="bottom-center" />
 </template>
 
 <script setup>
+import { watch } from 'vue';
+import { useToast } from 'primevue/usetoast';
+import { useUiStore } from '@/stores/uiStore';
+import Toast from 'primevue/toast';
+
+const uiStore = useUiStore();
+const toast = useToast();
+
+watch(() => uiStore.toast, (toastDetails) => {
+  if (toastDetails.visible) {
+    const severityMap = {
+      info: 'info',
+      success: 'success',
+      warning: 'warn',
+      error: 'error',
+    };
+    
+    toast.add({
+      severity: severityMap[toastDetails.type],
+      summary: toastDetails.message,
+      life: toastDetails.duration,
+    });
+    // Reset the store state after showing the toast
+    uiStore.hideToast();
+  }
+}, { deep: true });
 </script>
 
 <style>
+.p-toast .p-toast-message {
+  width: auto;
+}
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -108,8 +138,5 @@ html, body {
 }
 .grid-stack {
   background-color: var(--vt-c-black) !important;
-}
-.p-toast .p-toast-message {
-  width: auto;
 }
 </style>

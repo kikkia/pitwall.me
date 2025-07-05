@@ -79,11 +79,11 @@ import Menu from 'primevue/menu';
 import { useF1Store } from '@/stores/f1Store';
 import { useEventStore } from '@/stores/eventStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useUiStore } from '@/stores/uiStore';
 import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 import SettingsDialog from './SettingsDialog.vue';
-import { useToast } from 'primevue/usetoast';
 
 const props = defineProps({
   showDashboardButtons: {
@@ -101,7 +101,7 @@ const emit = defineEmits(['add-widget', 'open-info-modal', 'toggle-edit-mode']);
 const router = useRouter();
 const f1Store = useF1Store();
 const settingsStore = useSettingsStore();
-const toast = useToast();
+const uiStore = useUiStore();
 
 const { pages, activePageId } = storeToRefs(settingsStore);
 

@@ -1,5 +1,6 @@
 import { useF1Store } from '@/stores/f1Store';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useUiStore } from '@/stores/uiStore';
 import type { RaceData } from '@/types/dataTypes';
 
 type DirectFeedUpdateMessage = [keyof RaceData, Partial<RaceData[keyof RaceData]>];
@@ -23,6 +24,7 @@ type ParsedWebSocketData = Partial<RaceData> | DirectFeedUpdateMessage | Wrapped
 const WS_URL = import.meta.env.VITE_WS_PROXY_URL;
 let websocket: WebSocket | null = null;
 let connectionAttemptTimer: number | null = null; 
+let delayToastShown = false;
 const RECONNECT_DELAY = 5000;
 
 const PROCESSING_INTERVAL_MS = 100;
@@ -88,8 +90,22 @@ function applyParsedData(parsedData: ParsedWebSocketData, store: ReturnType<type
 function processMessageQueue(): void {
   const f1Store = getStore();
   const settingsStore = useSettingsStore();
+  const uiStore = useUiStore();
   const now = Date.now();
   const messageDelayMs = settingsStore.websocketDelay * 1000;
+
+  if (messageQueue.length > 0 && messageDelayMs > 0) {
+    const timeToProcess = messageQueue[0].timestamp + messageDelayMs - now;
+    if (timeToProcess > messageDelayMs * 0.9 && !delayToastShown) { // only force show for the first 10% of delay time
+      delayToastShown = true
+      const secondsDelayed = (messageDelayMs / 1000).toFixed(1);
+      uiStore.showToast(
+        `Live data delayed by ${secondsDelayed}s as set in settings. Waiting...`,
+        'warning',
+        messageDelayMs
+      );
+    }
+  }
 
   while (messageQueue.length > 0 && now - messageQueue[0].timestamp >= messageDelayMs) {
     const message = messageQueue.shift();
@@ -140,7 +156,19 @@ export function connect(): void {
   websocket.onmessage = (event: MessageEvent) => {
     try {
       const parsedData: ParsedWebSocketData = JSON.parse(event.data as string);
-      messageQueue.push({ timestamp: Date.now(), data: parsedData });
+
+      // Avoid holding a global state to at least show something to the user
+      if (typeof parsedData === 'object' && parsedData !== null && 'R' in parsedData && typeof parsedData.R === 'object') {
+        console.log("Service: global state message, applying immediately (skipping queue).");
+        try {
+          const f1Store = getStore();
+          applyParsedData(parsedData, f1Store);
+        } catch (e) {
+          console.error("Service: Failed to apply global state message:", e, parsedData);
+        }
+      } else {
+        messageQueue.push({ timestamp: Date.now(), data: parsedData });
+      }
     } catch (e) {
       console.error("Service: Failed to parse WebSocket message:", e, event.data);
       try {

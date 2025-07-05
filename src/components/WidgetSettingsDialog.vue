@@ -40,6 +40,19 @@
                 class="w-full"
              />
           </div>
+
+          <div v-if="setting.component === 'Select'" class="p-field select-field">
+             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
+             <Select
+                :id="`${widgetId}-${setting.id}`"
+                v-model="localWidgetConfig[setting.id]"
+                :options="setting.options"
+                placeholder="Select"
+                display="chip"
+                v-bind="setting.props || {}"
+                class="w-full"
+             />
+          </div>
   
           <div v-if="setting.component === 'Dropdown'" class="p-field dropdown-field">
             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
@@ -76,6 +89,7 @@
   import Checkbox from 'primevue/checkbox';
   import Slider from 'primevue/slider';
   import MultiSelect from 'primevue/multiselect';
+  import Select from 'primevue/select';
   import Dropdown from 'primevue/dropdown';
   
   const props = defineProps({

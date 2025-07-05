@@ -79,6 +79,26 @@
         <div v-else class="loading-placeholder">
             <div class="h-full w-full animate-pulse rounded-lg bg-zinc-800" />
         </div>
+        <div v-if="weatherData">
+            <div v-for="(group, position) in groupedIndicators" :key="position">
+                <div v-if="group.length > 0" :class="['weather-overlay', `weather-overlay--${position}`]">
+                    <div v-for="indicator in group" :key="indicator.type" class="weather-item">
+                        <template v-if="indicator.type === 'wind'">
+                            <div class="wind-indicator" :style="{ transform: `rotate(${windRotation}deg)` }">↑</div>
+                            <div class="weather-value">{{ weatherData.WindSpeed }} kph</div>
+                        </template>
+                        <template v-if="indicator.type === 'trackTemp'">
+                            <div class="weather-label">Track</div>
+                            <div class="weather-value">{{ weatherData.TrackTemp }}°C</div>
+                        </template>
+                        <template v-if="indicator.type === 'rainfall'">
+                            <div class="weather-label">Rain</div>
+                            <div class="weather-value">{{ weatherData.Rainfall }}%</div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -108,18 +128,29 @@ const props = withDefaults(defineProps<{
     cornerNumberFontSize?: number;
     nameTagFontSize?: number;
     carDotSize?: number;
+    windIndicatorPosition?: string;
+    trackTempIndicatorPosition?: string;
+    rainfallIndicatorPosition?: string;
 }>(), {
     showCornerNumbers: true,
     useSafetyCarColors: true,
     focusedDrivers: () => [],
     cornerNumberFontSize: 100,
     nameTagFontSize: 100,
-    carDotSize: 100
+    carDotSize: 100,
+    windIndicatorPosition: 'top-left',
+    trackTempIndicatorPosition: 'top-left',
+    rainfallIndicatorPosition: 'top-left',
 });
+
+const positionOptions = [ 'off', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
 
 const settingsDefinition = ref([
   { id: 'showCornerNumbers', label: 'Show corner numbers', type: 'boolean', component: 'Checkbox' },
   { id: 'useSafetyCarColors', label: 'Show safety car', type: 'boolean', component: 'Checkbox' },
+  { id: 'windIndicatorPosition', label: 'Wind Indicator', type: 'string', component: 'Select', options: positionOptions },
+  { id: 'trackTempIndicatorPosition', label: 'Track Temp Indicator', type: 'string', component: 'Select', options: positionOptions },
+  { id: 'rainfallIndicatorPosition', label: 'Rainfall Indicator', type: 'string', component: 'Select', options: positionOptions },
   { id: 'focusedDrivers', label: 'Focused Drivers', type: 'array', options: computed(() => Array.from(f1Store.driversViewModelMap.values()).map(d => d.tla)), component: 'MultiSelect' },
   { id: 'cornerNumberFontSize', label: 'Corner Number Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
   { id: 'nameTagFontSize', label: 'Name Tag Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
@@ -129,10 +160,41 @@ const settingsDefinition = ref([
 defineExpose({ settingsDefinition });
 
 const f1Store = useF1Store();
+const weatherData = computed(() => f1Store.raceData.WeatherData);
 const circuitKey = computed(() => f1Store.raceData.SessionInfo?.Meeting.Circuit.Key);
 const driversViewModelMap = computed(() => f1Store.driversViewModelMap);
 const raceControlMessages = computed(() => f1Store.raceData.RaceControlMessages?.Messages);
 const trackStatus = computed(() => f1Store.raceData.TrackStatus);
+
+const windRotation = computed(() => {
+    if (!weatherData.value) return 0;
+    // Seemed more accurate by eye
+    return parseFloat(weatherData.value.WindDirection) - ROTATION_FIX;
+    // return parseFloat(weatherData.value.WindDirection) - rotation.value;
+});
+
+const groupedIndicators = computed(() => {
+    const groups: { [key: string]: any[] } = {
+        'top-left': [],
+        'top-right': [],
+        'bottom-left': [],
+        'bottom-right': [],
+    };
+
+    if (!weatherData.value) return groups;
+
+    if (props.windIndicatorPosition && props.windIndicatorPosition !== 'off') {
+        groups[props.windIndicatorPosition].push({ type: 'wind' });
+    }
+    if (props.trackTempIndicatorPosition && props.trackTempIndicatorPosition !== 'off') {
+        groups[props.trackTempIndicatorPosition].push({ type: 'trackTemp' });
+    }
+    if (props.rainfallIndicatorPosition && props.rainfallIndicatorPosition !== 'off') {
+        groups[props.rainfallIndicatorPosition].push({ type: 'rainfall' });
+    }
+
+    return groups;
+});
 
 const safetyCar = computed(() => {
     const sc1 = driversViewModelMap.value.get('241');
@@ -258,6 +320,61 @@ watch(circuitKey, loadMap);
     height: 100%;
     background-color: #1a1a1a;
     overflow: hidden;
+    position: relative;
+}
+
+.weather-overlay {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 8px;
+    border-radius: 5px;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9em;
+    z-index: 10;
+}
+
+.weather-overlay--top-left {
+    top: 10px;
+    left: 10px;
+}
+
+.weather-overlay--top-right {
+    top: 10px;
+    right: 10px;
+}
+
+.weather-overlay--bottom-left {
+    bottom: 10px;
+    left: 10px;
+}
+
+.weather-overlay--bottom-right {
+    bottom: 10px;
+    right: 10px;
+}
+
+.weather-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.wind-indicator {
+    font-size: 20px;
+    line-height: 1;
+    transition: transform 0.3s ease;
+}
+
+.weather-label {
+    font-weight: bold;
+}
+
+.weather-value {
+    font-family: 'Courier New', Courier, monospace;
 }
 
 .track-map-svg {

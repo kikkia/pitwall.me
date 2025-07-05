@@ -307,7 +307,7 @@ function getTyreCompoundClass(compound: string): string {
 
 <template>
   <div class="widget tyre-stints-widget" :style="tableStyle">
-    <div v-if="!internalSelectedDriverNumber" class="driver-list-timeline">
+    <TransitionGroup tag="div" name="list" v-if="!internalSelectedDriverNumber" class="driver-list-timeline">
       <div
         v-for="driver in allDriversData"
         :key="driver.racingNumber"
@@ -334,7 +334,7 @@ function getTyreCompoundClass(compound: string): string {
           </div>
         </div>
       </div>
-    </div>
+    </TransitionGroup>
     <div v-else class="graph-view">
       <button @click="goBack" class="back-button">Back to Driver List</button>
       <div class="tyre-stints-graph">
@@ -530,4 +530,20 @@ function getTyreCompoundClass(compound: string): string {
  margin-left: 5px;
  white-space: nowrap;
 }
+  .list-move,
+  .list-enter-active,
+  .list-leave-active {
+    transition: all 0.5s ease;
+  }
+
+  .list-enter-from,
+  .list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  .list-leave-active {
+    position: absolute;
+    width: 100%;
+  }
 </style>

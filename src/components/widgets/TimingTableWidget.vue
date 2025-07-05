@@ -185,9 +185,9 @@ function getTireStyle(driver: DriverViewModel) {
           </template>
         </tr>
       </thead>
-      <tbody>
+      <TransitionGroup tag="tbody" name="list">
         <tr
-          v-for="(driver, index) in driversWithEliminationStatus"
+          v-for="(driver) in driversWithEliminationStatus"
           :key="driver.racingNumber"
           :class="{ 'at-risk-elimination': driver.isAtRiskOfElimination }"
           :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped || driver.retired || driver.isKnockedOut ? 0.5 : 1 }"
@@ -219,10 +219,10 @@ function getTireStyle(driver: DriverViewModel) {
           </template>
         </tr>
         <!-- Empty state -->
-         <tr v-if="drivers.length === 0">
+         <tr v-if="drivers.length === 0" key="empty-state">
             <td :colspan="tableColspan" style="text-align: center;">Waiting for timing data...</td>
         </tr>
-      </tbody>
+      </TransitionGroup>
     </table>
   </div>
 </template>
@@ -242,5 +242,21 @@ function getTireStyle(driver: DriverViewModel) {
 
   .at-risk-elimination td {
     background-color: #4a2a2a !important;
+  }
+  .list-move, 
+  .list-enter-active,
+  .list-leave-active {
+    transition: all 0.5s ease;
+  }
+
+  .list-enter-from,
+  .list-leave-to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  .list-leave-active {
+    position: absolute;
+    width: 100%;
   }
 </style>

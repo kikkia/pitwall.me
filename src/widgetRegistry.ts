@@ -11,7 +11,8 @@ export type WidgetComponentName =
   'TrackMap' |
   'LapCompare' |
   'SpeedTrap' |
-  'Battle';
+  'Battle' |
+  'Weather';
 
 // Map component names (strings) to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -26,6 +27,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'LapCompare': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapCompareWidget.vue'))),
   'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
   'Battle': shallowRef(defineAsyncComponent(() => import('./components/widgets/BattleWidget.vue'))),
+  'Weather': shallowRef(defineAsyncComponent(() => import('./components/widgets/WeatherWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -39,7 +41,17 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100 },
     'LapCompare': { selectedDrivers: [] },
     'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' },
-    'Battle': { threshold: 1.5, messageFontSize: 90, battleForPosition: 1, auto: false }
+    'Battle': { threshold: 1.5, messageFontSize: 90, battleForPosition: 1, auto: false },
+    'Weather': {
+      messageFontSize: 80,
+      showAirTemp: true,
+      showTrackTemp: true,
+      showHumidity: true,
+      showPressure: true,
+      showWindSpeed: true,
+      showWindDirection: true,
+      showRainfall: true
+    }
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -54,6 +66,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'LapCompare': 'Lap Compare',
     'SpeedTrap': 'Speed Trap',
     'Battle': 'Battle for Position',
+    'Weather': 'Weather Conditions',
 };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -67,5 +80,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'TrackMap': 'Shows a map of the track and the positions of the drivers.',
     'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
     'SpeedTrap': 'Displays speed trap data for all drivers.',
-    'Battle': 'Automatically detects and focuses on close on-track battles for position.'
+    'Battle': 'Automatically detects and focuses on close on-track battles for position.',
+    'Weather': 'Displays current weather conditions at the track.'
 };

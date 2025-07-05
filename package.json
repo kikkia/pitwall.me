@@ -11,6 +11,7 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
+    "@iconscout/unicons": "^4.2.0",
     "@primeuix/themes": "^1.0.3",
     "axios": "^1.8.4",
     "canvas-confetti": "^1.9.3",

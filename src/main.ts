@@ -1,3 +1,4 @@
+import '@iconscout/unicons/css/line.css';
 import './assets/main.css'
 import 'primeicons/primeicons.css';
 

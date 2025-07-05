@@ -33,6 +33,7 @@
         style="margin-right: 10px;"
         aria-haspopup="true"
         aria-controls="page-menu"
+        v-if="showDashboardButtons"
       />
       <Button
         :icon="editMode ? 'pi pi-lock-open' : 'pi pi-lock'"

@@ -54,6 +54,21 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     }
 };
 
+export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: number }> = {
+    'TimingTable': { w: 24, h: 28 },
+    'RaceControlMessages': { w: 24, h: 12 },
+    'TrackStatusLED': { w: 12, h: 10 },
+    'SectorTiming': { w: 42, h: 26 },
+    'LapHistory': { w: 20, h: 28 },
+    'DriverCarStats': { w: 24, h: 7 },
+    'TyreStrategy': { w: 20, h: 22 },
+    'TrackMap': { w: 20, h: 13 },
+    'LapCompare': { w: 24, h: 6 },
+    'SpeedTrap': { w: 20, h: 28 },
+    'Battle': { w: 24, h: 12 },
+    'Weather': { w: 43, h:6 },
+};
+
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'TimingTable': 'Live Timing Table',
     'RaceControlMessages': 'Race Control Messages',

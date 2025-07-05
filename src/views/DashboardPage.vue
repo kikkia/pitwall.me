@@ -68,7 +68,7 @@ import WidgetContainer from '../components/WidgetContainer.vue';
 import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import InfoModal from '../components/InfoModal.vue';
-import { widgetComponentMap, defaultWidgetConfigs } from '../widgetRegistry';
+import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '../widgetRegistry';
 
 const toast = useToast();
 
@@ -244,7 +244,8 @@ const handleAddWidget = (widgetComponentName) => {
   const newWidget = {
     id: newWidgetId,
     componentName: widgetComponentName,
-    x: 0, y: 0, w: 20, h: 20, // TODO: Default widget sizes
+    ...defaultWidgetSizes[widgetComponentName],
+    x: 0, y: 0,
     config: { ...defaultWidgetConfigs[widgetComponentName] },
   };
   layouts.value[activePageId.value].push(newWidget);

@@ -240,7 +240,7 @@ const openAddWidgetDialog = () => {
 };
 
 const handleAddWidget = (widgetComponentName) => {
-  const newWidgetId = `${widgetComponentName.toLowerCase()}-${Date.now()}`;
+  const newWidgetId = `${widgetComponentName.toLowerCase()}-${generateWidgetId(4)}`;
   const newWidget = {
     id: newWidgetId,
     componentName: widgetComponentName,
@@ -268,6 +268,16 @@ const handleToggleEditMode = () => {
   }
 };
 
+function generateWidgetId(length) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'; // Define allowed characters
+  let result = '';
+  const charactersLength = characters.length;
+
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 </script>
 
 <style>

@@ -454,17 +454,13 @@ function getTyreCompoundClass(compound: string): string {
   position: relative;
   z-index: 1;
   display: flex;
-  gap: 4px;
+  gap: 1px;
   align-items: center;
-  padding: 2px 8px;
+  padding: 2px 5px;
   border-radius: 10px;
   color: black;
   font-weight: bold;
   font-size: 0.8em;
-}
-
-.stint-laps {
-  font-size: 0.9em;
 }
 
 .graph-view {

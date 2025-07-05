@@ -65,54 +65,54 @@ watch(weatherData, (newVal, oldVal) => {
 <template>
   <div class="widget-wrapper weather-widget" :style="messageStyle">
     <div v-if="weatherData" class="weather-list">
-      <div v-if="props.showAirTemp" class="weather-item" :class="{ 'value-changed': changedStates.AirTemp }">
+      <div v-if="props.showAirTemp" class="weather-item">
         <div class="label-container">
           <i class="uil uil-sun icon"></i>
           <span class="label">Air Temp</span>
         </div>
-        <span class="value">{{ weatherData.AirTemp }}°C</span>
+        <span class="value" :class="{ 'value-changed': changedStates.AirTemp }">{{ weatherData.AirTemp }}°C</span>
       </div>
-      <div v-if="props.showTrackTemp" class="weather-item" :class="{ 'value-changed': changedStates.TrackTemp }">
+      <div v-if="props.showTrackTemp" class="weather-item">
         <div class="label-container">
           <i class="uil uil-temperature-half icon"></i>
           <span class="label">Track Temp</span>
         </div>
-        <span class="value">{{ weatherData.TrackTemp }}°C</span>
+        <span class="value" :class="{ 'value-changed': changedStates.TrackTemp }">{{ weatherData.TrackTemp }}°C</span>
       </div>
-      <div v-if="props.showHumidity" class="weather-item" :class="{ 'value-changed': changedStates.Humidity }">
+      <div v-if="props.showHumidity" class="weather-item">
         <div class="label-container">
           <i class="uil uil-raindrops icon"></i>
           <span class="label">Humidity</span>
         </div>
-        <span class="value">{{ weatherData.Humidity }}%</span>
+        <span class="value" :class="{ 'value-changed': changedStates.Humidity }">{{ weatherData.Humidity }}%</span>
       </div>
-      <div v-if="props.showPressure" class="weather-item" :class="{ 'value-changed': changedStates.Pressure }">
+      <div v-if="props.showPressure" class="weather-item">
         <div class="label-container">
           <i class="uil uil-compress-arrows icon"></i>
           <span class="label">Pressure</span>
         </div>
-        <span class="value">{{ weatherData.Pressure }} hPa</span>
+        <span class="value" :class="{ 'value-changed': changedStates.Pressure }">{{ weatherData.Pressure }} hPa</span>
       </div>
-      <div v-if="props.showWindSpeed" class="weather-item" :class="{ 'value-changed': changedStates.WindSpeed }">
+      <div v-if="props.showWindSpeed" class="weather-item">
         <div class="label-container">
           <i class="uil uil-wind icon"></i>
           <span class="label">Wind Speed</span>
         </div>
-        <span class="value">{{ weatherData.WindSpeed }} kph</span>
+        <span class="value" :class="{ 'value-changed': changedStates.WindSpeed }">{{ weatherData.WindSpeed }} kph</span>
       </div>
-      <div v-if="props.showWindDirection" class="weather-item" :class="{ 'value-changed': changedStates.WindDirection }">
+      <div v-if="props.showWindDirection" class="weather-item">
         <div class="label-container">
           <i class="uil uil-compass icon"></i>
           <span class="label">Direction</span>
         </div>
-        <span class="value">{{ weatherData.WindDirection }}°</span>
+        <span class="value" :class="{ 'value-changed': changedStates.WindDirection }">{{ weatherData.WindDirection }}°</span>
       </div>
-      <div v-if="props.showRainfall" class="weather-item" :class="{ 'value-changed': changedStates.Rainfall }">
+      <div v-if="props.showRainfall" class="weather-item">
         <div class="label-container">
           <i class="uil uil-cloud-showers icon"></i>
           <span class="label">Rainfall</span>
         </div>
-        <span class="value">{{ weatherData.Rainfall }}%</span>
+        <span class="value" :class="{ 'value-changed': changedStates.Rainfall }">{{ weatherData.Rainfall }}%</span>
       </div>
     </div>
     <div v-else class="loading-message">
@@ -186,18 +186,14 @@ watch(weatherData, (newVal, oldVal) => {
   line-height: 1;
 }
 
-.weather-item.value-changed {
-  animation: flash-border 0.7s ease-out;
+.value.value-changed {
+  animation: flash-text 0.7s ease-out;
 }
 
-@keyframes flash-border {
-  0%, 50% {
-    border-color: #00ff41;
-    box-shadow: 0 0 5px #00ff41;
-  }
-  100% {
-    border-color: transparent;
-    box-shadow: none;
+@keyframes flash-text {
+  50% {
+    color: #00ff41;
+    transform: scale(1.1);
   }
 }
 </style>

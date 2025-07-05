@@ -432,7 +432,7 @@ function getTyreCompoundClass(compound: string): string {
   position: relative;
   height: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 

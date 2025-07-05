@@ -208,7 +208,7 @@ export function calculateQualifyingGaps(
       : Infinity;
 
 
-  if (safeDriverTimeMillis === Infinity || leaderTimeMillis === Infinity) {
+  if (leaderTimeMillis === Infinity) {
     return;
   }
 
@@ -222,6 +222,10 @@ export function calculateQualifyingGaps(
     const driverTimeMillis = driver.qualifyingTime?.Value
         ? timeStringToMillis(driver.qualifyingTime.Value)
         : Infinity;
+    if (driverTimeMillis == Infinity) {
+      continue
+    }
+    
     if (driverPositionNum >= eliminationStartPos!) {
       driver.qualiGap = getQualiGap(driverTimeMillis, safeDriverTimeMillis)
     } else {

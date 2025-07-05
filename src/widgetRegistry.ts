@@ -14,7 +14,7 @@ export type WidgetComponentName =
   'Battle' |
   'Weather';
 
-// Map component names (strings) to their actual component definitions
+// Map component names to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'TimingTable': shallowRef(defineAsyncComponent(() => import('./components/widgets/TimingTableWidget.vue'))),
   'RaceControlMessages': shallowRef(defineAsyncComponent(() => import('./components/widgets/RaceControlMessagesWidget.vue'))),

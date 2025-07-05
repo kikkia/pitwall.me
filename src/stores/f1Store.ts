@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { reactive, computed, ref } from 'vue';
-import * as f1WebSocketService from '@/services/websocketService'; 
+import * as f1WebSocketService from '@/services/websocketService';
+import { useSettingsStore } from '@/stores/settingsStore';
 import * as transformer from '@/stores/f1DataTransformer';
 import { calculateQualifyingGaps } from '@/stores/f1DataTransformer';
 import pako from 'pako';
@@ -90,8 +91,18 @@ export const useF1Store = defineStore('f1', () => {
   }
 
   function setInitialState(initialDataR: Partial<RaceData>) {
+    const settingsStore = useSettingsStore();
     console.log("Store Action: Setting initial state...");
     Object.assign(raceData, createInitialRaceData(), initialDataR);
+
+    if (raceData.ExtrapolatedClock?.Utc) {
+      const clockTimestamp = new Date(raceData.ExtrapolatedClock.Utc);
+      if (!isNaN(clockTimestamp.getTime())) {
+        clockTimestamp.setSeconds(clockTimestamp.getSeconds() + settingsStore.websocketDelay);
+        raceData.ExtrapolatedClock.Utc = clockTimestamp.toISOString();
+      }
+    }
+
     currentSessionType.value = raceData.SessionInfo?.Type || '';
     currentQualifyingPart.value = raceData.TimingData?.SessionPart || 0;
 

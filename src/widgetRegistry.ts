@@ -12,7 +12,8 @@ export type WidgetComponentName =
   'LapCompare' |
   'SpeedTrap' |
   'Battle' |
-  'Weather';
+  'Weather' |
+  'ChampionshipPrediction';
 
 // Map component names to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -28,6 +29,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
   'Battle': shallowRef(defineAsyncComponent(() => import('./components/widgets/BattleWidget.vue'))),
   'Weather': shallowRef(defineAsyncComponent(() => import('./components/widgets/WeatherWidget.vue'))),
+  'ChampionshipPrediction': shallowRef(defineAsyncComponent(() => import('./components/widgets/ChampionshipPredictionWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -51,7 +53,8 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
       showWindSpeed: true,
       showWindDirection: true,
       showRainfall: true
-    }
+    },
+    'ChampionshipPrediction': { messageFontSize: 90 },
 };
 
 export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: number }> = {
@@ -67,6 +70,7 @@ export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: num
     'SpeedTrap': { w: 20, h: 28 },
     'Battle': { w: 24, h: 12 },
     'Weather': { w: 43, h:6 },
+    'ChampionshipPrediction': { w: 18, h: 18 },
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -82,6 +86,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'SpeedTrap': 'Speed Trap',
     'Battle': 'Battle for Position',
     'Weather': 'Weather Conditions',
+    'ChampionshipPrediction': 'Championship Prediction',
 };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -96,5 +101,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
     'SpeedTrap': 'Displays speed trap data for all drivers.',
     'Battle': 'Automatically detects and focuses on close on-track battles for position.',
-    'Weather': 'Displays current weather conditions at the track.'
+    'Weather': 'Displays current weather conditions at the track.',
+    'ChampionshipPrediction': 'Displays live championship standings based on race predictions.'
 };

@@ -68,7 +68,7 @@ function handleSettingsClick() {
   position: absolute;
   top: 5px;
   right: 5px; 
-  z-index: 10; 
+  z-index: 20;
   display: flex;
   gap: 4px; 
   opacity: 0; 

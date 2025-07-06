@@ -96,7 +96,7 @@ function processMessageQueue(): void {
 
   if (messageQueue.length > 0 && messageDelayMs > 0) {
     const timeToProcess = messageQueue[0].timestamp + messageDelayMs - now;
-    if (timeToProcess > messageDelayMs * 0.9 && !delayToastShown) { // only force show for the first 10% of delay time
+    if (timeToProcess > 0 && !delayToastShown) { // only force show for the first 10% of delay time
       delayToastShown = true
       const secondsDelayed = (messageDelayMs / 1000).toFixed(1);
       uiStore.showToast(

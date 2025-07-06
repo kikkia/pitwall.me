@@ -24,7 +24,8 @@ import type {
   LapHistory,
   CompletedLap,
   RaceControlMessage,
-  TeamRadioCapture
+  TeamRadioCapture,
+  ChampionshipPrediction
 } from '@/types/dataTypes';
 
 
@@ -46,7 +47,8 @@ const createInitialRaceData = (): RaceData => ({
   TeamRadio: { Captures: [] },
   TyreStintSeries: { Stints: {} },
   LapCount: {} ,
-  LapHistoryMap: {}
+  LapHistoryMap: {},
+  ChampionshipPrediction: { Drivers: {}, Teams: {} }
 });
 
 interface F1StoreState {
@@ -248,11 +250,17 @@ export const useF1Store = defineStore('f1', () => {
         break;
 
       case "TeamRadio":
-        const radioPayload = payload as Partial<TeamRadio>;
+        const radioPayload = payload as { Captures?: TeamRadioCapture[] | Record<string, TeamRadioCapture>, _kf?: boolean };
         if (target.TeamRadio && radioPayload.Captures) {
             if (Array.isArray(radioPayload.Captures)) {
-                target.TeamRadio.Captures.push(...radioPayload.Captures);
+                if (radioPayload._kf) {
+                    // It's a keyframe, so replace the captures
+                    target.TeamRadio.Captures = radioPayload.Captures;
+                } else {
+                    target.TeamRadio.Captures.push(...radioPayload.Captures);
+                }
             } else if (typeof radioPayload.Captures === 'object') {
+                // This is for object-based sparse array updates, which are incremental
                 Object.values(radioPayload.Captures).forEach(cap => {
                     if (cap) target.TeamRadio.Captures.push(cap as TeamRadioCapture);
                 });
@@ -318,6 +326,13 @@ export const useF1Store = defineStore('f1', () => {
             }
             target.LapHistoryMap[RacingNumber].CompletedLaps.push(CompletedLap);
             affectedDriverNumbers.add(RacingNumber);
+        }
+        break;
+
+      case "ChampionshipPrediction":
+        const predictionPayload = payload as Partial<ChampionshipPrediction>;
+        if (target.ChampionshipPrediction && predictionPayload) {
+            target.ChampionshipPrediction = deepMergeObjects(target.ChampionshipPrediction, predictionPayload);
         }
         break;
 

@@ -3,7 +3,7 @@ export type CarData = {
 	"2": number; // kph
 	"3": number; // gear
 	"4": number; // throttle
-	"5": number; // 0/1 braking bool
+	"5": number; // 0/1 braking bool (Might be changing soon progressive)
 	"45": number; // 0/1 drs
 };
 
@@ -258,7 +258,22 @@ export interface ValueWithLap {
   
   export interface TeamRadio {
 	Captures: TeamRadioCapture[];
-  }
+	 }
+	 
+	 export interface ChampionshipPredictionDriver {
+	PredictedPoints?: number;
+	PredictedPosition?: number;
+	 }
+	 
+	 export interface ChampionshipPredictionTeam {
+	PredictedPoints?: number;
+	PredictedPosition?: number;
+	 }
+	 
+	 export interface ChampionshipPrediction {
+	Drivers: Record<string, ChampionshipPredictionDriver>; // Keyed by RacingNumber
+	Teams: Record<string, ChampionshipPredictionTeam>;   // Keyed by Team Name
+	 }
   
   export interface TyreStintSeries {
 	Stints: Record<string, StintData[]>; // Keyed by RacingNumber
@@ -309,6 +324,7 @@ export interface ValueWithLap {
 	CarDataZ: string; // Base64 deflated string
 	PositionZ: string; // Base64 deflated string
 	TeamRadio: TeamRadio;
+	ChampionshipPrediction: ChampionshipPrediction;
 	TyreStintSeries: TyreStintSeries;
 	LapCount: LapCount;
 	LapHistoryMap: Record<string, LapHistory>

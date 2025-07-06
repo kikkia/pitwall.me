@@ -29,10 +29,10 @@
             </defs>
             <rect
                 v-if="finishLine"
-                :x="finishLine.x - 150"
+                :x="finishLine.x - 300"
                 :y="finishLine.y - 50"
-                width="480"
-                height="100"
+                width="700"
+                height="250"
                 fill="url(#checkeredFlag)"
                 stroke="none"
                 :transform="`rotate(${finishLine.startAngle + 90}, ${finishLine.x + 25}, ${finishLine.y})`"

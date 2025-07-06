@@ -113,6 +113,7 @@ const chartData = computed(() => {
     'HARD': '#FFFFFF', // White
     'INTERMEDIATE': '#27AE60', // Green
     'WET': '#2d04e4', // Blue
+    'UNKNOWN': '#808080', // Grey
   };
 
   if (!internalSelectedDriverNumber.value || selectedDriverTyreStints.value.length === 0 || lapHistoryForSelectedDriver.value.length === 0) {
@@ -288,6 +289,7 @@ function formatTyreCompound(compound: string): string {
     case 'HARD': return 'H';
     case 'INTERMEDIATE': return 'I';
     case 'WET': return 'W';
+    case 'UNKNOWN': return '?';
     default: return compound;
   }
 }
@@ -299,6 +301,7 @@ function getTyreCompoundClass(compound: string): string {
     case 'HARD': return 'tyre-hard';
     case 'INTERMEDIATE': return 'tyre-intermediate';
     case 'WET': return 'tyre-wet';
+    case 'UNKNOWN': return 'tyre-unknown';
     default: return '';
   }
 }
@@ -449,6 +452,7 @@ function getTyreCompoundClass(compound: string): string {
 .tyre-hard.stint-line { background-color: #FFFFFF; }
 .tyre-intermediate.stint-line { background-color: #27AE60; }
 .tyre-wet.stint-line { background-color: #2d04e4; }
+.tyre-unknown.stint-line { background-color: #808080; }
 
 .stint-pill {
   position: relative;
@@ -508,6 +512,7 @@ function getTyreCompoundClass(compound: string): string {
 .tyre-hard { background-color: #FFFFFF; }
 .tyre-intermediate { background-color: #27AE60; }
 .tyre-wet { background-color: #2d04e4; }
+.tyre-unknown { background-color: #808080; }
 
 .w-full {
   width: 100%;

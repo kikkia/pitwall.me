@@ -37,7 +37,7 @@ const rotatedPos = computed(() => {
 
 const groupStyle = computed(() => ({
     transform: `translate(${rotatedPos.value.x}px, ${rotatedPos.value.y}px)`,
-    transition: 'transform 1s linear',
+    transition: 'transform 1.7s linear',
 }));
 </script>
 

@@ -28,9 +28,10 @@
         label="Replay"
         @click="openReplayDialog"
         class="p-button-sm p-button-text p-button-primary"
+        :class="{ 'replay-active': isReplaying }"
         style="margin-left: 10px;"
         v-if="showDashboardButtons"
-        :disabled="isSessionActive"
+        :disabled="isSessionActive && !isReplaying"
       />
       <Menu ref="pageMenu" id="page-menu" :model="pageMenuItems" :popup="true" />
       <Button
@@ -91,6 +92,7 @@ import { useEventStore } from '@/stores/eventStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUiStore } from '@/stores/uiStore';
 import { fetchEvents } from '@/services/eventService';
+import { isReplaying } from '@/services/replayService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 import SettingsDialog from './SettingsDialog.vue';
@@ -165,7 +167,11 @@ const socketStatusLabel = computed<string>(() => {
 });
 
 const eventName = computed<string>(() => {
-  return raceData.value.SessionInfo?.Meeting?.Name || 'Loading Event...';
+  let name = raceData.value.SessionInfo?.Meeting?.Name || 'Loading Event...'
+  if (isReplaying) {
+    name = "(Replay) " + name
+  }
+  return name;
 });
 
 const latestSessionStatusInfo = computed<Partial<SessionStatusSeriesEntry>>(() => { 
@@ -387,6 +393,22 @@ onUnmounted(() => {
 
 .app-navbar .p-button.p-button-sm {
   vertical-align: middle;
+}
+
+.replay-active {
+  animation: pulse-green 1.5s infinite;
+}
+
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 123, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 123, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 123, 0);
+  }
 }
 </style>
 

@@ -1,7 +1,7 @@
 import type { F1Event } from '@/types/dataTypes';
 import { useEventStore } from '@/stores/eventStore';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL + "/season";
 
 export async function fetchEvents(): Promise<void> {
   const eventStore = useEventStore();

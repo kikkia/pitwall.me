@@ -23,6 +23,15 @@
     </template>
 
     <template #end>
+      <Button
+        icon="pi pi-replay"
+        label="Replay"
+        @click="openReplayDialog"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-left: 10px;"
+        v-if="showDashboardButtons"
+        :disabled="isSessionActive"
+      />
       <Menu ref="pageMenu" id="page-menu" :model="pageMenuItems" :popup="true" />
       <Button
         :label="activePageName"
@@ -67,6 +76,7 @@
   </Toolbar>
 
   <SettingsDialog :visible="settingsDialogVisible" @update:visible="settingsDialogVisible = $event" />
+  <ReplayDialog :visible="replayDialogVisible" @update:visible="replayDialogVisible = $event" />
 </template>
 
 <script lang="ts" setup>
@@ -84,6 +94,7 @@ import { fetchEvents } from '@/services/eventService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 import SettingsDialog from './SettingsDialog.vue';
+import ReplayDialog from './ReplayDialog.vue';
 
 const props = defineProps({
   showDashboardButtons: {
@@ -141,6 +152,7 @@ const { isConnected, raceData } = storeToRefs(f1Store);
 const eventStore = useEventStore();
 
 const settingsDialogVisible = ref(false);
+const replayDialogVisible = ref(false);
 
 console.log(isConnected)
 console.log(raceData)
@@ -159,6 +171,11 @@ const eventName = computed<string>(() => {
 const latestSessionStatusInfo = computed<Partial<SessionStatusSeriesEntry>>(() => { 
   const statuses = raceData.value.SessionData?.StatusSeries?.filter((st) => st.SessionStatus) || [];
   return statuses.length > 0 ? statuses[statuses.length - 1] : { SessionStatus: "Unknown" };
+});
+
+const isSessionActive = computed(() => {
+  const status = latestSessionStatusInfo.value?.SessionStatus;
+  return status === 'Started' || status === 'Aborted';
 });
 
 const connect = () => {
@@ -274,6 +291,10 @@ const goToSchedulePage = () => {
 
 const openSettingsDialog = () => {
   settingsDialogVisible.value = true;
+};
+
+const openReplayDialog = () => {
+  replayDialogVisible.value = true;
 };
 
 

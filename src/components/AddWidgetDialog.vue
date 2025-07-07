@@ -17,9 +17,6 @@
         <template #title>
           {{ widget.label }}
         </template>
-        <template #subtitle>
-          <i class="pi pi-image widget-icon-placeholder"></i>
-        </template>
         <template #content>
           <p>{{ widget.description }}</p>
         </template>
@@ -61,6 +58,7 @@ const confirmAddWidget = (widgetType: WidgetComponentName) => {
 </script>
 
 <style scoped>
+
 .widget-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -81,13 +79,6 @@ const confirmAddWidget = (widgetType: WidgetComponentName) => {
 }
 
 
-.widget-icon-placeholder {
-  font-size: 3rem;
-  color: var(--text-color-secondary);
-  margin-bottom: 1rem;
-  display: block;
-  text-align: center;
-}
 </style>
 
 <style>

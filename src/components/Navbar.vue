@@ -168,7 +168,7 @@ const socketStatusLabel = computed<string>(() => {
 
 const eventName = computed<string>(() => {
   let name = raceData.value.SessionInfo?.Meeting?.Name || 'Loading Event...'
-  if (isReplaying) {
+  if (isReplaying.value) {
     name = "(Replay) " + name
   }
   return name;

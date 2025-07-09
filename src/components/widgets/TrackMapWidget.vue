@@ -47,18 +47,6 @@
                 :font-size="cornerNumberFontSize"
             />
             <template v-if="centerX && centerY && driversViewModelMap">
-                <SafetyCar
-                    v-if="safetyCar && safetyCar.pos.Z !== 0"
-                    name="Safety Car"
-                    :pos="safetyCar.pos"
-                    :rotation="rotation"
-                    :centerX="centerX"
-                    :centerY="centerY"
-                    :color="safetyCar.color"
-                    :useSafetyCarColors="useSafetyCarColors"
-                    :name-tag-font-size="nameTagFontSize"
-                    :car-dot-size="carDotSize"
-                />
                 <CarDot
                     v-for="driver in activeDrivers"
                     :key="`map.driver.${driver.racingNumber}`"
@@ -110,7 +98,6 @@ import { createSectors, findYellowSectors, getSectorColor, prioritizeColoredSect
 import type { TrackPosition, MapSector } from '@/types/mapTypes';
 import CornerNumber from './trackMap/CornerNumber.vue';
 import CarDot from './trackMap/CarDot.vue';
-import SafetyCar from './trackMap/SafetyCar.vue';
 
 const SPACE = 1000;
 const ROTATION_FIX = 90;
@@ -123,7 +110,6 @@ type Corner = {
 
 const props = withDefaults(defineProps<{
     showCornerNumbers?: boolean;
-    useSafetyCarColors?: boolean;
     focusedDrivers?: string[];
     cornerNumberFontSize?: number;
     nameTagFontSize?: number;
@@ -133,7 +119,6 @@ const props = withDefaults(defineProps<{
     rainfallIndicatorPosition?: string;
 }>(), {
     showCornerNumbers: true,
-    useSafetyCarColors: true,
     focusedDrivers: () => [],
     cornerNumberFontSize: 100,
     nameTagFontSize: 100,
@@ -147,7 +132,6 @@ const positionOptions = [ 'off', 'top-left', 'top-right', 'bottom-left', 'bottom
 
 const settingsDefinition = ref([
   { id: 'showCornerNumbers', label: 'Show corner numbers', type: 'boolean', component: 'Checkbox' },
-  { id: 'useSafetyCarColors', label: 'Show safety car', type: 'boolean', component: 'Checkbox' },
   { id: 'windIndicatorPosition', label: 'Wind Indicator', type: 'string', component: 'Select', options: positionOptions },
   { id: 'trackTempIndicatorPosition', label: 'Track Temp Indicator', type: 'string', component: 'Select', options: positionOptions },
   { id: 'rainfallIndicatorPosition', label: 'Rainfall Indicator', type: 'string', component: 'Select', options: positionOptions },
@@ -213,16 +197,6 @@ const groupedIndicators = computed(() => {
     return groups;
 });
 
-const safetyCar = computed(() => {
-    const sc1 = driversViewModelMap.value.get('241');
-    const sc2 = driversViewModelMap.value.get('242');
-    const sc3 = driversViewModelMap.value.get('243');
-
-    if (sc1 && sc1.posX !== 0 && sc1.posY !== 0) return { pos: { X: sc1.posX, Y: sc1.posY, Z: sc1.posZ }, color: '229971' };
-    if (sc2 && sc2.posX !== 0 && sc2.posY !== 0) return { pos: { X: sc2.posX, Y: sc2.posY, Z: sc2.posZ }, color: '229971' };
-    if (sc3 && sc3.posX !== 0 && sc3.posY !== 0) return { pos: { X: sc3.posX, Y: sc3.posY, Z: sc3.posZ }, color: 'B90F09' };
-    return null;
-});
 
 const bounds = ref<[number, number, number, number] | null>(null);
 const centerX = ref<number | null>(null);

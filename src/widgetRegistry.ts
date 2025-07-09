@@ -14,7 +14,8 @@ export type WidgetComponentName =
   'Battle' |
   'Weather' |
   'ChampionshipPrediction' |
-  'LapTimeChart';
+  'LapTimeChart' |
+  'TeamRadio';
 
 // Map component names to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -32,6 +33,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'Weather': shallowRef(defineAsyncComponent(() => import('./components/widgets/WeatherWidget.vue'))),
   'ChampionshipPrediction': shallowRef(defineAsyncComponent(() => import('./components/widgets/ChampionshipPredictionWidget.vue'))),
   'LapTimeChart': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapTimeChartWidget.vue'))),
+  'TeamRadio': shallowRef(defineAsyncComponent(() => import('./components/widgets/TeamRadioWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -58,6 +60,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
       showRainfall: true
     },
     'ChampionshipPrediction': { messageFontSize: 90 },
+    'TeamRadio': { showTimestamp: true, focusedDrivers: [], focusedTeams: [], messageFontSize: 90 },
 };
 
 export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: number }> = {
@@ -75,6 +78,7 @@ export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: num
     'Battle': { w: 24, h: 12 },
     'Weather': { w: 43, h:6 },
     'ChampionshipPrediction': { w: 18, h: 18 },
+    'TeamRadio': { w: 24, h: 12 },
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -92,6 +96,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'Battle': 'Battle for Position',
     'Weather': 'Weather Conditions',
     'ChampionshipPrediction': 'Championship Prediction',
+    'TeamRadio': 'Team Radio',
 };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -108,5 +113,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'SpeedTrap': 'Displays speed trap data for all drivers.',
     'Battle': 'Automatically detects and focuses on close on-track battles for position.',
     'Weather': 'Displays current weather conditions at the track.',
-    'ChampionshipPrediction': 'Displays live championship standings based on race predictions.'
+    'ChampionshipPrediction': 'Displays live championship standings based on race predictions.',
+    'TeamRadio': 'Listen to team radio messages from drivers and teams.'
 };

@@ -5,7 +5,7 @@ import { useF1Store } from '@/stores/f1Store';
 const f1Store = useF1Store();
 
 // TODO: Standardize this in some shared array
-const selectableCategories = ["Flag", "Sector", "Other", "Drs", "SafetyCar"];
+const selectableCategories = ["Flag", "Sector", "Other", "Drs", "SafetyCar"].map(c => ({ label: c, value: c }));
 
 const props = defineProps({
   showTimestamp: { type: Boolean, default: true },
@@ -44,7 +44,10 @@ const settingsDefinition = ref([
     type: 'array',
     component: 'MultiSelect',
     options: selectableCategories,
-    props: {}
+    props: {
+        optionLabel: 'label',
+        optionValue: 'value'
+    }
   }
 ]);
 

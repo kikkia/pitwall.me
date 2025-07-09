@@ -74,6 +74,7 @@ const settingsDefinition = ref([
     props: {
       optionLabel: 'label',
       optionValue: 'value',
+      selectionLimit: 2,
     },
   },
 ]);

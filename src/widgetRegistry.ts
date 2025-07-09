@@ -13,7 +13,8 @@ export type WidgetComponentName =
   'SpeedTrap' |
   'Battle' |
   'Weather' |
-  'ChampionshipPrediction';
+  'ChampionshipPrediction' |
+  'LapTimeChart';
 
 // Map component names to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -30,6 +31,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'Battle': shallowRef(defineAsyncComponent(() => import('./components/widgets/BattleWidget.vue'))),
   'Weather': shallowRef(defineAsyncComponent(() => import('./components/widgets/WeatherWidget.vue'))),
   'ChampionshipPrediction': shallowRef(defineAsyncComponent(() => import('./components/widgets/ChampionshipPredictionWidget.vue'))),
+  'LapTimeChart': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapTimeChartWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -42,6 +44,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'TyreStrategy': { selectedDriverNumber: null, messageFontSize: 90, ignorePittedLaps: false },
     'TrackMap': { showCornerNumbers: true, useSafetyCarColors: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100, windIndicatorPosition: 'off', trackTempIndicatorPosition: 'off', rainfallIndicatorPosition: 'off' },
     'LapCompare': { selectedDrivers: [] },
+    'LapTimeChart': { selectedDrivers: [], ignorePittedLaps: false, messageFontSize: 90 },
     'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' },
     'Battle': { threshold: 1.5, messageFontSize: 90, battleForPosition: 1, auto: false },
     'Weather': {
@@ -67,6 +70,7 @@ export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: num
     'TyreStrategy': { w: 20, h: 22 },
     'TrackMap': { w: 20, h: 13 },
     'LapCompare': { w: 24, h: 6 },
+    'LapTimeChart': { w: 24, h: 14 },
     'SpeedTrap': { w: 20, h: 28 },
     'Battle': { w: 24, h: 12 },
     'Weather': { w: 43, h:6 },
@@ -83,6 +87,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'TyreStrategy': 'Tyre Strategy',
     'TrackMap': 'Track Map',
     'LapCompare': 'Lap Compare',
+    'LapTimeChart': 'Lap Time Chart',
     'SpeedTrap': 'Speed Trap',
     'Battle': 'Battle for Position',
     'Weather': 'Weather Conditions',
@@ -99,6 +104,7 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'TyreStrategy': 'Displays a graphical overview of each driver\'s tyre strategy throughout the race.',
     'TrackMap': 'Shows a map of the track and the positions of the drivers.',
     'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
+    'LapTimeChart': 'Compares lap times for multiple drivers on a line chart.',
     'SpeedTrap': 'Displays speed trap data for all drivers.',
     'Battle': 'Automatically detects and focuses on close on-track battles for position.',
     'Weather': 'Displays current weather conditions at the track.',

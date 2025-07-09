@@ -151,7 +151,24 @@ const settingsDefinition = ref([
   { id: 'windIndicatorPosition', label: 'Wind Indicator', type: 'string', component: 'Select', options: positionOptions },
   { id: 'trackTempIndicatorPosition', label: 'Track Temp Indicator', type: 'string', component: 'Select', options: positionOptions },
   { id: 'rainfallIndicatorPosition', label: 'Rainfall Indicator', type: 'string', component: 'Select', options: positionOptions },
-  { id: 'focusedDrivers', label: 'Focused Drivers', type: 'array', options: computed(() => Array.from(f1Store.driversViewModelMap.values()).map(d => d.tla)), component: 'MultiSelect' },
+  {
+    id: 'focusedDrivers',
+    label: 'Focused Drivers',
+    type: 'array',
+    component: 'MultiSelect',
+    options: computed(() =>
+      Array.from(f1Store.driversViewModelMap.values()).map(d => ({
+        label: `${d.tla} (${d.racingNumber})`,
+        value: d.tla
+      }))
+    ),
+    props: {
+      optionLabel: 'label',
+      optionValue: 'value',
+      filter: true,
+      placeholder: 'Select Focused Drivers'
+    }
+  },
   { id: 'cornerNumberFontSize', label: 'Corner Number Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
   { id: 'nameTagFontSize', label: 'Name Tag Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
   { id: 'carDotSize', label: 'Car Dot Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },

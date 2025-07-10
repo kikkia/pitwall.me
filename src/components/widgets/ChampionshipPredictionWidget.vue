@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import { timeStringToMillis } from '@/utils/formatUtils';
 
 const f1Store = useF1Store();
 const activeTab = ref<'drivers' | 'teams'>('drivers');
@@ -34,16 +35,6 @@ const teamPointsFromRace = computed(() => {
 const racePoints = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const sprintPoints = [8, 7, 6, 5, 4, 3, 2, 1];
 
-function parseLapTime(lapTime: string): number {
-  if (!lapTime) return Infinity;
-  const parts = lapTime.split(':');
-  if (parts.length === 2) {
-    const minutes = parseInt(parts[0], 10);
-    const seconds = parseFloat(parts[1]);
-    return minutes * 60 + seconds;
-  }
-  return parseFloat(lapTime);
-}
 
 const fastestLapDriver = computed(() => {
     let fastestTime = Infinity;
@@ -51,7 +42,7 @@ const fastestLapDriver = computed(() => {
 
     for (const driver of f1Store.driversViewModelMap.values()) {
         if (driver.bestLapTime?.Value) {
-            const time = parseLapTime(driver.bestLapTime.Value);
+            const time = timeStringToMillis(driver.bestLapTime.Value);
             if (time < fastestTime) {
                 fastestTime = time;
                 fastestDriverNum = driver.racingNumber;

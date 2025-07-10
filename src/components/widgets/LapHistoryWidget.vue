@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import { formatLapTime } from '@/utils/formatUtils';
+import { getMinisectorClass, getLastTimeClass } from '@/utils/sectorFormattingUtils';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Dropdown from 'primevue/dropdown';
@@ -68,38 +70,7 @@ const tableStyle = computed(() => ({
     fontSize: `${props.messageFontSize}%`
 }));
 
-function formatTime(timeValue: string | null | undefined): string {
-  if (timeValue && timeValue.includes(':') && timeValue.match(/\.\d$/)) {
-      timeValue += '0';
-  } else if (timeValue && !timeValue.includes(':') && timeValue.match(/\.\d$/)) {
-      timeValue += '0';
-  }
-  return timeValue || '-.--';
-}
 
-function getMinisectorClass(segmentStatus: number | undefined): string {
-  switch (segmentStatus) {
-    case 2048: return 'minisector-set';
-    case 0: return 'minisector-stopped';
-    case 2049: return 'minisector-pb';
-    case 2051: return 'minisector-ob';
-    case 2064: return 'minisector-pit';
-    default: return 'minisector-unknown';
-  }
-}
-
-function getLapTimeClass(lap: any): string {
-  if (lap.OverallFastest) return 'sector-overall-best';
-  if (lap.PersonalFastest) return 'sector-personal-best';
-  return '';
-}
-
-function getSectorTimeClass(sector: any): string {
-  if (!sector) return '';
-  if (sector.OverallFastest) return 'sector-overall-best';
-  if (sector.PersonalFastest) return 'sector-personal-best';
-  return '';
-}
 
 function handleDriverSelection(event: any) {
   internalSelectedDriverNumber.value = event.value;
@@ -136,8 +107,8 @@ function handleDriverSelection(event: any) {
         <Column field="Lap" header="Lap" :style="{ width: '50px' }" frozen />
         <Column field="LapTime" header="Lap Time">
           <template #body="slotProps">
-            <span :class="['time-value', getLapTimeClass(slotProps.data)]">
-              {{ formatTime(slotProps.data.LapTime) }}
+            <span :class="['time-value', getLastTimeClass(slotProps.data)]">
+              {{ formatLapTime(slotProps.data.LapTime) }}
             </span>
           </template>
         </Column>
@@ -145,8 +116,8 @@ function handleDriverSelection(event: any) {
           <template #body="slotProps">
             <div class="time-cell-content">
               <div class="time-row">
-                <span :class="['time-value', getSectorTimeClass(slotProps.data.Sectors?.[0])]">
-                  {{ formatTime(slotProps.data.Sectors?.[0]?.Value) }}
+                <span :class="['time-value', getLastTimeClass(slotProps.data.Sectors?.[0])]">
+                  {{ formatLapTime(slotProps.data.Sectors?.[0]?.Value) }}
                 </span>
               </div>
               <div class="minisector-row">
@@ -165,8 +136,8 @@ function handleDriverSelection(event: any) {
           <template #body="slotProps">
             <div class="time-cell-content">
               <div class="time-row">
-                <span :class="['time-value', getSectorTimeClass(slotProps.data.Sectors?.[1])]">
-                  {{ formatTime(slotProps.data.Sectors?.[1]?.Value) }}
+                <span :class="['time-value', getLastTimeClass(slotProps.data.Sectors?.[1])]">
+                  {{ formatLapTime(slotProps.data.Sectors?.[1]?.Value) }}
                 </span>
               </div>
               <div class="minisector-row">
@@ -185,8 +156,8 @@ function handleDriverSelection(event: any) {
           <template #body="slotProps">
             <div class="time-cell-content">
               <div class="time-row">
-                <span :class="['time-value', getSectorTimeClass(slotProps.data.Sectors?.[2])]">
-                  {{ formatTime(slotProps.data.Sectors?.[2]?.Value) }}
+                <span :class="['time-value', getLastTimeClass(slotProps.data.Sectors?.[2])]">
+                  {{ formatLapTime(slotProps.data.Sectors?.[2]?.Value) }}
                 </span>
               </div>
               <div class="minisector-row">

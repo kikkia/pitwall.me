@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import { timeStringToMillis, formatLapTime } from '@/utils/formatUtils';
 import Chart from 'primevue/chart';
 import MultiSelect from 'primevue/multiselect';
 
@@ -70,7 +71,7 @@ const chartData = computed(() => {
                 return null;
             }
             return {
-                time: parseLapTime(lap.LapTime),
+                time: timeStringToMillis(lap.LapTime),
                 tyre: lap.TyreCompound
             };
         }
@@ -84,7 +85,7 @@ const chartData = computed(() => {
     return {
         label: driverInfo?.tla ?? driverNumber,
         racingNumber: driverNumber,
-        data: pointData.map(p => p ? p.time : null),
+        data: pointData.map(p => p ? p.time / 1000 : null),
         borderColor: teamColour,
         borderDash: usageCount > 0 ? [5, 5] : [],
         fill: false,
@@ -123,7 +124,7 @@ const chartOptions = computed(() => ({
                     label += ': ';
                 }
                 if (context.parsed.y !== null) {
-                    label += formatSecondsToLapTime(context.parsed.y);
+                    label += formatLapTime(context.parsed.y * 1000);
                 }
 
                 const driverNumber = context.dataset.racingNumber;
@@ -160,7 +161,7 @@ const chartOptions = computed(() => ({
       ticks: {
         color: '#ddd',
         callback: function(value: any) {
-          return formatSecondsToLapTime(value);
+          return formatLapTime(value * 1000);
         }
       },
       grid: { color: '#444' }
@@ -214,23 +215,6 @@ function getTyreCompoundColor(compound: string): string {
     }
 }
 
-function parseLapTime(lapTime: string): number | null {
-  if (!lapTime || lapTime === "N/A") return null;
-  const parts = lapTime.split(':');
-  if (parts.length === 2) {
-    const minutes = parseInt(parts[0], 10);
-    const seconds = parseFloat(parts[1]);
-    return minutes * 60 + seconds;
-  }
-  return parseFloat(lapTime);
-}
-
-function formatSecondsToLapTime(totalSeconds: number): string {
-  if (isNaN(totalSeconds) || totalSeconds === null) return '-.--';
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toFixed(3).padStart(6, '0')}`;
-}
 
 function handleDriverSelection(event: any) {
   // This is for the initial selection, settings are handled via props

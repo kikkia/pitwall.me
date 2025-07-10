@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import { timeStringToMillis } from '@/utils/formatUtils';
 import type { DriverViewModel } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
@@ -122,26 +123,13 @@ const handleDriverClick = (driver: DriverViewModel) => {
   }
 };
 
-const parseLapTime = (time: string | undefined): number | null => {
-    if (!time || typeof time !== 'string') return null;
-
-    const parts = time.split(':');
-    let seconds = 0;
-    if (parts.length === 2) {
-        seconds += parseInt(parts[0], 10) * 60;
-        seconds += parseFloat(parts[1]);
-    } else {
-        seconds = parseFloat(time);
-    }
-    return isNaN(seconds) ? null : seconds;
-}
 
 const parseTimeToSeconds = (time: string | undefined, isQuali: boolean): number | null => {
   if (!time) return 0; // Leader is 0
   if (typeof time !== 'string') return null;
   
   if (isQuali) {
-    return parseLapTime(time);
+    return timeStringToMillis(time);
   }
 
   if (time.toLowerCase().includes('lap')) return null;

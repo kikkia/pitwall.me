@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
+import { timeStringToMillis, formatLapTime } from '@/utils/formatUtils';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Chart from 'primevue/chart'; 
@@ -150,7 +151,7 @@ const chartData = computed(() => {
           pointBackgroundColors.push('transparent');
           pointRadii.push(0);
         } else {
-          data.push(parseLapTime(lap.LapTime));
+          data.push(timeStringToMillis(lap.LapTime));
           if (lap.Pitted) {
             pointBackgroundColors.push('#2196F3');
             pointRadii.push(5); 
@@ -221,7 +222,7 @@ const chartOptions = computed(() => ({
       ticks: {
         color: '#ddd',
         callback: function(value: any) {
-          return formatSecondsToLapTime(value);
+          return formatLapTime(value);
         }
       },
       grid: {
@@ -231,23 +232,6 @@ const chartOptions = computed(() => ({
   }
 }));
 
-function parseLapTime(lapTime: string): number {
-  if (!lapTime) return 0;
-  const parts = lapTime.split(':');
-  if (parts.length === 2) {
-    const minutes = parseInt(parts[0], 10);
-    const seconds = parseFloat(parts[1]);
-    return minutes * 60 + seconds;
-  }
-  return parseFloat(lapTime);
-}
-
-function formatSecondsToLapTime(totalSeconds: number): string {
-  if (isNaN(totalSeconds) || totalSeconds === 0) return '-.--';
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toFixed(3).padStart(6, '0')}`;
-}
 
 const settingsDefinition = computed(() => {
   return [

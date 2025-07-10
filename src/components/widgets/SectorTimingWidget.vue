@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
-import { timeStringToMillis } from '@/utils/formatUtils';
+import { timeStringToMillis, formatLapTime } from '@/utils/formatUtils';
+import { getMinisectorClass, getLastTimeClass, getBestTimeClass } from '@/utils/sectorFormattingUtils';
 
 const f1Store = useF1Store();
 
@@ -125,44 +126,7 @@ const tableStyle = computed(() => ({
     fontSize: `${props.messageFontSize}%`
 }));
 
-function formatTime(timeValue: string | null | undefined): string {
-  // Pad single-digit seconds with a leading zero if needed for alignment
-  if (timeValue && timeValue.includes(':') && timeValue.match(/\.\d$/)) {
-      // Handle M:SS.s -> M:SS.s0
-      timeValue += '0';
-  } else if (timeValue && !timeValue.includes(':') && timeValue.match(/\.\d$/)) {
-      // Handle SS.s -> SS.s0
-      timeValue += '0';
-  }
-  return timeValue || '-.--';
-}
 
-function getMinisectorClass(segmentStatus: number | undefined): string {
-  switch (segmentStatus) {
-    case 2048: return 'minisector-set'; 
-    case 0: return 'minisector-stopped'; 
-    case 2049: return 'minisector-pb'; 
-    case 2051: return 'minisector-ob';
-    case 2064: return 'minisector-pit';
-    default: return 'minisector-unknown'; 
-  }
-}
-
-// Gets class for the LAST sector/lap time span
-function getLastTimeClass(timeData: any | null | undefined): string {
-  if (!timeData) return '';
-  if (timeData.OverallFastest) return 'sector-overall-best';
-  if (timeData.PersonalFastest) return 'sector-personal-best';
-  return '';
-}
-
-// Gets class for the BEST sector/lap time span
-function getBestTimeClass(timeData: any | null | undefined): string {
-  // Best time only gets purple highlight if it's overall best
-  if (!timeData) return '';
-  if (timeData.Position == 1) return 'sector-overall-best';
-  return '';
-}
 
 </script>
 
@@ -200,10 +164,10 @@ function getBestTimeClass(timeData: any | null | undefined): string {
             <div class="time-cell-content">
               <div class="time-row">
                 <span v-if="props.showLastLap" :class="['time-value last-time', getLastTimeClass(driver.lastLapTime)]">
-                  {{ formatTime(driver.lastLapTime?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.lastLapTime?.Value)) }}
                 </span>
                 <span v-if="props.showBestLap" :class="['time-value best-time', getBestTimeClass(driver.personalBestLap)]">
-                  {{ formatTime(driver.personalBestLap?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.personalBestLap?.Value)) }}
                 </span>
               </div>
             </div>
@@ -212,11 +176,11 @@ function getBestTimeClass(timeData: any | null | undefined): string {
             <div class="time-cell-content">
               <div class="time-row">
                 <span v-if="props.showLastSectors" :class="['time-value last-time', getLastTimeClass(driver.sectors?.[0])]">
-                  {{ formatTime(driver.sectors?.[0]?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.sectors?.[0]?.Value)) }}
                 </span>
                 <span v-if="props.showLastSectors && props.showBestSectors">/</span>
                 <span v-if="props.showBestSectors" :class="['time-value best-time', getBestTimeClass(driver.bestSectors?.[0])]">
-                  {{ formatTime(driver.bestSectors?.[0]?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.bestSectors?.[0]?.Value)) }}
                 </span>
               </div>
               <div v-if="props.showMinisectors" class="minisector-row">
@@ -230,11 +194,11 @@ function getBestTimeClass(timeData: any | null | undefined): string {
             <div class="time-cell-content">
               <div class="time-row">
                 <span v-if="props.showLastSectors" :class="['time-value last-time', getLastTimeClass(driver.sectors?.[1])]">
-                  {{ formatTime(driver.sectors?.[1]?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.sectors?.[1]?.Value)) }}
                 </span>
                 <span v-if="props.showLastSectors && props.showBestSectors">/</span>
                 <span v-if="props.showBestSectors" :class="['time-value best-time', getBestTimeClass(driver.bestSectors?.[1])]">
-                  {{ formatTime(driver.bestSectors?.[1]?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.bestSectors?.[1]?.Value)) }}
                 </span>
               </div>
               <div v-if="props.showMinisectors" class="minisector-row">
@@ -248,11 +212,11 @@ function getBestTimeClass(timeData: any | null | undefined): string {
             <div class="time-cell-content">
               <div class="time-row">
                 <span v-if="props.showLastSectors" :class="['time-value last-time', getLastTimeClass(driver.sectors?.[2])]">
-                  {{ formatTime(driver.sectors?.[2]?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.sectors?.[2]?.Value)) }}
                 </span>
                 <span v-if="props.showLastSectors && props.showBestSectors">/</span>
                 <span v-if="props.showBestSectors" :class="['time-value best-time', getBestTimeClass(driver.bestSectors?.[2])]">
-                  {{ formatTime(driver.bestSectors?.[2]?.Value) }}
+                  {{ formatLapTime(timeStringToMillis(driver.bestSectors?.[2]?.Value)) }}
                 </span>
               </div>
               <div v-if="props.showMinisectors" class="minisector-row">

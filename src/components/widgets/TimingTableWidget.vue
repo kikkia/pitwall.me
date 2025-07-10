@@ -159,6 +159,12 @@ function getTireStyle(driver: DriverViewModel) {
   };
 }
 
+function getTyreAge(driver: DriverViewModel) {
+  if (driver.currentStint && !isQualifying.value) {
+    return driver.currentStint.totalLaps;
+  }
+  return null;
+}
 </script>
 
 <template>
@@ -203,7 +209,10 @@ function getTireStyle(driver: DriverViewModel) {
           </td>
           <td v-if="showNumber">{{ driver.racingNumber }}</td>
           <td>{{ driver.tla }}</td>
-          <td v-if="showTire" :style="getTireStyle(driver)">{{ driver.currentStint?.compound?.charAt(0) || '' }}</td>
+          <td v-if="showTire" :style="getTireStyle(driver)">
+            {{ driver.currentStint?.compound?.charAt(0) || '' }}
+            <span v-if="getTyreAge(driver) !== null" class="tyre-age"> ({{ getTyreAge(driver) }})</span>
+          </td>
           <template v-if="isQualifying">
             <td>{{ driver.qualifyingTime?.Value || '-' }}</td>
             <td>{{ driver.qualiGap || '-' }}</td>
@@ -232,6 +241,10 @@ function getTireStyle(driver: DriverViewModel) {
   th, td { padding: 2px 4px; text-align: left; border-bottom: 1px solid #444; white-space: nowrap; }
   th { background-color: #333; color: #eee; font-weight: bold; }
   td { background-color: #222; color: #ddd; }
+  .tyre-age {
+    color: #aaa;
+    font-size: 0.8em;
+  }
   tr:nth-child(even) td { background-color: #282828; }
   tr[style*="opacity: 0.5"] td { color: #888; }
 

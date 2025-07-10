@@ -384,3 +384,12 @@ export interface ValueWithLap {
 	qualiInterval: string;
 	qualiGap: string;
 }
+
+export interface TrackInfo {
+  lon: number;
+  lat: number;
+  location: string;
+  name: string;
+  id: string;
+  pitDelta: number;
+}

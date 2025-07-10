@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
-import { reactive, computed, ref } from 'vue';
+import { reactive, computed, ref, watch } from 'vue';
 import * as f1WebSocketService from '@/services/websocketService';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { fetchTrackInfo } from '@/services/trackService';
 import * as transformer from '@/stores/f1DataTransformer';
 import { calculateQualifyingGaps } from '@/stores/f1DataTransformer';
 import pako from 'pako';
@@ -65,6 +66,15 @@ export const useF1Store = defineStore('f1', () => {
   const driversViewModelMap = reactive<Map<string, DriverViewModel>>(new Map<string, DriverViewModel>());
   const currentSessionType = ref<'Race' | 'Qualifying' | 'Practice' | ''>('');
   const currentQualifyingPart = ref<number>(0);
+  const currentCircuitShortName = ref<string | null>(null);
+
+  watch(() => raceData.SessionInfo?.Meeting.Circuit.ShortName, (newShortName, oldShortName) => {
+    if (newShortName && newShortName !== oldShortName) {
+      console.log(`Circuit changed from ${oldShortName} to ${newShortName}. Fetching new track info.`);
+      fetchTrackInfo(newShortName);
+      currentCircuitShortName.value = newShortName;
+    }
+  }, { deep: true, immediate: true });
 
   const sortedDriversViewModel = computed<DriverViewModel[]>(() => {
     const drivers = Array.from(driversViewModelMap.values());
@@ -114,6 +124,8 @@ export const useF1Store = defineStore('f1', () => {
     if (currentSessionType.value === 'Qualifying') {
       calculateQualifyingGaps(driversViewModelMap, raceData);
     }
+    
+
     console.log("Store Action: Initial state applied.");
   }
 
@@ -164,6 +176,7 @@ export const useF1Store = defineStore('f1', () => {
           target.SessionInfo = payload;
           currentSessionType.value = target.SessionInfo?.Type || '';
         }
+
         break;
       case "TopThree": // TopThree has Lines array
          if (payload && target.TopThree) {

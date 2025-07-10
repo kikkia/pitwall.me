@@ -109,6 +109,86 @@ defineExpose({
   settingsDefinition
 });
 
+const selectedDriverNumber = ref<string | null>(null);
+
+const handleDriverClick = (driver: DriverViewModel) => {
+  if (driver.stopped || driver.retired || driver.isKnockedOut) {
+    return;
+  }
+  if (selectedDriverNumber.value === driver.racingNumber) {
+    selectedDriverNumber.value = null;
+  } else {
+    selectedDriverNumber.value = driver.racingNumber;
+  }
+};
+
+const parseLapTime = (time: string | undefined): number | null => {
+    if (!time || typeof time !== 'string') return null;
+
+    const parts = time.split(':');
+    let seconds = 0;
+    if (parts.length === 2) {
+        seconds += parseInt(parts[0], 10) * 60;
+        seconds += parseFloat(parts[1]);
+    } else {
+        seconds = parseFloat(time);
+    }
+    return isNaN(seconds) ? null : seconds;
+}
+
+const parseTimeToSeconds = (time: string | undefined, isQuali: boolean): number | null => {
+  if (!time) return 0; // Leader is 0
+  if (typeof time !== 'string') return null;
+  
+  if (isQuali) {
+    return parseLapTime(time);
+  }
+
+  if (time.toLowerCase().includes('lap')) return null;
+  const parsed = parseFloat(time);
+  return isNaN(parsed) ? null : parsed;
+};
+
+const driversForTable = computed(() => {
+    const baseDrivers = driversWithEliminationStatus.value;
+
+    if (!selectedDriverNumber.value) {
+        // No driver selected, return normal data
+        return baseDrivers.map(d => ({
+             ...d,
+             displayInterval: isQualifying.value ? d.qualiInterval : d.gapToAhead
+        }));
+    }
+
+    const selectedDriver = baseDrivers.find(d => d.racingNumber === selectedDriverNumber.value);
+    if (!selectedDriver) {
+        // Should not happen, but as a fallback
+        return baseDrivers.map(d => ({ ...d, displayInterval: isQualifying.value ? d.qualiInterval : d.gapToAhead }));
+    }
+
+    const selectedDriverTimeSource = isQualifying.value ? selectedDriver.qualifyingTime?.Value : selectedDriver.gapToLeader;
+    const selectedDriverTimeSeconds = parseTimeToSeconds(selectedDriverTimeSource, isQualifying.value);
+
+    return baseDrivers.map(driver => {
+        let displayInterval = isQualifying.value ? driver.qualiInterval : driver.gapToAhead; // Default value
+
+        if (selectedDriverTimeSeconds !== null) {
+            const driverTimeSource = isQualifying.value ? driver.qualifyingTime?.Value : driver.gapToLeader;
+            const driverTimeSeconds = parseTimeToSeconds(driverTimeSource, isQualifying.value);
+
+            if (driverTimeSeconds !== null) {
+                if (driver.racingNumber === selectedDriverNumber.value) {
+                    displayInterval = '-';
+                } else {
+                    const interval = driverTimeSeconds - selectedDriverTimeSeconds;
+                    displayInterval = (interval > 0 ? '+' : '') + interval.toFixed(3);
+                }
+            }
+        }
+        return { ...driver, displayInterval };
+    });
+});
+
 const tableStyle = computed(() => ({
     fontSize: `${props.messageFontSize}%`
 }));
@@ -193,10 +273,15 @@ function getTyreAge(driver: DriverViewModel) {
       </thead>
       <TransitionGroup tag="tbody" name="list">
         <tr
-          v-for="(driver) in driversWithEliminationStatus"
+          v-for="(driver) in driversForTable"
           :key="driver.racingNumber"
-          :class="{ 'at-risk-elimination': driver.isAtRiskOfElimination }"
-          :style="{ borderLeft: `5px solid #${driver.teamColour}`, opacity: driver.stopped || driver.retired || driver.isKnockedOut ? 0.5 : 1 }"
+          :class="{ 'at-risk-elimination': driver.isAtRiskOfElimination, 'selected-driver': driver.racingNumber === selectedDriverNumber }"
+          @click="handleDriverClick(driver)"
+          :style="{
+            borderLeft: `5px solid #${driver.teamColour}`,
+            opacity: driver.stopped || driver.retired || driver.isKnockedOut ? 0.5 : 1,
+            cursor: (driver.stopped || driver.retired || driver.isKnockedOut) ? 'default' : 'pointer'
+          }"
         >
           <td>
             <template v-if="isQualifying">
@@ -216,14 +301,14 @@ function getTyreAge(driver: DriverViewModel) {
           <template v-if="isQualifying">
             <td>{{ driver.qualifyingTime?.Value || '-' }}</td>
             <td>{{ driver.qualiGap || '-' }}</td>
-            <td>{{ driver.qualiInterval || '-' }}</td>
+            <td>{{ driver.displayInterval || '-' }}</td>
             <td>{{ driver.inPit ? "In Pits" : '' }}</td>
           </template>
           <template v-else>
             <td v-if="showBest">{{ driver.bestLapTime?.Value || '-' }}</td>
             <td v-if="showLast">{{ driver.lastLapTime?.Value || '-' }}</td>
             <td v-if="showGap">{{ driver.gapToLeader || '-' }}</td>
-            <td v-if="showInterval">{{ driver.gapToAhead || '-' }}</td>
+            <td v-if="showInterval">{{ driver.displayInterval || '-' }}</td>
             <td v-if="showPitstopCount">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
           </template>
         </tr>
@@ -255,6 +340,10 @@ function getTyreAge(driver: DriverViewModel) {
 
   .at-risk-elimination td {
     background-color: #4a2a2a !important;
+  }
+
+  .selected-driver td {
+    background-color: rgba(247, 0, 255, 0.733) !important;
   }
   .list-move, 
   .list-enter-active,

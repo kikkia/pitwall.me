@@ -1,11 +1,13 @@
+import { MiniSectorStatus } from "@/types/dataTypes";
+
 export function getMinisectorClass(segmentStatus: number | undefined): string {
   switch (segmentStatus) {
-    case 2048: return 'minisector-set'; 
-    case 0: return 'minisector-stopped'; 
-    case 2049: return 'minisector-pb'; 
-    case 2051: return 'minisector-ob';
-    case 2064: return 'minisector-pit';
-    default: return 'minisector-unknown'; 
+    case MiniSectorStatus.Set: return 'minisector-set';
+    case MiniSectorStatus.Unset: return 'minisector-stopped';
+    case MiniSectorStatus.PersonalBest: return 'minisector-pb';
+    case MiniSectorStatus.OverallFastest: return 'minisector-ob';
+    case MiniSectorStatus.InPits: return 'minisector-pit';
+    default: return 'minisector-unknown';
   }
 }
 

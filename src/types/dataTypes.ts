@@ -3,6 +3,7 @@ export enum MiniSectorStatus {
   PersonalBest = 2049,
   Set = 2051,
   InPits = 2064,
+  Unset = 0,
 }
 
 export type CarData = {

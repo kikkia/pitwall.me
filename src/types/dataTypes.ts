@@ -375,6 +375,7 @@ export interface ValueWithLap {
 	posX: number;
 	posY: number;
 	posZ: number;
+	lastLapCompleted: number | null;
 
 	// Qualifying specific
 	isQualifying: boolean;

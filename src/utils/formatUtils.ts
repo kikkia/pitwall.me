@@ -15,14 +15,14 @@ export function timeStringToMillis(timeStr: string | null | undefined): number {
 
   try {
     if (parts.length === 3) { // HH:MM:SS.ms
-        millis += parseInt(parts[0], 10) * 60 * 60 * 1000; // Hours
-        millis += parseInt(parts[1], 10) * 60 * 1000;    // Minutes
-        millis += parseFloat(parts[2]) * 1000;           // Seconds
+        millis += parseInt(parts[0], 10) * 60 * 60 * 1000; 
+        millis += parseInt(parts[1], 10) * 60 * 1000;    
+        millis += parseFloat(parts[2]) * 1000;          
     } else if (parts.length === 2) { // MM:SS.ms
-      millis += parseInt(parts[0], 10) * 60 * 1000; // Minutes
-      millis += parseFloat(parts[1]) * 1000;        // Seconds
+      millis += parseInt(parts[0], 10) * 60 * 1000;
+      millis += parseFloat(parts[1]) * 1000;      
     } else if (parts.length === 1) { // SS.ms
-      millis += parseFloat(parts[0]) * 1000;        // Seconds
+      millis += parseFloat(parts[0]) * 1000;      
     } else {
       return Infinity; // Invalid format
     }
@@ -93,4 +93,25 @@ export function formatDiff(diffMillis: number | null | undefined): string {
   const formattedMs = String(ms).padStart(3, '0');
 
   return `${sign}${formattedSeconds}.${formattedMs}`;
+}
+
+/**
+ * Converts milliseconds to a formatted live time string (MM:SS.d).
+ * @param millis The time in milliseconds.
+ * @returns Formatted time string with one decimal place.
+ */
+export function formatLiveTime(millis: number | null | undefined): string {
+  if (millis === null || millis === undefined || millis === Infinity) {
+    return '-';
+  }
+  const totalSeconds = millis / 1000;
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  const tenths = Math.floor((totalSeconds - Math.floor(totalSeconds)) * 10);
+
+  const formattedMinutes = minutes > 0 ? `${minutes}:` : '';
+  const formattedSeconds = minutes > 0 ? String(seconds).padStart(2, '0') : String(seconds);
+  const formattedTenths = String(tenths);
+
+  return `${formattedMinutes}${formattedSeconds}.${formattedTenths}`;
 }

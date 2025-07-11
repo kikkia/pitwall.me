@@ -338,6 +338,13 @@ export const useF1Store = defineStore('f1', () => {
                 target.LapHistoryMap[RacingNumber] = { RacingNumber: RacingNumber, CompletedLaps: [] };
             }
             target.LapHistoryMap[RacingNumber].CompletedLaps.push(CompletedLap);
+            
+            // Update lastLapCompleted timestamp
+            const vm = driversViewModelMap.get(RacingNumber);
+            if (vm) {
+                vm.lastLapCompleted = Date.now();
+            }
+
             affectedDriverNumbers.add(RacingNumber);
         }
         break;

@@ -16,7 +16,8 @@ export type WidgetComponentName =
   'ChampionshipPrediction' |
   'LapTimeChart' |
   'TeamRadio' |
-  'PitstopStrategy';
+  'PitstopStrategy' |
+  'FlyingLap';
 
 // Map component names to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -36,6 +37,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'LapTimeChart': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapTimeChartWidget.vue'))),
   'TeamRadio': shallowRef(defineAsyncComponent(() => import('./components/widgets/TeamRadioWidget.vue'))),
   'PitstopStrategy': shallowRef(defineAsyncComponent(() => import('./components/widgets/PitstopStrategyWidget.vue'))),
+  'FlyingLap': shallowRef(defineAsyncComponent(() => import('./components/widgets/FlyingLapWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -64,6 +66,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'ChampionshipPrediction': { messageFontSize: 90 },
     'TeamRadio': { showTimestamp: true, focusedDrivers: [], focusedTeams: [], messageFontSize: 90 },
     'PitstopStrategy': { messageFontSize: 90 },
+    'FlyingLap': { selectedDriverNumber: null, auto: true, messageFontSize: 90 },
 };
 
 export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: number }> = {
@@ -83,6 +86,7 @@ export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: num
     'ChampionshipPrediction': { w: 18, h: 18 },
     'TeamRadio': { w: 24, h: 12 },
     'PitstopStrategy': { w: 18, h: 10 },
+    'FlyingLap': { w: 24, h: 10 },
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -102,6 +106,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'ChampionshipPrediction': 'Championship Prediction',
     'TeamRadio': 'Team Radio',
     'PitstopStrategy': 'Pitstop Strategy',
+    'FlyingLap': 'Flying Lap',
   };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -120,5 +125,6 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'Weather': 'Displays current weather conditions at the track.',
     'ChampionshipPrediction': 'Displays live championship standings based on race predictions.',
     'TeamRadio': 'Listen to team radio messages from drivers and teams.',
-    'PitstopStrategy': 'Visualize pitstop strategy, identifying traffic and risks of under/overcuts.'
+    'PitstopStrategy': 'Visualize pitstop strategy, identifying traffic and risks of under/overcuts.',
+    'FlyingLap': 'Highlights a driver on a flying lap, showing sector progress and deltas.'
   };

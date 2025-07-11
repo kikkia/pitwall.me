@@ -1,0 +1,514 @@
+<script setup lang="ts">
+import { ref, computed, watch, onUnmounted, onMounted } from 'vue';
+import { useF1Store } from '@/stores/f1Store';
+import { useSettingsStore } from '@/stores/settingsStore';
+import type { DriverViewModel, Sector } from '@/types/dataTypes';
+import { getMinisectorClass, getLastTimeClass, getBestTimeClass } from '@/utils/sectorFormattingUtils';
+import { timeStringToMillis, formatLapTime } from '@/utils/formatUtils';
+import type { PropType } from 'vue';
+
+const props = defineProps({
+    widgetId: {
+        type: [String, Number]
+    },
+    selectedDriverNumber: {
+        type: String as PropType<string | null>,
+        default: null,
+    },
+    auto: {
+        type: Boolean,
+        default: true,
+    },
+    messageFontSize: {
+        type: Number,
+        default: 90,
+    },
+});
+
+const emit = defineEmits(['update:widgetConfig']);
+
+const f1Store = useF1Store();
+const settingsStore = useSettingsStore();
+
+const flyingLapDriver = ref<DriverViewModel | null>(null);
+const lapStartTime = ref(0);
+const displayTime = ref("--:--.---");
+let lapTimerAnimationId: number | null = null;
+
+const isAnimating = ref(false);
+const animationDisplayTime = ref("");
+const isDriverSelectionLocked = ref(false);
+
+const sessionType = computed(() => f1Store.raceData.SessionInfo?.Type);
+const isQualiOrPractice = computed(() => sessionType.value === 'Qualifying' || sessionType.value === 'Practice');
+
+
+const sessionBestSectors = computed(() => {
+    const bests = new Map<number, number>();
+    for (const driver of f1Store.driversViewModelMap.values()) {
+        driver.sectors.forEach((sector, index) => {
+            if (sector.Value) {
+                const time = timeStringToMillis(sector.Value);
+                if (time !== Infinity && (!bests.has(index) || time < bests.get(index)!)) {
+                    bests.set(index, time);
+                }
+            }
+        });
+    }
+    return bests;
+});
+
+function isDriverOnFlyingLap(driver: DriverViewModel | null): boolean {
+  if (!driver || driver.inPit || driver.retired || driver.stopped) {
+    return false;
+  }
+
+  const hasCompletedMinisector = driver.sectors.some(s =>
+    s.Segments?.some(seg => [2048, 2049, 2051].includes(seg.Status))
+  );
+
+  if (!hasCompletedMinisector) {
+    return false;
+  }
+
+  const hasPittedInSectors = driver.sectors.some(s => s.Segments?.some(seg => seg.Status === 2064));
+  if (hasPittedInSectors) {
+      return false;
+  }
+
+  if (driver.sectors.length > 0) {
+    for (let i = 0; i < driver.sectors.length; i++) {
+      const sector = driver.sectors[i];
+      const bestSectorTime = sessionBestSectors.value.get(i);
+      if (sector && sector.Value && bestSectorTime) {
+        const sectorTime = timeStringToMillis(sector.Value);
+        if (sectorTime > bestSectorTime * 1.05) {
+          return false;
+        }
+      }
+    }
+  }
+
+  return true;
+}
+
+const runLapTimer = () => {
+    if (flyingLapDriver.value) {
+        if (flyingLapDriver.value.inPit) {
+            displayTime.value = "IN PIT";
+        } else if (flyingLapDriver.value.stopped || flyingLapDriver.value.retired) {
+            displayTime.value = "STOPPED";
+        } else if (isDriverOnFlyingLap(flyingLapDriver.value)) {
+            const elapsedSinceLapStart = Date.now() - lapStartTime.value;
+            displayTime.value = formatLapTime(elapsedSinceLapStart);
+        } else {
+            displayTime.value = "--:--.---";
+        }
+    } else {
+        displayTime.value = "--:--.---";
+    }
+
+    lapTimerAnimationId = requestAnimationFrame(runLapTimer);
+};
+
+onMounted(() => {
+    if (!lapTimerAnimationId) {
+        runLapTimer();
+    }
+});
+
+onUnmounted(() => {
+  if (lapTimerAnimationId) {
+    cancelAnimationFrame(lapTimerAnimationId);
+    lapTimerAnimationId = null;
+  }
+});
+
+watch(flyingLapDriver, (newDriver, oldDriver) => {
+    if (newDriver && (!oldDriver || newDriver.racingNumber !== oldDriver.racingNumber)) {
+        if (newDriver.lastLapCompleted) {
+            lapStartTime.value = newDriver.lastLapCompleted;
+        } else {
+            lapStartTime.value = Date.now();
+        }
+    }
+});
+
+watch(() => flyingLapDriver.value?.sectors, (newSectors, oldSectors) => {
+    if (isAnimating.value || !newSectors || !oldSectors) return;
+
+    for (let i = 0; i < newSectors.length; i++) {
+        const newSector = newSectors[i];
+        const oldSector = oldSectors[i];
+
+        if (newSector && oldSector && newSector.Value && !oldSector.Value) {
+            isAnimating.value = true;
+            isDriverSelectionLocked.value = true;
+
+            let cumulativeTime = 0;
+            newSectors.forEach(sector => {
+                if (sector.Value) {
+                    cumulativeTime += timeStringToMillis(sector.Value);
+                }
+            });
+            animationDisplayTime.value = formatLapTime(cumulativeTime);
+
+
+            if (i === 2) {
+              lapStartTime.value = Date.now();
+            } else {
+              lapStartTime.value = Date.now() - cumulativeTime
+            }
+
+            setTimeout(() => {
+                isAnimating.value = false;
+                isDriverSelectionLocked.value = false;
+            }, 3000);
+
+            break;
+        }
+    }
+}, { deep: true });
+
+watch(() => [f1Store.driversViewModelMap, props.auto, props.selectedDriverNumber], () => {
+  if (isDriverSelectionLocked.value && props.auto) {
+    return;
+  }
+  if (!isQualiOrPractice.value) {
+    flyingLapDriver.value = null;
+    return;
+  }
+
+  if (props.auto) {
+    let bestCandidate: DriverViewModel | null = null;
+    let bestCandidateScore = -1;
+
+    const drivers = Array.from(f1Store.driversViewModelMap.values());
+
+    for (const driver of drivers) {
+      if (!isDriverOnFlyingLap(driver)) {
+        continue;
+      }
+
+      let minisectorCount = 0;
+      driver.sectors.forEach(sector => {
+        if (sector.Segments) {
+            sector.Segments.forEach(segment => {
+                if ([2048, 2049, 2051].includes(segment.Status)) {
+                    minisectorCount++;
+                }
+            });
+        }
+      });
+      let score = minisectorCount;
+
+
+      if (score > bestCandidateScore) {
+        bestCandidateScore = score;
+        bestCandidate = driver;
+      }
+    }
+    flyingLapDriver.value = bestCandidate;
+
+  } else if (props.selectedDriverNumber) {
+    flyingLapDriver.value = f1Store.driversViewModelMap.get(props.selectedDriverNumber) || null;
+  } else {
+    flyingLapDriver.value = null;
+  }
+}, { deep: true, immediate: true });
+
+
+const messageFontSize = computed(() => {
+    const size = props.messageFontSize ?? 90;
+    return `${size}%`;
+});
+
+
+
+function getSectorClass(sector: Sector | undefined): string {
+  if (!sector || sector.Stopped) return '';
+  if (sector.OverallFastest) return 'sector-fill-overall-best';
+  if (sector.PersonalFastest) return 'sector-fill-personal-best';
+  return 'sector-fill-completed';
+}
+
+const availableDrivers = computed(() => {
+  return Array.from(f1Store.driversViewModelMap.values())
+    .filter(driver => driver.racingNumber !== "_kf")
+    .map(driver => ({
+      label: `${driver.tla} (${driver.racingNumber})`,
+      value: driver.racingNumber
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+});
+
+const settingsDefinition = computed(() => {
+  return [
+    {
+      id: 'auto',
+      label: 'Auto Select Flying Lap',
+      type: 'boolean',
+      component: 'Checkbox',
+    },
+    {
+      id: 'selectedDriverNumber',
+      label: 'Select Driver (if auto is off)',
+      type: 'string',
+      component: 'Dropdown',
+      options: availableDrivers.value,
+      props: {
+        placeholder: "Select a Driver",
+        filter: true
+      }
+    },
+    {
+      id: 'messageFontSize',
+      label: 'Font Size (%)',
+      type: 'number',
+      component: 'Slider',
+      props: { min: 50, max: 200, step: 10 },
+    }
+  ];
+});
+
+defineExpose({ settingsDefinition });
+
+</script>
+
+<template>
+  <div class="flying-lap-widget widget-wrapper" :style="{ fontSize: messageFontSize }">
+    <div v-if="!isQualiOrPractice" class="unsupported-session">
+      <p>Flying Lap widget is only available during Practice and Qualifying sessions.</p>
+    </div>
+    <div v-else-if="flyingLapDriver" class="driver-info">
+      <div class="header">
+        <div class="position">{{ flyingLapDriver.position }}</div>
+        <div class="name">
+          <span class="tla">{{ flyingLapDriver.tla }}</span>
+          <span class="number">{{ flyingLapDriver.racingNumber }}</span>
+        </div>
+        <div class="tyre" :style="{ color: `var(--team-color-${flyingLapDriver.teamName.toLowerCase().replace(/\s/g, '-')})` }">
+            <span :class="`tyre-compound--${flyingLapDriver.currentStint?.compound.toLowerCase()}`">
+                {{ flyingLapDriver.currentStint?.compound[0] }}
+            </span>
+        </div>
+      </div>
+      <div class="lap-time" :class="{ 'lap-time-animated': isAnimating }">
+        {{ isAnimating ? animationDisplayTime : displayTime }}
+      </div>
+      <div class="sectors">
+        <!-- Render completed sectors -->
+        <div v-for="(sector, index) in flyingLapDriver.sectors" :key="index" class="sector-bar">
+          <div class="sector-details">
+            <span class="sector-label">S{{ index + 1 }}</span>
+            <span class="sector-time" :class="getLastTimeClass(sector)">{{ sector.Value }}</span>
+          </div>
+          <div class="minisectors-track">
+            <div class="minisectors-progress" :class="getSectorClass(sector)" :style="{ width: '100%' }">
+              <div v-for="(segment, segIndex) in sector.Segments" :key="segIndex" class="minisector" :class="getMinisectorClass(segment.Status)"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Render placeholder sectors -->
+        <div v-for="i in (3 - flyingLapDriver.sectors.length)" :key="'placeholder-' + i" class="sector-bar">
+           <div class="sector-details">
+            <span class="sector-label">S{{ flyingLapDriver.sectors.length + i }}</span>
+          </div>
+          <div class="minisectors-track"></div>
+        </div>
+      </div>
+    </div>
+    <div v-else class="no-driver">
+      <p>Waiting for a driver on a flying lap...</p>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.widget-wrapper {
+    font-family: 'Formula1-Regular', sans-serif;
+    color: white;
+    padding: 10px;
+}
+
+.unsupported-session, .no-driver {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    text-align: center;
+}
+
+.driver-info {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    background-color: #1F1F1F;
+    padding: 0.3em 0.5em;
+    border-radius: 5px;
+    border-bottom: 2px solid;
+    border-color: var(--vt-c-black);
+}
+
+.position {
+    font-weight: 900;
+    font-size: 1.1em;
+    padding: 0.1em 0.4em;
+    background-color: white;
+    color: black;
+    border-radius: 3px;
+    margin-right: 0.5em;
+}
+
+.name {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    font-weight: 700;
+    flex-grow: 1;
+}
+
+.tla {
+    font-size: 1.1em;
+}
+
+.number {
+    font-size: 0.9em;
+    opacity: 0.8;
+}
+
+.tyre {
+    font-size: 1.1em;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tyre span {
+    border: 1px solid;
+    border-radius: 50%;
+    width: 1.5em;
+    height: 1.5em;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+}
+
+.lap-time {
+    font-family: 'Formula1-Bold', sans-serif;
+    font-size: 3em;
+    font-weight: 700;
+    text-align: left;
+    padding: 0.1em 0.2em;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    transition: all 0.2s ease-in-out;
+}
+
+.lap-time-animated {
+    animation: flash-and-grow 0.5s ease-in-out alternate 2; /* Runs twice for a full cycle */
+}
+
+@keyframes flash-and-grow {
+    from {
+        transform: scale(1);
+        opacity: 0.8;
+        color: #ffffff;
+    }
+    to {
+        transform: scale(1.1);
+        opacity: 1;
+        color: #F2E205; /* F1 Yellow */
+    }
+}
+
+.sectors {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.3em;
+    margin-top: auto;
+}
+
+.sector-bar {
+    background-color: #151515;
+    border-radius: 3px;
+    padding: 0.4em;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+}
+
+.sector-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.9em;
+}
+
+.sector-label {
+    font-weight: 700;
+    opacity: 0.7;
+}
+
+.sector-time {
+    font-family: 'Formula1-Mono', sans-serif;
+    font-weight: 400;
+}
+
+.minisectors-track {
+    width: 100%;
+    background-color: #333;
+    border-radius: 2px;
+    height: 6px;
+    overflow: hidden;
+}
+
+.minisectors-progress {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    border-radius: 2px;
+}
+
+.minisectors-progress.sector-fill-personal-best {
+    background-color: #00F500;
+}
+.minisectors-progress.sector-fill-overall-best {
+    background-color: #B300B3;
+}
+.minisectors-progress.sector-fill-completed {
+    background-color: #F2E205;
+}
+
+.minisector {
+    flex-grow: 1;
+}
+
+.tyre-compound--soft { color: #F95A55; border-color: #F95A55; }
+.tyre-compound--medium { color: #F2E205; border-color: #F2E205; }
+.tyre-compound--hard { color: #FFFFFF; border-color: #FFFFFF; }
+.tyre-compound--intermediate { color: #4CAF50; border-color: #4CAF50; }
+.tyre-compound--wet { color: #2196F3; border-color: #2196F3; }
+
+.sector-overall-best { color: #B300B3; }
+.sector-personal-best { color: #00F500; }
+
+/* These classes are now applied to the .minisectors-progress div */
+
+.minisector-set { background-color: #F2E205; }
+.minisector-stopped { background-color: #333333; }
+.minisector-pb { background-color: #00F500; }
+.minisector-ob { background-color: #B300B3; }
+.minisector-pit { background-color: #2196F3; }
+.minisector-unknown { background-color: #555555; }
+</style>

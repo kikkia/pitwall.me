@@ -1,3 +1,10 @@
+export enum MiniSectorStatus {
+  OverallFastest = 2048,
+  PersonalBest = 2049,
+  Set = 2051,
+  InPits = 2064,
+}
+
 export type CarData = {
 	"0": number; // rpm
 	"2": number; // kph

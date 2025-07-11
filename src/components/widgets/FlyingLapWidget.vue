@@ -2,6 +2,7 @@
 import { ref, computed, watch, onUnmounted, onMounted } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { MiniSectorStatus } from '@/types/dataTypes';
 import type { DriverViewModel, Sector } from '@/types/dataTypes';
 import { getMinisectorClass, getLastTimeClass, getBestTimeClass } from '@/utils/sectorFormattingUtils';
 import { timeStringToMillis, formatLapTime } from '@/utils/formatUtils';
@@ -37,10 +38,114 @@ let lapTimerAnimationId: number | null = null;
 
 const isAnimating = ref(false);
 const animationDisplayTime = ref("");
+const animationDiff = ref("");
 const isDriverSelectionLocked = ref(false);
+
+const validMiniSectorStatuses = [
+    MiniSectorStatus.OverallFastest,
+    MiniSectorStatus.PersonalBest,
+    MiniSectorStatus.Set,
+];
 
 const sessionType = computed(() => f1Store.raceData.SessionInfo?.Type);
 const isQualiOrPractice = computed(() => sessionType.value === 'Qualifying' || sessionType.value === 'Practice');
+
+const targetOpponent = computed<DriverViewModel | null>(() => {
+    if (!flyingLapDriver.value || !isQualiOrPractice.value) {
+        return null;
+    }
+
+    const drivers = f1Store.sortedDriversViewModel;
+    if (drivers.length === 0) {
+        return null;
+    }
+
+    const leader = drivers.find(d => d.position === '1' && !d.isKnockedOut);
+    const currentDriver = flyingLapDriver.value;
+    const currentDriverPos = parseInt(currentDriver.position, 10);
+
+    const currentQualifyingPart = f1Store.currentQualifyingPart;
+    let isAtRisk = false;
+    let safePosition: number | null = null;
+
+    if (currentQualifyingPart === 1) {
+        safePosition = 15;
+        isAtRisk = currentDriverPos >= 16;
+    } else if (currentQualifyingPart === 2) {
+        safePosition = 10;
+        isAtRisk = currentDriverPos >= 11;
+    }
+
+    if (isAtRisk && safePosition) {
+        const safeDriver = drivers.find(d => parseInt(d.position, 10) === safePosition);
+        return safeDriver || leader || null;
+    }
+
+    return leader || null;
+});
+
+const targetOpponentTime = computed<string | null>(() => {
+    if (!targetOpponent.value || !targetOpponentBestLapSectors.value || !flyingLapDriver.value) {
+        return null;
+    }
+
+    const opponentSectors = targetOpponentBestLapSectors.value;
+    if (opponentSectors.length === 0) return null;
+
+    const flyingSectors = flyingLapDriver.value.sectors.filter(s => s.Segments?.every(m => validMiniSectorStatuses.includes(m.Status)));
+    const flyingSectorsCount = flyingSectors.length;
+
+    let targetMillis = 0;
+
+    // Show full lap
+    if (flyingSectorsCount == 3) {
+      if (targetOpponent.value.qualifyingTime?.Value) {
+            return targetOpponent.value.qualifyingTime.Value;
+        }
+        opponentSectors.forEach(sector => {
+            if (sector.Value) {
+                targetMillis += timeStringToMillis(sector.Value);
+            }
+        });
+    }
+
+    for (let i = 0; i < flyingSectorsCount + 1; i++) {
+        if (opponentSectors[i]?.Value) {
+            targetMillis += timeStringToMillis(opponentSectors[i].Value);
+        }
+    }
+
+    if (targetMillis === 0) {
+        return null;
+    }
+
+    return formatLapTime(targetMillis);
+});
+
+const targetOpponentBestLapSectors = computed<{ Value: string }[] | null>(() => {
+    if (!targetOpponent.value) return null;
+
+    const opponentNumber = targetOpponent.value.racingNumber;
+    const opponentBestTime = targetOpponent.value.qualifyingTime?.Value;
+    if (!opponentBestTime) return null;
+
+    const lapHistory = f1Store.raceData.LapHistoryMap[opponentNumber];
+    if (!lapHistory || !lapHistory.CompletedLaps) return null;
+
+    const bestLap = (lapHistory.CompletedLaps as any[]).find(lap => lap.LapTime === opponentBestTime);
+
+    if (bestLap && bestLap.Sectors) {
+        return bestLap.Sectors;
+    }
+
+    return null;
+});
+
+const animationDiffClass = computed(() => {
+    if (!animationDiff.value) return '';
+    const diffValue = parseFloat(animationDiff.value);
+    return diffValue > 0 ? 'diff-positive' : 'diff-negative';
+});
 
 
 const sessionBestSectors = computed(() => {
@@ -64,14 +169,14 @@ function isDriverOnFlyingLap(driver: DriverViewModel | null): boolean {
   }
 
   const hasCompletedMinisector = driver.sectors.some(s =>
-    s.Segments?.some(seg => [2048, 2049, 2051].includes(seg.Status))
+    s.Segments?.some(seg => validMiniSectorStatuses.includes(seg.Status))
   );
 
   if (!hasCompletedMinisector) {
     return false;
   }
 
-  const hasPittedInSectors = driver.sectors.some(s => s.Segments?.some(seg => seg.Status === 2064));
+  const hasPittedInSectors = driver.sectors.some(s => s.Segments?.some(seg => seg.Status === MiniSectorStatus.InPits));
   if (hasPittedInSectors) {
       return false;
   }
@@ -144,25 +249,40 @@ watch(() => flyingLapDriver.value?.sectors, (newSectors, oldSectors) => {
         if (newSector && oldSector && newSector.Value && !oldSector.Value) {
             isAnimating.value = true;
             isDriverSelectionLocked.value = true;
+            animationDiff.value = "";
 
             let cumulativeTime = 0;
-            newSectors.forEach(sector => {
-                if (sector.Value) {
-                    cumulativeTime += timeStringToMillis(sector.Value);
+            let opponentCumulativeTime = 0;
+            for (let j = 0; j <= i; j++) {
+                if (newSectors[j] && newSectors[j].Value) {
+                    cumulativeTime += timeStringToMillis(newSectors[j].Value);
+
+                    // Calc target sectors
+                    if (targetOpponentBestLapSectors.value) {
+                      const opponentSector = targetOpponentBestLapSectors.value[j];
+                      if (opponentSector && opponentSector.Value) {
+                          opponentCumulativeTime += timeStringToMillis(opponentSector.Value);
+                      }
+                    }
                 }
-            });
+            }
             animationDisplayTime.value = formatLapTime(cumulativeTime);
 
-
+            if (opponentCumulativeTime > 0) {
+                    const diff = cumulativeTime - opponentCumulativeTime;
+                    animationDiff.value = (diff / 1000).toFixed(3);
+            }
+            
             if (i === 2) {
               lapStartTime.value = Date.now();
             } else {
-              lapStartTime.value = Date.now() - cumulativeTime
+              lapStartTime.value = Date.now() - cumulativeTime;
             }
 
             setTimeout(() => {
                 isAnimating.value = false;
                 isDriverSelectionLocked.value = false;
+                animationDiff.value = "";
             }, 3000);
 
             break;
@@ -194,7 +314,7 @@ watch(() => [f1Store.driversViewModelMap, props.auto, props.selectedDriverNumber
       driver.sectors.forEach(sector => {
         if (sector.Segments) {
             sector.Segments.forEach(segment => {
-                if ([2048, 2049, 2051].includes(segment.Status)) {
+                if (validMiniSectorStatuses.includes(segment.Status)) {
                     minisectorCount++;
                 }
             });
@@ -293,8 +413,20 @@ defineExpose({ settingsDefinition });
             </span>
         </div>
       </div>
-      <div class="lap-time" :class="{ 'lap-time-animated': isAnimating }">
-        {{ isAnimating ? animationDisplayTime : displayTime }}
+      <div class="lap-time-container">
+        <div class="lap-time" :class="{ 'lap-time-animated': isAnimating }">
+          {{ isAnimating ? animationDisplayTime : displayTime }}
+           <div v-if="isAnimating && animationDiff" class="lap-time-diff" :class="animationDiffClass">
+            {{ animationDiff }}
+          </div>
+        </div>
+        <div v-if="targetOpponentTime && targetOpponent" class="target-time" :style="{ borderBottom: `2px solid #${targetOpponent.teamColour}` }">
+            <div class="target-driver">
+                <span class="target-tla">{{ targetOpponent.tla }}</span>
+                <span class="target-number">{{ targetOpponent.racingNumber }}</span>
+            </div>
+            <span class="target-value">{{ targetOpponentTime }}</span>
+        </div>
       </div>
       <div class="sectors">
         <!-- Render completed sectors -->
@@ -402,17 +534,84 @@ defineExpose({ settingsDefinition });
     line-height: 1;
 }
 
+.lap-time-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 1em;
+    padding: 0.1em 0.2em;
+    flex-grow: 1;
+}
+
 .lap-time {
     font-family: 'Formula1-Bold', sans-serif;
     font-size: 3em;
     font-weight: 700;
     text-align: left;
-    padding: 0.1em 0.2em;
-    flex-grow: 1;
     display: flex;
     align-items: center;
     justify-content: flex-start;
     transition: all 0.2s ease-in-out;
+    line-height: 1;
+    position: relative;
+}
+
+.target-time {
+    font-family: 'Formula1-Regular', sans-serif;
+    font-size: 1.2em;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.1;
+    opacity: 0.9;
+    background-color: #1f1f1f;
+    padding: 0.3em 0.5em;
+    border-radius: 4px;
+}
+
+.target-driver {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4em;
+    font-weight: 700;
+}
+
+.target-tla {
+    font-size: 1em;
+}
+
+.target-number {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.target-value {
+    font-family: 'Formula1-Mono', sans-serif;
+    font-weight: 400;
+    font-size: 1.2em;
+}
+
+.lap-time-diff {
+    font-family: 'Formula1-Mono', sans-serif;
+    font-size: 0.5em;
+    margin-left: 0.5em;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    animation: fade-in 0.5s ease-in-out;
+}
+
+@keyframes fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.diff-positive {
+    background-color: #F95A55; /* Red for slower */
+    color: white;
+}
+
+.diff-negative {
+    background-color: #00F500; /* Green for faster */
+    color: black;
 }
 
 .lap-time-animated {

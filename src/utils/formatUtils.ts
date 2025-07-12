@@ -36,6 +36,15 @@ export function timeStringToMillis(timeStr: string | null | undefined): number {
 
 /**
  * Converts milliseconds to a formatted lap time string (MM:SS.ms or S.ms).
+ * @param seconds The time in seconds.
+ * @returns Formatted time string.
+ */
+export function formatLapTimeSeconds(seconds: number): string {
+  return formatLapTime(seconds * 1000)
+}
+
+/**
+ * Converts milliseconds to a formatted lap time string (MM:SS.ms or S.ms).
  * @param millis The time in milliseconds.
  * @returns Formatted time string.
  */

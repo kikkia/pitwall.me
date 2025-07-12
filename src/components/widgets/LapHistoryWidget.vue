@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
-import { formatLapTime } from '@/utils/formatUtils';
+import { timeStringToMillis, formatLapTime, formatLapTimeSeconds } from '@/utils/formatUtils';
 import { getMinisectorClass, getLastTimeClass } from '@/utils/sectorFormattingUtils';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -108,7 +108,7 @@ function handleDriverSelection(event: any) {
         <Column field="LapTime" header="Lap Time">
           <template #body="slotProps">
             <span :class="['time-value', getLastTimeClass(slotProps.data)]">
-              {{ formatLapTime(slotProps.data.LapTime) }}
+              {{ formatLapTime(timeStringToMillis(slotProps.data.LapTime)) }}
             </span>
           </template>
         </Column>
@@ -117,7 +117,7 @@ function handleDriverSelection(event: any) {
             <div class="time-cell-content">
               <div class="time-row">
                 <span :class="['time-value', getLastTimeClass(slotProps.data.Sectors?.[0])]">
-                  {{ formatLapTime(slotProps.data.Sectors?.[0]?.Value) }}
+                  {{ formatLapTimeSeconds(slotProps.data.Sectors?.[0]?.Value) }}
                 </span>
               </div>
               <div class="minisector-row">
@@ -137,7 +137,7 @@ function handleDriverSelection(event: any) {
             <div class="time-cell-content">
               <div class="time-row">
                 <span :class="['time-value', getLastTimeClass(slotProps.data.Sectors?.[1])]">
-                  {{ formatLapTime(slotProps.data.Sectors?.[1]?.Value) }}
+                  {{ formatLapTimeSeconds(slotProps.data.Sectors?.[1]?.Value) }}
                 </span>
               </div>
               <div class="minisector-row">
@@ -157,7 +157,7 @@ function handleDriverSelection(event: any) {
             <div class="time-cell-content">
               <div class="time-row">
                 <span :class="['time-value', getLastTimeClass(slotProps.data.Sectors?.[2])]">
-                  {{ formatLapTime(slotProps.data.Sectors?.[2]?.Value) }}
+                  {{ formatLapTimeSeconds(slotProps.data.Sectors?.[2]?.Value) }}
                 </span>
               </div>
               <div class="minisector-row">

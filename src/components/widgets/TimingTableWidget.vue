@@ -129,7 +129,7 @@ const parseTimeToSeconds = (time: string | undefined, isQuali: boolean): number 
   if (typeof time !== 'string') return null;
   
   if (isQuali) {
-    return timeStringToMillis(time);
+    return timeStringToMillis(time) / 1000;
   }
 
   if (time.toLowerCase().includes('lap')) return null;

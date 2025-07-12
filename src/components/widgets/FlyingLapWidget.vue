@@ -5,7 +5,7 @@ import { useSettingsStore } from '@/stores/settingsStore';
 import { MiniSectorStatus } from '@/types/dataTypes';
 import type { DriverViewModel, Sector } from '@/types/dataTypes';
 import { getMinisectorClass, getLastTimeClass, getBestTimeClass } from '@/utils/sectorFormattingUtils';
-import { timeStringToMillis, formatLapTime } from '@/utils/formatUtils';
+import { timeStringToMillis, formatLapTime, formatLiveTime } from '@/utils/formatUtils';
 import type { PropType } from 'vue';
 
 const props = defineProps({
@@ -32,9 +32,9 @@ const f1Store = useF1Store();
 const settingsStore = useSettingsStore();
 
 const flyingLapDriver = ref<DriverViewModel | null>(null);
-const lapStartTime = ref(0);
+const sectorStartTime = ref(0);
 const displayTime = ref("--:--.---");
-let lapTimerAnimationId: number | null = null;
+let lapTimerIntervalId: number | null = null;
 
 const isAnimating = ref(false);
 const animationDisplayTime = ref("");
@@ -204,40 +204,53 @@ const runLapTimer = () => {
         } else if (flyingLapDriver.value.stopped || flyingLapDriver.value.retired) {
             displayTime.value = "STOPPED";
         } else if (isDriverOnFlyingLap(flyingLapDriver.value)) {
-            const elapsedSinceLapStart = Date.now() - lapStartTime.value;
-            displayTime.value = formatLapTime(elapsedSinceLapStart);
+            const elapsedSinceLapStart = Date.now() - sectorStartTime.value;
+            displayTime.value = formatLiveTime(elapsedSinceLapStart);
         } else {
-            displayTime.value = "--:--.---";
+            displayTime.value = "-:--.-";
         }
     } else {
-        displayTime.value = "--:--.---";
+        displayTime.value = "-:--.-";
     }
-
-    lapTimerAnimationId = requestAnimationFrame(runLapTimer);
 };
 
 onMounted(() => {
-    if (!lapTimerAnimationId) {
-        runLapTimer();
+    if (!lapTimerIntervalId) {
+        lapTimerIntervalId = window.setInterval(runLapTimer, 100);
     }
 });
 
 onUnmounted(() => {
-  if (lapTimerAnimationId) {
-    cancelAnimationFrame(lapTimerAnimationId);
-    lapTimerAnimationId = null;
+  if (lapTimerIntervalId) {
+    clearInterval(lapTimerIntervalId);
+    lapTimerIntervalId = null;
   }
 });
 
 watch(flyingLapDriver, (newDriver, oldDriver) => {
     if (newDriver && (!oldDriver || newDriver.racingNumber !== oldDriver.racingNumber)) {
-        if (newDriver.lastLapCompleted) {
-            lapStartTime.value = newDriver.lastLapCompleted;
+        if (newDriver.lastSectorCompleted) {
+            sectorStartTime.value = newDriver.lastSectorCompleted - calculateTimerOffset(newDriver);
         } else {
-            lapStartTime.value = Date.now();
+            sectorStartTime.value = Date.now();
         }
     }
 });
+
+function calculateTimerOffset(driver: DriverViewModel): number {
+  let cumulativeTime = 0;
+  let validSectors = driver.sectors.filter(s=> s.Value != "");
+  for (let i = 0; i < validSectors.length; i++) {
+    const sector = validSectors[i];
+    cumulativeTime += timeStringToMillis(sector.Value);
+    if (i == 2) { // Sector 3 is populated, this only happens when we are on a new lap befor S1 is done
+      cumulativeTime = 0
+      break
+    }
+  }
+  console.log("Calculated: " + cumulativeTime)
+  return cumulativeTime
+}
 
 watch(() => flyingLapDriver.value?.sectors, (newSectors, oldSectors) => {
     if (isAnimating.value || !newSectors || !oldSectors) return;
@@ -274,9 +287,9 @@ watch(() => flyingLapDriver.value?.sectors, (newSectors, oldSectors) => {
             }
             
             if (i === 2) {
-              lapStartTime.value = Date.now();
+              sectorStartTime.value = Date.now();
             } else {
-              lapStartTime.value = Date.now() - cumulativeTime;
+              sectorStartTime.value = Date.now() - cumulativeTime;
             }
 
             setTimeout(() => {
@@ -537,9 +550,9 @@ defineExpose({ settingsDefinition });
 .lap-time-container {
     display: flex;
     align-items: flex-end;
+    justify-content: space-between;
     gap: 1em;
     padding: 0.1em 0.2em;
-    flex-grow: 1;
 }
 
 .lap-time {

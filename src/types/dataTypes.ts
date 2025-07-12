@@ -1,7 +1,7 @@
 export enum MiniSectorStatus {
-  OverallFastest = 2048,
+  OverallFastest = 2051,
   PersonalBest = 2049,
-  Set = 2051,
+  Set = 2048,
   InPits = 2064,
   Unset = 0,
 }
@@ -383,7 +383,7 @@ export interface ValueWithLap {
 	posX: number;
 	posY: number;
 	posZ: number;
-	lastLapCompleted: number | null;
+	lastSectorCompleted: number | null;
 
 	// Qualifying specific
 	isQualifying: boolean;

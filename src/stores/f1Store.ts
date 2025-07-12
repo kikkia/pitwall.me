@@ -210,6 +210,21 @@ export const useF1Store = defineStore('f1', () => {
 
             for (const driverNumber in typedPayloadLines) {
                 const driverUpdate = typedPayloadLines[driverNumber];
+                const driverUpdateSectors = (driverUpdate as any)?.Sectors;
+                if (driverUpdateSectors) {
+                    const vm = driversViewModelMap.get(driverNumber);
+                    if (vm) {
+                        // Check if a sector Value has been added or changed
+                        for (const sectorIndex in driverUpdateSectors) {
+                            const newSector = driverUpdateSectors[sectorIndex];
+                            const oldSector = vm.sectors[parseInt(sectorIndex, 10)];
+                            if (newSector && newSector.Value && (!oldSector || oldSector.Value !== newSector.Value)) {
+                                vm.lastSectorCompleted = Date.now();
+                                break;
+                            }
+                        }
+                    }
+                }
                 if (!targetField.Lines[driverNumber]) {
                     targetField.Lines[driverNumber] = {} as any; // Initialize, cast as any for broad compatibility or use specific type
                 }
@@ -339,11 +354,6 @@ export const useF1Store = defineStore('f1', () => {
             }
             target.LapHistoryMap[RacingNumber].CompletedLaps.push(CompletedLap);
             
-            // Update lastLapCompleted timestamp
-            const vm = driversViewModelMap.get(RacingNumber);
-            if (vm) {
-                vm.lastLapCompleted = Date.now();
-            }
 
             affectedDriverNumbers.add(RacingNumber);
         }

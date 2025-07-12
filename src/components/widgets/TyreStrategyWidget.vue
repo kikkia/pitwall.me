@@ -197,6 +197,20 @@ const chartOptions = computed(() => ({
       labels: {
         color: '#eee'
       }
+    },
+    tooltip: {
+      callbacks: {
+        label: function(context: any) {
+          let label = context.dataset.label || '';
+          if (label) {
+            label += ': ';
+          }
+          if (context.parsed.y !== null) {
+            label += formatLapTime(context.parsed.y);
+          }
+          return label;
+        }
+      }
     }
   },
   scales: {

@@ -3,6 +3,7 @@
     <template #start>
       <span class="navbar-brand" @click="emit('open-info-modal')">Pitwall.me</span>
       <Button
+        id="upcoming-sessions-button"
         icon="pi pi-calendar"
         label="Upcoming Sessions"
         @click="goToSchedulePage"
@@ -36,6 +37,7 @@
       />
       <Menu ref="pageMenu" id="page-menu" :model="pageMenuItems" :popup="true" />
       <Button
+        id="page-selector-button"
         :label="activePageName"
         icon="pi pi-chevron-down"
         iconPos="right"
@@ -47,6 +49,7 @@
         v-if="showDashboardButtons"
       />
       <Button
+        id="edit-mode-button"
         :icon="editMode ? 'pi pi-lock-open' : 'pi pi-lock'"
         :severity="editMode ? 'success' : 'danger'"
         @click="emit('toggle-edit-mode')"
@@ -55,6 +58,7 @@
         v-if="showDashboardButtons"
       />
       <Button
+        id="add-widget-button"
         icon="pi pi-plus"
         label="Add Widget"
         @click="emit('add-widget')"
@@ -63,6 +67,7 @@
         v-if="showDashboardButtons"
       />
       <Button
+        id="settings-button"
         icon="pi pi-cog"
         label="Settings"
         @click="openSettingsDialog"
@@ -70,6 +75,7 @@
         style="margin-right: 10px;"
       />
       <i
+        id="connection-status-icon"
         :class="['pi', isConnected ? 'pi-sort-alt' : 'pi-sort-alt-slash', { 'pulse-disconnected': !isConnected }]"
         :style="{ color: isConnected ? 'green' : 'red' }"
         :title="socketStatusLabel"

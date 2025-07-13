@@ -68,9 +68,6 @@ watch(
 </script>
 
 <style>
-.v-onboarding-overlay {
-  background: rgba(0, 0, 0, 0.2);
-}
 .v-onboarding-item__header-title {
   color: #FFFFFF;
 }
@@ -81,14 +78,11 @@ watch(
 .v-onboarding-item__description {
     color: #e0e0e0;
 }
-.v-onboarding-button {
-    background: #42b883;
-    color: white;
-}
+
 #hide-tour-btn {
   background: none;
   border: none;
-  color: #bbbbbb;
+  color: var(--color-text);
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
@@ -96,5 +90,15 @@ watch(
 }
 body.v-onboarding-active {
   padding-right: 0 !important;
+}
+.v-onboarding-item__arrow {
+  display: none;
+}
+.v-onboarding-item {
+  background-color: #222222 !important;
+}
+
+.v-onboarding-item__header {
+  padding-bottom: 0;
 }
 </style>

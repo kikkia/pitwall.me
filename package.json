@@ -21,6 +21,7 @@
     "pinia": "^3.0.2",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.3",
+    "v-onboarding": "^2.9.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1"
   },

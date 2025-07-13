@@ -53,6 +53,7 @@
       @add-widget="handleAddWidget"
     />
     <InfoModal v-model:visible="isInfoModalVisible" />
+    <ReplayTour />
   </div>
 </template>
 
@@ -67,6 +68,7 @@ import WidgetContainer from '../components/WidgetContainer.vue';
 import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import InfoModal from '../components/InfoModal.vue';
+import ReplayTour from '../components/ReplayTour.vue';
 import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '../widgetRegistry';
 
 const uiStore = useUiStore();
@@ -307,7 +309,7 @@ html, body {
 
 .dashboard-container {
   flex-grow: 1;
-  margin: 0 20px 0 0;
+  margin: 0 0 0 0;
   overflow: auto;
   min-width: 0;
   background-color: var(--vt-c-black);

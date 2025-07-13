@@ -1,6 +1,7 @@
 import '@iconscout/unicons/css/line.css';
 import './assets/main.css'
 import 'primeicons/primeicons.css';
+import 'v-onboarding/dist/style.css';
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -17,6 +18,7 @@ import Toast from 'primevue/toast';
 import Chart from 'primevue/chart';
 import App from './App.vue'
 import router from './router';
+import { VOnboardingWrapper } from 'v-onboarding';
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -37,5 +39,6 @@ app.component('Button', Button);
 app.component('MultiSelect', MultiSelect);
 app.component('Toast', Toast);
 app.component('Chart', Chart);
+app.component('VOnboardingWrapper', VOnboardingWrapper);
 
 app.mount('#app')

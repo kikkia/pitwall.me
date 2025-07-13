@@ -24,6 +24,7 @@
 
     <template #end>
       <Button
+        id="replay-button"
         icon="pi pi-replay"
         label="Replay"
         @click="openReplayDialog"

@@ -1,4 +1,5 @@
 <template>
+  <VOnboardingWrapper />
   <router-view />
   <Toast position="bottom-center" />
 </template>

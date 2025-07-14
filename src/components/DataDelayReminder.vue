@@ -4,14 +4,14 @@
 
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { useF1Store } from '@/stores/f1Store';
+import { useEventStore } from '@/stores/eventStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { VOnboardingWrapper, useVOnboarding } from 'v-onboarding';
 import { storeToRefs } from 'pinia';
+import { isReplaying } from '@/services/replayService';
 
-const f1Store = useF1Store();
+const eventStore = useEventStore();
 const settingsStore = useSettingsStore();
-const { raceData } = storeToRefs(f1Store);
 const { websocketDelay } = storeToRefs(settingsStore);
 
 const wrapper = ref(null);
@@ -36,14 +36,13 @@ const steps = [
   },
 ];
 
-const latestSessionStatusInfo = computed(() => { 
-  const statuses = raceData.value.SessionData?.StatusSeries?.filter((st) => st.SessionStatus) || [];
-  return statuses.length > 0 ? statuses[statuses.length - 1] : { SessionStatus: "Unknown" };
-});
-
 const isSessionActive = computed(() => {
-  const status = latestSessionStatusInfo.value?.SessionStatus;
-  return status === 'Started';
+  const now = new Date().getTime();
+  return eventStore.events.some(event => {
+    const startTime = new Date(event.startTimeLocal).getTime();
+    const endTime = new Date(event.endTimeLocal).getTime();
+    return now >= startTime && now <= endTime;
+  });
 });
 
 const hideReminderForever = () => {
@@ -52,24 +51,25 @@ const hideReminderForever = () => {
 };
 
 watch(
-  [isSessionActive, websocketDelay],
-  ([sessionActive, delay]) => {
-    if (sessionActive && delay === 0) {
-      const hideReminder = localStorage.getItem('hideDataDelayReminder');
-      if (hideReminder !== 'true') {
-        setTimeout(() => {
-          start();
+  () => eventStore.isLoading,
+  (isLoading, wasLoading) => {
+    if (wasLoading && !isLoading) {
+      if (isSessionActive.value && websocketDelay.value === 0 && !isReplaying.value) {
+        const hideReminder = localStorage.getItem('hideDataDelayReminder');
+        if (hideReminder !== 'true') {
           setTimeout(() => {
-            const btn = document.getElementById('hide-delay-reminder-btn');
-            if (btn) {
-              btn.addEventListener('click', hideReminderForever);
-            }
-          }, 100);
-        }, 500);
+            start();
+            setTimeout(() => {
+              const btn = document.getElementById('hide-delay-reminder-btn');
+              if (btn) {
+                btn.addEventListener('click', hideReminderForever);
+              }
+            }, 100);
+          }, 500);
+        }
       }
     }
-  },
-  { deep: true, immediate: true }
+  }
 );
 
 </script>

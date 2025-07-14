@@ -1,12 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import DashboardPage from '../views/DashboardPage.vue';
+import HomePage from '../views/HomePage.vue';
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
-      redirect: '/dashboard'
+      name: 'Home',
+      component: HomePage,
     },
     {
       path: '/dashboard',

@@ -1,13 +1,15 @@
 <template>
-  <VOnboardingWrapper ref="wrapper" :steps="steps" />
+  <VOnboardingWrapper ref="wrapper" :steps="steps" :options="{ overlay: { preventOverlayInteraction: false } }" />
 </template>
 
 <script setup>
 import { ref, watch, computed } from 'vue';
 import { useEventStore } from '@/stores/eventStore';
+import { useUiStore } from '@/stores/uiStore';
 import { VOnboardingWrapper, useVOnboarding } from 'v-onboarding';
 
 const eventStore = useEventStore();
+const uiStore = useUiStore();
 const wrapper = ref(null);
 const { start, finish } = useVOnboarding(wrapper);
 
@@ -48,7 +50,7 @@ watch(
   () => eventStore.isLoading,
   (isLoading, wasLoading) => {
     if (wasLoading && !isLoading) {
-      if (!isSessionActive.value) {
+      if (!isSessionActive.value && !uiStore.startWelcomeTour) {
         const hideTour = localStorage.getItem('hideReplayTour');
         if (hideTour !== 'true') {
           setTimeout(() => {

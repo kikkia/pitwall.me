@@ -26,9 +26,29 @@ export const useUiStore = defineStore('ui', () => {
     toast.value.visible = false;
   }
 
+  const startWelcomeTour = ref(false);
+  const tookTour = ref(false);
+
+  function triggerWelcomeTour() {
+    startWelcomeTour.value = true;
+  }
+
+  function completeWelcomeTour() {
+    tookTour.value = true;
+  }
+
+  function resetWelcomeTour() {
+    startWelcomeTour.value = false;
+  }
+
   return {
     toast,
     showToast,
     hideToast,
+    startWelcomeTour,
+    triggerWelcomeTour,
+    resetWelcomeTour,
+    tookTour,
+    completeWelcomeTour
   };
 });

@@ -54,6 +54,7 @@
     />
     <InfoModal v-model:visible="isInfoModalVisible" />
     <ReplayTour />
+    <WelcomeTour ref="welcomeTourRef" @tour-finished="handleTourFinished" />
   </div>
 </template>
 
@@ -69,9 +70,12 @@ import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import InfoModal from '../components/InfoModal.vue';
 import ReplayTour from '../components/ReplayTour.vue';
+import WelcomeTour from '../components/WelcomeTour.vue';
 import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '../widgetRegistry';
 
 const uiStore = useUiStore();
+const { startWelcomeTour } = storeToRefs(uiStore);
+const welcomeTourRef = ref(null);
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
@@ -214,6 +218,16 @@ onMounted(() => {
   if (savedEditMode) {
     isEditMode.value = JSON.parse(savedEditMode);
   }
+
+  if (uiStore.startWelcomeTour) {
+    // Need to wait for the component to be mounted and the ref to be available
+    nextTick(() => {
+      if (welcomeTourRef.value) {
+        welcomeTourRef.value.start();
+        uiStore.completeWelcomeTour();
+      }
+    });
+  }
 });
 
 
@@ -267,6 +281,10 @@ const handleToggleEditMode = () => {
   } else {
     uiStore.showToast('Layout locked', 'info', 2000);
   }
+};
+
+const handleTourFinished = () => {
+  uiStore.resetWelcomeTour();
 };
 
 function generateWidgetId(length) {

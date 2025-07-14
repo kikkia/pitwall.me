@@ -1,13 +1,19 @@
 <template>
-  <VOnboardingWrapper ref="wrapper" :steps="steps" />
+  <VOnboardingWrapper ref="wrapper" :steps="steps" :options="{ overlay: { preventOverlayInteraction: false } }" @finish="onTourFinish" />
 </template>
 
 <script setup>
 import { ref } from 'vue';
 import { VOnboardingWrapper, useVOnboarding } from 'v-onboarding';
 
+const emit = defineEmits(['tour-finished']);
+
 const wrapper = ref(null);
 const { start, finish } = useVOnboarding(wrapper);
+
+const onTourFinish = () => {
+  emit('tour-finished');
+};
 
 const steps = [
   {
@@ -21,7 +27,7 @@ const steps = [
     attachTo: { element: '#replay-button' },
     content: {
       title: 'Replay a Session',
-      description: 'Watch a replay of a past session. Useful for testing a layout when there isn\'t one going on live.'
+      description: 'Watch a replay of a past session. Useful for testing a layout when there isn\'t a live session.'
     }
   },
   {
@@ -61,6 +67,9 @@ const steps = [
   }
 ];
 
+defineExpose({
+  start,
+});
 </script>
 
 <style>

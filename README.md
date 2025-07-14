@@ -4,7 +4,7 @@
 
 # Pitwall.me
 
-**Pitwall.me** is a customizable, real-time Formula 1 timing and telemetry dashboard designed to provide the kind of compact, data-rich dashboard you'd find on a race engineer's console. This project is the frontend application, built with Vue 3 and Vite.
+**Pitwall.me** is a customizable, real-time Formula 1 timing and telemetry dashboard designed to provide the kind of compact, data-rich dashboard you'd find on a race engineer's console. This project is the frontend application, built with Vue 3 and Vite. I took it on as a fun pet project to play around with Vue and also because I really wanted a site like this but was unable to find one. 
 
 The backend data provider is a separate project: [kikkia/pitwall-drs](https://github.com/kikkia/pitwall-drs).
 

@@ -1,7 +1,7 @@
 <template>
   <Toolbar class="app-navbar">
     <template #start>
-      <span class="navbar-brand" @click="emit('open-info-modal')">Pitwall.me</span>
+      <span class="navbar-brand" @click="handleLogoClick">Pitwall.me</span>
       <Button
         id="upcoming-sessions-button"
         icon="pi pi-calendar"
@@ -107,7 +107,7 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import Button from 'primevue/button';
 import Toolbar from 'primevue/toolbar';
 import Tag from 'primevue/tag';
@@ -137,6 +137,7 @@ const props = defineProps({
 const emit = defineEmits(['add-widget', 'open-info-modal', 'toggle-edit-mode']);
 
 const router = useRouter();
+const route = useRoute();
 const f1Store = useF1Store();
 const settingsStore = useSettingsStore();
 const uiStore = useUiStore();
@@ -215,6 +216,14 @@ const connect = () => {
 
 const openLink = (url: string) => {
   window.open(url, '_blank');
+};
+
+const handleLogoClick = () => {
+  if (route.path === '/') {
+    emit('open-info-modal');
+  } else {
+    router.push('/');
+  }
 };
 
 onMounted(() => {

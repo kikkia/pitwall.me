@@ -1,6 +1,6 @@
 <template>
   <div class="home-page-container">
-    <Navbar :show-dashboard-buttons="false" />
+    <Navbar :show-dashboard-buttons="false" @open-info-modal="isInfoModalVisible = true" />
     <div class="content-wrapper">
       <main class="main-content">
         <img src="/pwlogo-full.png" alt="Logo" class="logo" />
@@ -14,17 +14,21 @@
         </div>
       </main>
     </div>
+    <InfoModal v-model:visible="isInfoModalVisible" />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 import Navbar from '@/components/Navbar.vue';
+import InfoModal from '@/components/InfoModal.vue';
 import { useUiStore } from '@/stores/uiStore';
 
 const router = useRouter();
 const uiStore = useUiStore();
+const isInfoModalVisible = ref(false);
 
 const goToDashboard = () => {
   router.push('/dashboard');

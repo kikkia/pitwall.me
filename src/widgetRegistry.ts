@@ -48,7 +48,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
     'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 },
     'TyreStrategy': { selectedDriverNumber: null, messageFontSize: 90, ignorePittedLaps: false },
-    'TrackMap': { showCornerNumbers: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100, windIndicatorPosition: 'off', trackTempIndicatorPosition: 'off', rainfallIndicatorPosition: 'off' },
+    'TrackMap': { showCornerNumbers: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100, windIndicatorPosition: 'off', trackTempIndicatorPosition: 'off', rainfallIndicatorPosition: 'off', dataInterpolationWindow: 1.7 },
     'LapCompare': { selectedDrivers: [] },
     'LapTimeChart': { selectedDrivers: [], ignorePittedLaps: false, messageFontSize: 90 },
     'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' },

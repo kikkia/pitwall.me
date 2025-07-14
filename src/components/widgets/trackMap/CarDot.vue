@@ -17,7 +17,7 @@
 import { computed } from 'vue';
 import { rotate } from '@/utils/mapUtils';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     name: string;
     color?: string;
     pit: boolean;
@@ -29,7 +29,10 @@ const props = defineProps<{
     hasFocusedDrivers: boolean;
     nameTagFontSize: number;
     carDotSize: number;
-}>();
+    dataInterpolationWindow?: number;
+}>(), {
+    dataInterpolationWindow: 1.7,
+});
 
 const rotatedPos = computed(() => {
     return rotate(props.pos.X, props.pos.Y, props.rotation, props.centerX, props.centerY);
@@ -37,7 +40,7 @@ const rotatedPos = computed(() => {
 
 const groupStyle = computed(() => ({
     transform: `translate(${rotatedPos.value.x}px, ${rotatedPos.value.y}px)`,
-    transition: 'transform 1.7s linear',
+    transition: `transform ${props.dataInterpolationWindow}s linear`,
 }));
 </script>
 

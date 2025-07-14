@@ -61,6 +61,7 @@
                     :has-focused-drivers="focusedDrivers.length > 0"
                     :name-tag-font-size="nameTagFontSize"
                     :car-dot-size="carDotSize"
+                    :data-interpolation-window="dataInterpolationWindow"
                 />
             </template>
         </svg>
@@ -117,6 +118,7 @@ const props = withDefaults(defineProps<{
     windIndicatorPosition?: string;
     trackTempIndicatorPosition?: string;
     rainfallIndicatorPosition?: string;
+    dataInterpolationWindow?: number;
 }>(), {
     showCornerNumbers: true,
     focusedDrivers: () => [],
@@ -126,6 +128,7 @@ const props = withDefaults(defineProps<{
     windIndicatorPosition: 'top-left',
     trackTempIndicatorPosition: 'top-left',
     rainfallIndicatorPosition: 'top-left',
+    dataInterpolationWindow: 1.7,
 });
 
 const positionOptions = [ 'off', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -156,6 +159,14 @@ const settingsDefinition = ref([
   { id: 'cornerNumberFontSize', label: 'Corner Number Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
   { id: 'nameTagFontSize', label: 'Name Tag Font Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
   { id: 'carDotSize', label: 'Car Dot Size (%)', type: 'number', component: 'Slider', props: { min: 50, max: 300, step: 10 } },
+  {
+    id: 'dataInterpolationWindow',
+    label: 'Data Interpolation Window (s)',
+    type: 'number',
+    component: 'Slider',
+    props: { min: 1, max: 3, step: 0.1 },
+    tooltip: 'How long to interpolate car positions for. Higher values can smooth out lag, but increase perceived delay.'
+  },
 ]);
 
 defineExpose({ settingsDefinition });

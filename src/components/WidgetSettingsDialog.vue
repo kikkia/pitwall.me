@@ -16,11 +16,11 @@
               v-model="localWidgetConfig[setting.id]"
               :binary="true"
             />
-            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
+            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label><i v-if="setting.tooltip" class="pi pi-info-circle setting-tooltip" v-tooltip.top="setting.tooltip" />
           </div>
   
           <div v-if="setting.component === 'Slider'" class="p-field slider-field">
-            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}: {{ localWidgetConfig[setting.id] }}</label>
+            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}: {{ localWidgetConfig[setting.id] }} <i v-if="setting.tooltip" class="pi pi-info-circle setting-tooltip" v-tooltip.top="setting.tooltip" /></label>
             <Slider
               :id="`${widgetId}-${setting.id}`"
               v-model="localWidgetConfig[setting.id]"
@@ -29,7 +29,7 @@
           </div>
   
           <div v-if="setting.component === 'MultiSelect'" class="p-field multi-field">
-             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
+             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }} <i v-if="setting.tooltip" class="pi pi-info-circle setting-tooltip" v-tooltip.top="setting.tooltip" /></label>
              <MultiSelect
                 :id="`${widgetId}-${setting.id}`"
                 v-model="localWidgetConfig[setting.id]"
@@ -45,7 +45,7 @@
           </div>
 
           <div v-if="setting.component === 'Select'" class="p-field select-field">
-             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
+             <label :for="`${widgetId}-${setting.id}`">{{ setting.label }} <i v-if="setting.tooltip" class="pi pi-info-circle setting-tooltip" v-tooltip.top="setting.tooltip" /></label>
              <Select
                 :id="`${widgetId}-${setting.id}`"
                 v-model="localWidgetConfig[setting.id]"
@@ -58,7 +58,7 @@
           </div>
   
           <div v-if="setting.component === 'Dropdown'" class="p-field dropdown-field">
-            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }}</label>
+            <label :for="`${widgetId}-${setting.id}`">{{ setting.label }} <i v-if="setting.tooltip" class="pi pi-info-circle setting-tooltip" v-tooltip.top="setting.tooltip" /></label>
             <Dropdown
               :id="`${widgetId}-${setting.id}`"
               v-model="localWidgetConfig[setting.id]"
@@ -161,6 +161,12 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+  }
+
+  .setting-tooltip {
+    margin-left: 0.5rem;
+    cursor: help;
+    font-size: 0.8rem;
   }
   .p-field-checkbox label {
       margin-bottom: 0;

@@ -54,6 +54,7 @@
     />
     <InfoModal v-model:visible="isInfoModalVisible" />
     <ReplayTour />
+    <DataDelayReminder />
     <WelcomeTour ref="welcomeTourRef" @tour-finished="handleTourFinished" />
   </div>
 </template>
@@ -70,6 +71,7 @@ import WidgetSettingsDialog from '../components/WidgetSettingsDialog.vue';
 import AddWidgetDialog from '../components/AddWidgetDialog.vue';
 import InfoModal from '../components/InfoModal.vue';
 import ReplayTour from '../components/ReplayTour.vue';
+import DataDelayReminder from '../components/DataDelayReminder.vue';
 import WelcomeTour from '../components/WelcomeTour.vue';
 import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '../widgetRegistry';
 

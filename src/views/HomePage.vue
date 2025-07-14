@@ -4,13 +4,13 @@
     <div class="content-wrapper">
       <main class="main-content">
         <img src="/pwlogo-full.png" alt="Logo" class="logo" />
-        <h1>Real-time Formula 1 telemetry and timing</h1>
+        <h2>Take a seat on the pitwall and make your own race engineer dashboads to view real-time, or past session telemtry data.</h2>
         <div class="action-buttons">
-          <Button label="Go to the Pitwall" @click="goToDashboard" class="p-button-lg" />
+          <Button label="Go to the Pitwall 🏎️" @click="goToDashboard" class="p-button-lg" />
           <Button label="Check Schedule" @click="goToSchedule" class="p-button-lg p-button-secondary" />
         </div>
         <div class="action-buttons" style="margin-top: 1rem;">
-          <Button label="Tour the pitwall 🏎️" @click="takeTour" class="p-button-lg p-button-info" />
+          <Button label="Take a tour 👀" @click="takeTour" class="p-button-lg p-button-info" />
         </div>
       </main>
     </div>
@@ -62,12 +62,11 @@ const takeTour = () => {
 }
 
 .logo {
-  max-width: 200px;
-  margin-bottom: 2rem;
+  max-width: 300px;
 }
 
-h1 {
-  font-size: 2.5rem;
+h2 {
+  font-size: 1.5rem;
   margin-bottom: 2rem;
 }
 

@@ -37,6 +37,24 @@
       />
       <Menu ref="pageMenu" id="page-menu" :model="pageMenuItems" :popup="true" />
       <Button
+        id="kofi-button"
+        icon="pi pi-dollar"
+        iconPos="right"
+        @click="openLink('https://ko-fi.com/kikkia')"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-right: 10px;"
+        v-if="!showDashboardButtons"
+      />
+      <Button
+        id="github-button"
+        icon="pi pi-github"
+        iconPos="right"
+        @click="openLink('https://github.com/kikkia/pitwall.me')"
+        class="p-button-sm p-button-text p-button-primary"
+        style="margin-right: 10px;"
+        v-if="!showDashboardButtons"
+      />
+      <Button
         id="page-selector-button"
         :label="activePageName"
         icon="pi pi-chevron-down"
@@ -193,6 +211,10 @@ const isSessionActive = computed(() => {
 
 const connect = () => {
   f1Store.initialize(); 
+};
+
+const openLink = (url: string) => {
+  window.open(url, '_blank');
 };
 
 onMounted(() => {

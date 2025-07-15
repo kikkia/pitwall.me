@@ -50,6 +50,8 @@
                 :id="`${widgetId}-${setting.id}`"
                 v-model="localWidgetConfig[setting.id]"
                 :options="setting.options"
+                :optionLabel="setting.props?.optionLabel || 'label'"
+                :optionValue="setting.props?.optionValue || 'value'"
                 placeholder="Select"
                 display="chip"
                 v-bind="setting.props || {}"

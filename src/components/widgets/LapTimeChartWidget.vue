@@ -16,6 +16,9 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  slowLapThreshold: {
+    type: Number, default: 40
+  },
   messageFontSize: { type: Number, default: 90 }
 });
 
@@ -23,6 +26,7 @@ const emit = defineEmits(['update:widgetConfig']);
 
 const internalSelectedDrivers = ref<string[]>(props.selectedDrivers);
 const internalIgnorePittedLaps = ref(props.ignorePittedLaps);
+const internalSlowLapThreshold = ref(props.slowLapThreshold);
 
 watch(() => props.selectedDrivers, (newVal) => {
   internalSelectedDrivers.value = newVal;
@@ -31,6 +35,10 @@ watch(() => props.selectedDrivers, (newVal) => {
 watch(() => props.ignorePittedLaps, (newVal) => {
   internalIgnorePittedLaps.value = newVal;
 });
+
+watch(() => props.slowLapThreshold, (newVal) => {
+  internalSlowLapThreshold.value = newVal;
+})
 
 const availableDrivers = computed(() => {
   return Array.from(f1Store.driversViewModelMap.values())
@@ -189,6 +197,13 @@ const settingsDefinition = computed(() => {
       label: 'Ignore Pitted Laps',
       type: 'boolean',
       component: 'Checkbox'
+    },
+    {
+      id: 'slowLapThreshold',
+      label: 'Ignore laps X% slower than the fastest lap',
+      type: 'number',
+      component: 'Slider',
+      props: { min: 1, max: 100, step: 1 }
     },
     { 
       id: 'messageFontSize', 

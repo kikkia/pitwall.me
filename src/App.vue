@@ -1,17 +1,25 @@
 <template>
   <VOnboardingWrapper />
-  <router-view />
+  <router-view v-if="!isLoading" />
   <Toast position="bottom-center" />
 </template>
 
 <script setup>
-import { watch } from 'vue';
+import { watch, ref, onMounted } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useUiStore } from '@/stores/uiStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import Toast from 'primevue/toast';
 
 const uiStore = useUiStore();
 const toast = useToast();
+const settingsStore = useSettingsStore();
+const isLoading = ref(true);
+
+onMounted(async () => {
+  await settingsStore.initializeStore();
+  isLoading.value = false;
+});
 
 watch(() => uiStore.toast, (toastDetails) => {
   if (toastDetails.visible) {

@@ -1,67 +1,69 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
-import { defaultWidgetConfigs } from '@/widgetRegistry';
 
-const defaultLayout = [
-    {
-        id: 'timing-1',
-        componentName: 'TimingTable',
-        x: 0, y: 0, w: 24, h: 30,
-        config: {...defaultWidgetConfigs.TimingTable},
-    },
-    {
-        id: 'rcm-1',
-        componentName: 'RaceControlMessages',
-        x: 24, y: 0, w: 32, h: 20,
-        config: {...defaultWidgetConfigs.RaceControlMessages},
-    },
-    {
-        id: 'track-status-1',
-        componentName: 'TrackStatusLED',
-        x: 56, y: 0, w: 8, h: 4,
-        config: {...defaultWidgetConfigs.TrackStatusLED},
-    },
-    {
-        id: 'sector-timing',
-        componentName: 'SectorTiming',
-        x: 0, y: 30, w:38, h:30,
-        config: {...defaultWidgetConfigs.SectorTiming},
-    },
-    {
-        id: 'lap-history-1',
-        componentName: 'LapHistory',
-        x: 65, y: 0, w: 21, h: 25,
-        config: {...defaultWidgetConfigs.LapHistory},
+async function loadDefaultSettings() {
+  try {
+    const response = await fetch('/default.json');
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-];
+    return await response.json();
+  } catch (e) {
+    console.error("Failed to load default settings:", e);
+    return {
+      websocketDelay: 0,
+      gridFloat: true,
+      pages: [{ id: 'default', name: 'Default' }],
+      activePageId: 'default',
+      layouts: { 'default': [] }
+    };
+  }
+}
 
 export const useSettingsStore = defineStore('settings', () => {
   const websocketDelay = ref<number>(0);
   const gridFloat = ref<boolean>(true);
-  const pages = ref<{ id: string; name: string }[]>([{ id: 'default', name: 'Default' }]);
-  const activePageId = ref<string>('default');
-  const layouts = ref<Record<string, any[]>>({ 'default': defaultLayout });
+  const pages = ref<{ id: string; name: string }[]>([]);
+  const activePageId = ref<string>('');
+  const layouts = ref<Record<string, any[]>>({});
   const layoutVersion = ref(0);
 
   const DASHBOARD_SETTINGS_KEY = 'dashboardSettings';
 
-  const savedSettings = localStorage.getItem(DASHBOARD_SETTINGS_KEY);
-  if (savedSettings) {
-    try {
-      const parsed = JSON.parse(savedSettings);
-      websocketDelay.value = parsed.websocketDelay ?? 0;
-      gridFloat.value = parsed.gridFloat ?? true;
-      if (parsed.pages) pages.value = parsed.pages;
-      if (parsed.activePageId) activePageId.value = parsed.activePageId;
-      if (parsed.layouts) {
-          layouts.value = parsed.layouts
+  async function initializeStore() {
+    const savedSettings = localStorage.getItem(DASHBOARD_SETTINGS_KEY);
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        websocketDelay.value = parsed.websocketDelay ?? 0;
+        gridFloat.value = parsed.gridFloat ?? true;
+        pages.value = parsed.pages ?? [];
+        activePageId.value = parsed.activePageId ?? '';
+        layouts.value = parsed.layouts ?? {};
+        
+        if (!pages.value.length || !activePageId.value || !layouts.value[activePageId.value]) {
+            const defaultSettings = await loadDefaultSettings();
+            pages.value = defaultSettings.pages;
+            activePageId.value = defaultSettings.activePageId;
+            layouts.value = defaultSettings.layouts;
+        }
+
+      } catch (e) {
+        console.error("Failed to parse settings from local storage, loading default settings.", e);
+        const defaultSettings = await loadDefaultSettings();
+        websocketDelay.value = defaultSettings.websocketDelay;
+        gridFloat.value = defaultSettings.gridFloat;
+        pages.value = defaultSettings.pages;
+        activePageId.value = defaultSettings.activePageId;
+        layouts.value = defaultSettings.layouts;
       }
-      // Ensure default page has a layout
-      if (!layouts.value.default) {
-        layouts.value.default = defaultLayout;
-      }
-    } catch (e) {
-      console.error("Failed to parse settings from local storage", e);
+    } else {
+      const defaultSettings = await loadDefaultSettings();
+      websocketDelay.value = defaultSettings.websocketDelay;
+      gridFloat.value = defaultSettings.gridFloat;
+      pages.value = defaultSettings.pages;
+      activePageId.value = defaultSettings.activePageId;
+      layouts.value = defaultSettings.layouts;
     }
   }
 
@@ -134,7 +136,7 @@ export const useSettingsStore = defineStore('settings', () => {
     };
   }
 
-  function importSettings(settings: any, merge: boolean) {
+  async function importSettings(settings: any, merge: boolean) {
     if (merge) {
       // Merge pages
       const existingPageNames = new Set(pages.value.map(p => p.name));
@@ -146,11 +148,12 @@ export const useSettingsStore = defineStore('settings', () => {
       }
     } else {
       // Replace settings
-      websocketDelay.value = settings.websocketDelay ?? 0;
-      gridFloat.value = settings.gridFloat ?? true;
-      pages.value = settings.pages ?? [{ id: 'default', name: 'Default' }];
-      layouts.value = settings.layouts ?? { 'default': defaultLayout };
-      activePageId.value = settings.pages[0]?.id || 'default';
+      const defaultSettings = await loadDefaultSettings();
+      websocketDelay.value = settings.websocketDelay ?? defaultSettings.websocketDelay;
+      gridFloat.value = settings.gridFloat ?? defaultSettings.gridFloat;
+      pages.value = settings.pages ?? defaultSettings.pages;
+      layouts.value = settings.layouts ?? defaultSettings.layouts;
+      activePageId.value = settings.pages[0]?.id || defaultSettings.activePageId;
       layoutVersion.value++;
     }
   }
@@ -170,6 +173,7 @@ export const useSettingsStore = defineStore('settings', () => {
     updateLayout,
     exportSettings,
     importSettings,
-    layoutVersion
+    layoutVersion,
+    initializeStore
   };
 });

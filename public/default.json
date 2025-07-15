@@ -1,0 +1,361 @@
+{
+  "websocketDelay": 0,
+  "gridFloat": false,
+  "pages": [
+    {
+      "id": "default",
+      "name": "Race"
+    },
+    {
+      "id": "page-1751611578778",
+      "name": "Quali/Practice"
+    }
+  ],
+  "activePageId": "page-1751611578778",
+  "layouts": {
+    "default": [
+      {
+        "id": "timing-1",
+        "componentName": "TimingTable",
+        "x": 0,
+        "y": 0,
+        "w": 23,
+        "h": 28,
+        "config": {
+          "showNumber": true,
+          "showBest": true,
+          "showLast": true,
+          "showGap": true,
+          "showInterval": true,
+          "showTire": true,
+          "showPitstopCount": true,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "track-status-1",
+        "componentName": "TrackStatusLED",
+        "x": 76,
+        "y": 0,
+        "w": 10,
+        "h": 8,
+        "config": {}
+      },
+      {
+        "id": "sector-timing",
+        "componentName": "SectorTiming",
+        "x": 0,
+        "y": 28,
+        "w": 43,
+        "h": 28,
+        "config": {
+          "showBestLap": true,
+          "showLastLap": true,
+          "showBestSectors": true,
+          "showLastSectors": true,
+          "showMinisectors": true,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "tyrestrategy-1751633907113",
+        "componentName": "TyreStrategy",
+        "x": 23,
+        "y": 0,
+        "w": 20,
+        "h": 28,
+        "config": {
+          "selectedDriverNumber": null,
+          "messageFontSize": 80,
+          "ignorePittedLaps": true
+        }
+      },
+      {
+        "id": "trackmap-1751634046680",
+        "componentName": "TrackMap",
+        "x": 43,
+        "y": 36,
+        "w": 43,
+        "h": 24,
+        "config": {
+          "showCornerNumbers": true,
+          "useSafetyCarColors": true,
+          "focusedDrivers": [],
+          "cornerNumberFontSize": 150,
+          "nameTagFontSize": 150,
+          "carDotSize": 100,
+          "windIndicatorPosition": "bottom-right",
+          "trackTempIndicatorPosition": "bottom-left",
+          "rainfallIndicatorPosition": "bottom-right",
+          "dataInterpolationWindow": 1.7
+        }
+      },
+      {
+        "id": "drivercarstats-1751644952558",
+        "componentName": "DriverCarStats",
+        "x": 43,
+        "y": 29,
+        "w": 18,
+        "h": 7,
+        "config": {
+          "selectedDriverNumber": "55",
+          "interpolationRate": 60,
+          "shiftLightMode": "converging",
+          "speedUnit": "kmh"
+        }
+      },
+      {
+        "id": "racecontrolmessages-YLQA",
+        "componentName": "RaceControlMessages",
+        "w": 33,
+        "h": 8,
+        "x": 43,
+        "y": 0,
+        "config": {
+          "showTimestamp": true,
+          "showCategory": true,
+          "messageFontSize": 90,
+          "selectedCategories": [
+            "Flag",
+            "Other",
+            "Sector",
+            "Drs",
+            "SafetyCar"
+          ]
+        }
+      },
+      {
+        "id": "teamradio-8eWo",
+        "componentName": "TeamRadio",
+        "w": 18,
+        "h": 11,
+        "x": 43,
+        "y": 18,
+        "config": {
+          "showTimestamp": true,
+          "focusedDrivers": [],
+          "focusedTeams": [],
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "battle-V75a",
+        "componentName": "Battle",
+        "w": 18,
+        "h": 10,
+        "x": 43,
+        "y": 8,
+        "config": {
+          "threshold": 1.5,
+          "messageFontSize": 90,
+          "battleForPosition": 1,
+          "auto": false
+        }
+      },
+      {
+        "id": "laptimechart-CnlB",
+        "componentName": "LapTimeChart",
+        "w": 25,
+        "h": 21,
+        "x": 61,
+        "y": 8,
+        "config": {
+          "selectedDrivers": [
+            "12",
+            "6",
+            "1"
+          ],
+          "ignorePittedLaps": true,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "weather-XakW",
+        "componentName": "Weather",
+        "w": 25,
+        "h": 7,
+        "x": 61,
+        "y": 29,
+        "config": {
+          "messageFontSize": 80,
+          "showAirTemp": true,
+          "showTrackTemp": true,
+          "showHumidity": true,
+          "showPressure": true,
+          "showWindSpeed": false,
+          "showWindDirection": true,
+          "showRainfall": true
+        }
+      }
+    ],
+    "page-1751611578778": [
+      {
+        "id": "trackstatusled-1751611583035",
+        "componentName": "TrackStatusLED",
+        "x": 0,
+        "y": 0,
+        "w": 86,
+        "h": 3,
+        "config": {}
+      },
+      {
+        "id": "trackmap-u0Ih",
+        "componentName": "TrackMap",
+        "w": 35,
+        "h": 19,
+        "x": 0,
+        "y": 3,
+        "config": {
+          "showCornerNumbers": true,
+          "focusedDrivers": [],
+          "cornerNumberFontSize": 100,
+          "nameTagFontSize": 100,
+          "carDotSize": 100,
+          "windIndicatorPosition": "top-left",
+          "trackTempIndicatorPosition": "top-right",
+          "rainfallIndicatorPosition": "bottom-right",
+          "dataInterpolationWindow": 1.7
+        }
+      },
+      {
+        "id": "flyinglap-JNL5",
+        "componentName": "FlyingLap",
+        "w": 28,
+        "h": 9,
+        "x": 35,
+        "y": 13,
+        "config": {
+          "selectedDriverNumber": null,
+          "auto": true,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "timingtable-9X9p",
+        "componentName": "TimingTable",
+        "w": 26,
+        "h": 27,
+        "x": 0,
+        "y": 22,
+        "config": {
+          "showNumber": true,
+          "showBest": true,
+          "showLast": true,
+          "showGap": true,
+          "showInterval": true,
+          "showTire": true,
+          "showPitstopCount": true,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "teamradio-f2wH",
+        "componentName": "TeamRadio",
+        "w": 20,
+        "h": 10,
+        "x": 35,
+        "y": 3,
+        "config": {
+          "showTimestamp": true,
+          "focusedDrivers": [],
+          "focusedTeams": [],
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "racecontrolmessages-x6Ji",
+        "componentName": "RaceControlMessages",
+        "w": 31,
+        "h": 10,
+        "x": 55,
+        "y": 3,
+        "config": {
+          "showTimestamp": true,
+          "showCategory": true,
+          "messageFontSize": 90,
+          "selectedCategories": [
+            "Flag",
+            "Other",
+            "Sector",
+            "Drs",
+            "SafetyCar"
+          ]
+        }
+      },
+      {
+        "id": "sectortiming-q5mz",
+        "componentName": "SectorTiming",
+        "w": 42,
+        "h": 27,
+        "x": 26,
+        "y": 22,
+        "config": {
+          "showBestLap": true,
+          "showLastLap": true,
+          "showBestSectors": true,
+          "showLastSectors": true,
+          "showMinisectors": true,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "drivercarstats-3z4o",
+        "componentName": "DriverCarStats",
+        "w": 23,
+        "h": 9,
+        "x": 63,
+        "y": 13,
+        "config": {
+          "selectedDriverNumber": null,
+          "interpolationRate": 15
+        }
+      },
+      {
+        "id": "laphistory-eYCY",
+        "componentName": "LapHistory",
+        "w": 18,
+        "h": 27,
+        "x": 68,
+        "y": 22,
+        "config": {
+          "selectedDriverNumber": null,
+          "messageFontSize": 90
+        }
+      },
+      {
+        "id": "laptimechart-2ab2",
+        "componentName": "LapTimeChart",
+        "w": 86,
+        "h": 15,
+        "x": 0,
+        "y": 49,
+        "config": {
+          "selectedDrivers": [
+            "23",
+            "14",
+            "12",
+            "87",
+            "5",
+            "43",
+            "10",
+            "6",
+            "44",
+            "27",
+            "30",
+            "16",
+            "4",
+            "31",
+            "81",
+            "63",
+            "55",
+            "18",
+            "22",
+            "1"
+          ],
+          "ignorePittedLaps": true,
+          "messageFontSize": 90
+        }
+      }
+    ]
+  }
+}

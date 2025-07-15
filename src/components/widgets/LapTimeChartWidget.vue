@@ -16,6 +16,9 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
+  slowLapThreshold: {
+    type: Number, default: 40
+  },
   messageFontSize: { type: Number, default: 90 }
 });
 
@@ -23,6 +26,7 @@ const emit = defineEmits(['update:widgetConfig']);
 
 const internalSelectedDrivers = ref<string[]>(props.selectedDrivers);
 const internalIgnorePittedLaps = ref(props.ignorePittedLaps);
+const internalSlowLapThreshold = ref(props.slowLapThreshold);
 
 watch(() => props.selectedDrivers, (newVal) => {
   internalSelectedDrivers.value = newVal;
@@ -31,6 +35,10 @@ watch(() => props.selectedDrivers, (newVal) => {
 watch(() => props.ignorePittedLaps, (newVal) => {
   internalIgnorePittedLaps.value = newVal;
 });
+
+watch(() => props.slowLapThreshold, (newVal) => {
+  internalSlowLapThreshold.value = newVal;
+})
 
 const availableDrivers = computed(() => {
   return Array.from(f1Store.driversViewModelMap.values())
@@ -55,6 +63,12 @@ const chartData = computed(() => {
     return { labels: [], datasets: [] };
   }
 
+  const validLaps = allLaps.filter(lap => lap.LapTime && !lap.Pitted);
+  let fastestLapTime = Infinity;
+  if (validLaps.length > 0) {
+    fastestLapTime = Math.min(...validLaps.map(lap => timeStringToMillis(lap.LapTime)));
+  }
+
   const minLap = Math.min(...allLaps.map(lap => lap.Lap));
   const maxLap = Math.max(...allLaps.map(lap => lap.Lap));
   const labels = Array.from({ length: maxLap - minLap + 1 }, (_, i) => minLap + i);
@@ -70,8 +84,15 @@ const chartData = computed(() => {
             if (internalIgnorePittedLaps.value && lap.Pitted) {
                 return null;
             }
+            const lapTimeMillis = timeStringToMillis(lap.LapTime);
+            if (fastestLapTime !== Infinity && internalSlowLapThreshold.value > 0) {
+                const threshold = fastestLapTime * (1 + (internalSlowLapThreshold.value / 100));
+                if (lapTimeMillis > threshold) {
+                    return null;
+                }
+            }
             return {
-                time: timeStringToMillis(lap.LapTime),
+                time: lapTimeMillis,
                 tyre: lap.TyreCompound
             };
         }
@@ -189,6 +210,13 @@ const settingsDefinition = computed(() => {
       label: 'Ignore Pitted Laps',
       type: 'boolean',
       component: 'Checkbox'
+    },
+    {
+      id: 'slowLapThreshold',
+      label: 'Ignore laps X% slower than the fastest lap',
+      type: 'number',
+      component: 'Slider',
+      props: { min: 0, max: 100, step: 1 }
     },
     { 
       id: 'messageFontSize', 

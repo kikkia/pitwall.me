@@ -51,7 +51,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'CustomChart': { selectedDrivers: [], selectedMetricId: 'lapTime', ignorePittedLaps: true, slowLapThreshold: 40, selectedTyreCompounds: ['SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', 'WET'], messageFontSize: 90 },
     'SectorTiming': { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90 },
     'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
-    'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15 },
+    'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15, shiftLightMode: 'converging', speedUnit: 'kph' },
     'TyreStrategy': { selectedDriverNumber: null, messageFontSize: 90, ignorePittedLaps: false },
     'RaceControlMessages': { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Sector", "Drs", "SafetyCar"] },
     'LapCompare': { selectedDrivers: [] },

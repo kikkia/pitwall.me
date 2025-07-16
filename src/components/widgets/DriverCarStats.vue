@@ -20,8 +20,8 @@ const props = defineProps({
     default: 'linear',
   },
   speedUnit: {
-    type: String as PropType<'kmh' | 'mph'>,
-    default: 'kmh',
+    type: String as PropType<'kph' | 'mph'>,
+    default: 'kph',
   },
 });
 
@@ -341,7 +341,7 @@ const settingsDefinition = computed(() => {
       type: 'string',
       component: 'Dropdown',
       options: [
-        { label: 'km/h', value: 'kmh' },
+        { label: 'km/h', value: 'kph' },
         { label: 'mph', value: 'mph' }
       ],
       props: {}
@@ -351,8 +351,8 @@ const settingsDefinition = computed(() => {
 
 defineExpose({ settingsDefinition });
 
-function convertKmhToMph(kmh: number): number {
-  return kmh * 0.621371;
+function convertKphToMph(kph: number): number {
+  return kph * 0.621371;
 }
 
 function handleDriverSelection(event: any) {
@@ -417,8 +417,8 @@ function handleSpeedUnitChange(event: any) {
             <div class="speed-display">
               <span class="data-label">Speed</span>
               <span class="data-value">
-                {{ internalSpeedUnit === 'mph' ? convertKmhToMph(currentCarData['2']).toFixed(0) : currentCarData['2'] }}
-                <span class="unit">{{ internalSpeedUnit === 'mph' ? 'mph' : 'km/h' }}</span>
+                {{ internalSpeedUnit === 'mph' ? convertKphToMph(currentCarData['2']).toFixed(0) : currentCarData['2'] }}
+                <span class="unit">{{ internalSpeedUnit === 'mph' ? 'mph' : 'kph' }}</span>
               </span>
             </div>
             <div class="brake-drs-indicators">

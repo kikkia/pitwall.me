@@ -323,8 +323,8 @@
         }
       },
       {
-        "id": "laptimechart-2ab2",
-        "componentName": "LapTimeChart",
+        "id": "customchart-LZaH",
+        "componentName": "CustomChart",
         "w": 86,
         "h": 15,
         "x": 0,
@@ -352,7 +352,16 @@
             "22",
             "1"
           ],
+          "selectedMetricId": "lapTime",
           "ignorePittedLaps": true,
+          "slowLapThreshold": 31,
+          "selectedTyreCompounds": [
+            "SOFT",
+            "MEDIUM",
+            "HARD",
+            "INTERMEDIATE",
+            "WET"
+          ],
           "messageFontSize": 90
         }
       }

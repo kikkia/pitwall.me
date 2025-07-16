@@ -153,29 +153,12 @@
         }
       },
       {
-        "id": "laptimechart-CnlB",
-        "componentName": "LapTimeChart",
-        "w": 25,
-        "h": 21,
-        "x": 61,
-        "y": 8,
-        "config": {
-          "selectedDrivers": [
-            "12",
-            "6",
-            "1"
-          ],
-          "ignorePittedLaps": true,
-          "messageFontSize": 90
-        }
-      },
-      {
         "id": "weather-XakW",
         "componentName": "Weather",
         "w": 25,
         "h": 7,
         "x": 61,
-        "y": 29,
+        "y": 8,
         "config": {
           "messageFontSize": 80,
           "showAirTemp": true,
@@ -185,6 +168,49 @@
           "showWindSpeed": false,
           "showWindDirection": true,
           "showRainfall": true
+        }
+      },
+      {
+        "id": "customchart-uu1u",
+        "componentName": "CustomChart",
+        "w": 25,
+        "h": 21,
+        "x": 61,
+        "y": 15,
+        "config": {
+          "selectedDrivers": [
+            "23",
+            "14",
+            "12",
+            "87",
+            "5",
+            "43",
+            "10",
+            "6",
+            "44",
+            "27",
+            "30",
+            "16",
+            "4",
+            "31",
+            "81",
+            "63",
+            "55",
+            "18",
+            "22",
+            "1"
+          ],
+          "selectedMetricId": "lapTime",
+          "ignorePittedLaps": true,
+          "slowLapThreshold": 10,
+          "selectedTyreCompounds": [
+            "SOFT",
+            "MEDIUM",
+            "HARD",
+            "INTERMEDIATE",
+            "WET"
+          ],
+          "messageFontSize": 90
         }
       }
     ],
@@ -326,7 +352,7 @@
         "id": "customchart-LZaH",
         "componentName": "CustomChart",
         "w": 86,
-        "h": 15,
+        "h": 14,
         "x": 0,
         "y": 49,
         "config": {

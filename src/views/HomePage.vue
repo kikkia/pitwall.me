@@ -1,5 +1,8 @@
 <template>
   <div class="home-page-container">
+    <video autoplay loop muted playsinline class="background-video">
+      <source src="/pitwall-bg.mp4" type="video/mp4">
+    </video>
     <Navbar :show-dashboard-buttons="false" @open-info-modal="isInfoModalVisible = true" />
     <div class="content-wrapper">
       <main class="main-content">
@@ -46,11 +49,24 @@ const takeTour = () => {
 
 <style scoped>
 .home-page-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
   background-color: #121212;
   color: #ffffff;
+  overflow: hidden;
+}
+
+.background-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  z-index: 0;
 }
 
 .content-wrapper {
@@ -59,10 +75,18 @@ const takeTour = () => {
   justify-content: center;
   align-items: center;
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .main-content {
   max-width: 600px;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); /* For Safari */
+  padding: 1.5rem 2rem 2rem;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .logo {

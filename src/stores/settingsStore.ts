@@ -27,6 +27,7 @@ export const useSettingsStore = defineStore('settings', () => {
   const activePageId = ref<string>('');
   const layouts = ref<Record<string, any[]>>({});
   const layoutVersion = ref(0);
+  const replayTimeFactor = ref(1);
 
   const DASHBOARD_SETTINGS_KEY = 'dashboardSettings';
 
@@ -40,6 +41,7 @@ export const useSettingsStore = defineStore('settings', () => {
         pages.value = parsed.pages ?? [];
         activePageId.value = parsed.activePageId ?? '';
         layouts.value = parsed.layouts ?? {};
+        replayTimeFactor.value = parsed.replayTimeFactor ?? 1;
         
         if (!pages.value.length || !activePageId.value || !layouts.value[activePageId.value]) {
             const defaultSettings = await loadDefaultSettings();
@@ -56,6 +58,7 @@ export const useSettingsStore = defineStore('settings', () => {
         pages.value = defaultSettings.pages;
         activePageId.value = defaultSettings.activePageId;
         layouts.value = defaultSettings.layouts;
+        replayTimeFactor.value = defaultSettings.replayTimeFactor ?? 1;
       }
     } else {
       const defaultSettings = await loadDefaultSettings();
@@ -64,17 +67,19 @@ export const useSettingsStore = defineStore('settings', () => {
       pages.value = defaultSettings.pages;
       activePageId.value = defaultSettings.activePageId;
       layouts.value = defaultSettings.layouts;
+      replayTimeFactor.value = defaultSettings.replayTimeFactor ?? 1;
     }
   }
 
-  watch([websocketDelay, gridFloat, pages, activePageId, layouts], () => {
+  watch([websocketDelay, gridFloat, pages, activePageId, layouts, replayTimeFactor], () => {
     const settings = {
       websocketDelay: websocketDelay.value,
       gridFloat: gridFloat.value,
       pages: pages.value,
       activePageId: activePageId.value,
       layouts: layouts.value,
-      layoutVersion: layoutVersion.value
+      layoutVersion: layoutVersion.value,
+      replayTimeFactor: replayTimeFactor.value
     };
     localStorage.setItem(DASHBOARD_SETTINGS_KEY, JSON.stringify(settings));
   }, { deep: true });
@@ -126,6 +131,12 @@ export const useSettingsStore = defineStore('settings', () => {
     gridFloat.value = float;
   }
 
+  function setReplayTimeFactor(factor: number) {
+    if (factor >= 0.5 && factor <= 5) {
+        replayTimeFactor.value = factor;
+    }
+  }
+
   function exportSettings() {
     return {
       websocketDelay: websocketDelay.value,
@@ -164,8 +175,10 @@ export const useSettingsStore = defineStore('settings', () => {
     pages,
     activePageId,
     layouts,
+    replayTimeFactor,
     setWebsocketDelay,
     setGridFloat,
+    setReplayTimeFactor,
     addPage,
     removePage,
     renamePage,

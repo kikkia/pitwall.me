@@ -19,7 +19,7 @@
         <div class="p-col-12 p-md-6">
           <div class="p-field">
             <label for="time-factor">Time Factor (0.5x - 5x)</label>
-            <InputNumber id="time-factor" v-model="timeFactor" :min="0.5" :max="5" :step="0.1" @update:modelValue="updateReplaySpeed" />
+            <InputNumber id="time-factor" v-model="replayTimeFactor" :min="0.5" :max="5" :step="0.1" @update:modelValue="settingsStore.setReplayTimeFactor($event)" />
           </div>
         </div>
         <div class="p-col-12 p-md-6" style="margin-top: 1.75rem">
@@ -46,14 +46,14 @@ import Listbox from 'primevue/listbox';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import { useSessionRecordingStore } from '@/stores/sessionRecordingStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { fetchRecordings, downloadAndDecompressRecording } from '@/services/sessionRecordingService';
-import { 
-  startReplay as startReplayService, 
-  stopReplay as stopReplayService, 
-  pauseReplay, 
-  resumeReplay, 
-  updateTimeFactor, 
-  isPaused 
+import {
+  startReplay as startReplayService,
+  stopReplay as stopReplayService,
+  pauseReplay,
+  resumeReplay,
+  isPaused
 } from '@/services/replayService';
 import type { SessionRecording } from '@/stores/sessionRecordingStore';
 import { useF1Store } from '@/stores/f1Store';
@@ -68,12 +68,13 @@ const props = defineProps({
 const emit = defineEmits(['update:visible']);
 
 const store = useSessionRecordingStore();
+const settingsStore = useSettingsStore();
 const f1Store = useF1Store();
 const { recordingGroups, isLoading, error } = storeToRefs(store);
+const { replayTimeFactor } = storeToRefs(settingsStore);
 const confirm = useConfirm();
 
 const replayInProgress = ref(false);
-const timeFactor = ref(1);
 const selectedRecording = ref<SessionRecording | null>(null);
 
 watch(() => props.visible, (newValue) => {
@@ -104,7 +105,7 @@ const startReplay = async () => {
 
   try {
     const content = await downloadAndDecompressRecording(selectedRecording.value);
-    startReplayService(content, timeFactor.value);
+    startReplayService(content);
     replayInProgress.value = true;
   } catch (err) {
     console.error('Error starting replay:', err);
@@ -118,9 +119,4 @@ const stopReplay = () => {
   f1Store.initialize();
 };
 
-const updateReplaySpeed = (newSpeed: number) => {
-  if (replayInProgress.value) {
-    updateTimeFactor(newSpeed);
-  }
-};
 </script>

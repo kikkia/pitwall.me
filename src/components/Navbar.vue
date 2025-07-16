@@ -142,7 +142,7 @@ const f1Store = useF1Store();
 const settingsStore = useSettingsStore();
 const uiStore = useUiStore();
 
-const { pages, activePageId } = storeToRefs(settingsStore);
+const { pages, activePageId, replayTimeFactor } = storeToRefs(settingsStore);
 
 const pageMenu = ref<any>(null);
 const togglePageMenu = (event: Event) => {
@@ -173,6 +173,7 @@ watch(activePageId, (newId) => {
 
 const countdownDisplay = ref<string>('--:--:--');
 const intervalId = ref<number | null>(null); // setTimeout/setInterval return number in browser
+const countdownInternalSeconds = ref(0);
 
 // Use storeToRefs for reactive access
 const { isConnected, raceData } = storeToRefs(f1Store);
@@ -313,20 +314,21 @@ function runCountdownInterval(currentRemainingSeconds: number) {
 
   if (currentRemainingSeconds <= 0) {
     countdownDisplay.value = '00:00:00';
+    countdownInternalSeconds.value = 0;
     return;
   }
-  countdownDisplay.value = formatSecondsToTime(currentRemainingSeconds);
+  countdownInternalSeconds.value = currentRemainingSeconds;
+  countdownDisplay.value = formatSecondsToTime(countdownInternalSeconds.value);
 
-  let internalSeconds = currentRemainingSeconds;
   intervalId.value = window.setInterval(() => {
-    internalSeconds--;
-    if (internalSeconds >= 0) {
-        countdownDisplay.value = formatSecondsToTime(internalSeconds);
+    countdownInternalSeconds.value--;
+    if (countdownInternalSeconds.value >= 0) {
+        countdownDisplay.value = formatSecondsToTime(countdownInternalSeconds.value);
     } else {
         countdownDisplay.value = '00:00:00';
         stopCountdown();
     }
-  }, 1000);
+  }, 1000 / (isReplaying.value ? settingsStore.replayTimeFactor : 1));
 }
 
 const goToSchedulePage = () => {
@@ -344,7 +346,7 @@ const openReplayDialog = () => {
 
 watch(
 [extrapolatedClock, latestSessionStatusInfo, sessionType],
-([clockData, statusInfoNew, typeNew], [oldClockData, oldStatusInfo, oldType]) => {
+([clockData, statusInfoNew, typeNew]) => {
   const status = statusInfoNew?.SessionStatus;
   if (
     status === 'Started' &&
@@ -352,6 +354,9 @@ watch(
     clockData?.Remaining &&
     clockData?.Utc
   ) {
+    if (isReplaying.value && intervalId.value !== null) {
+      return;
+    }
     const initialRemainingSeconds = timeStringToSeconds(clockData.Remaining);
     const clockTimestamp = new Date(clockData.Utc);
     const nowTimestamp = new Date();
@@ -375,12 +380,18 @@ watch(
     if (status !== 'Started' || (typeNew !== 'Qualifying' && typeNew !== 'Practice')) {
         countdownDisplay.value = '--:--:--';
     } else if (status === 'Started' && (typeNew === 'Qualifying' || typeNew === 'Practice')) {
-        countdownDisplay.value = 'Clock Syncing...'; 
+        countdownDisplay.value = 'Clock Syncing...';
     }
   }
 },
-{ immediate: true, deep: true } 
+{ immediate: true, deep: true }
 );
+
+watch(replayTimeFactor, () => {
+    if (isReplaying.value && intervalId.value !== null) {
+        runCountdownInterval(countdownInternalSeconds.value);
+    }
+});
 
 onUnmounted(() => {
   stopCountdown();

@@ -248,7 +248,6 @@ function calculateTimerOffset(driver: DriverViewModel): number {
       break
     }
   }
-  console.log("Calculated: " + cumulativeTime)
   return cumulativeTime
 }
 

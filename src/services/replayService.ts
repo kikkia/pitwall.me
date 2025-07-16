@@ -1,4 +1,5 @@
 import { useF1Store } from '@/stores/f1Store';
+import { useSettingsStore } from '@/stores/settingsStore';
 import type { RaceData } from '@/types/dataTypes';
 import { ref } from 'vue';
 
@@ -12,7 +13,6 @@ export const isPaused = ref(false);
 let timeoutId: number | null = null;
 let messages: RecordedMessage[] = [];
 let currentIndex = 0;
-let currentTimeFactor = 1;
 
 function parseLog(content: string): RecordedMessage[] {
   const lines = content.split('\n');
@@ -82,7 +82,8 @@ function scheduleNextMessage() {
   if (currentIndex < messages.length) {
     const nextMessage = messages[currentIndex];
     const delay = nextMessage.timestamp.getTime() - currentMessage.timestamp.getTime();
-    const adjustedDelay = delay / currentTimeFactor;
+    const settingsStore = useSettingsStore();
+    const adjustedDelay = delay / settingsStore.replayTimeFactor;
 
     timeoutId = window.setTimeout(scheduleNextMessage, adjustedDelay);
   } else {
@@ -90,7 +91,7 @@ function scheduleNextMessage() {
   }
 }
 
-export function startReplay(recordingContent: string, timeFactor: number) {
+export function startReplay(recordingContent: string) {
   if (isReplaying.value) {
     stopReplay();
   }
@@ -104,7 +105,6 @@ export function startReplay(recordingContent: string, timeFactor: number) {
   isReplaying.value = true;
   isPaused.value = false;
   currentIndex = 0;
-  currentTimeFactor = timeFactor;
   
   scheduleNextMessage();
 }
@@ -134,6 +134,3 @@ export function stopReplay() {
   console.log('Replay stopped.');
 }
 
-export function updateTimeFactor(newTimeFactor: number) {
-  currentTimeFactor = newTimeFactor;
-}

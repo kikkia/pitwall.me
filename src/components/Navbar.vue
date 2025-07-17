@@ -400,6 +400,8 @@ onUnmounted(() => {
 
 <style scoped>
 .app-navbar {
+  position: relative;
+  z-index: 2;
   padding: 0.5rem 1rem;
   border-radius: 0;
 }

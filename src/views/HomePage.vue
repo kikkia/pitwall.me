@@ -66,7 +66,7 @@ const takeTour = () => {
   height: 100%;
   object-fit: cover;
   transform: translate(-50%, -50%);
-  z-index: 0;
+  z-index: 1;
 }
 
 .content-wrapper {

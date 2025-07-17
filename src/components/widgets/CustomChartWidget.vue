@@ -4,13 +4,14 @@ import { useF1Store } from '@/stores/f1Store';
 import { metrics, filters as filterDefinitions, tyreCompounds } from '@/utils/chartMetrics';
 import { timeStringToMillis } from '@/utils/formatUtils';
 import Chart from 'primevue/chart';
-import MultiSelect from 'primevue/multiselect';
+import Select from 'primevue/select';
+import Button from 'primevue/button';
 
 const f1Store = useF1Store();
 
 const props = defineProps({
   selectedDrivers: { type: Array as () => string[], default: () => [] },
-  selectedMetricId: { type: String, default: 'lapTime' },
+  selectedMetricId: { type: String, default: '' },
   ignorePittedLaps: { type: Boolean, default: true },
   slowLapThreshold: { type: Number, default: 40 },
   selectedTyreCompounds: { type: Array as () => string[], default: () => [...tyreCompounds] },
@@ -228,34 +229,45 @@ function getTyreCompoundColor(compound: string): string {
     }
 }
 
-function handleDriverSelection(event: any) {
-  internalSelectedDrivers.value = event.value;
-  emit('update:widgetConfig', { selectedDrivers: event.value });
+function handleMetricSelection(event: any) {
+  internalMetricId.value = event.value;
+  emit('update:widgetConfig', { selectedMetric: event.value });
 }
 
 const widgetStyle = computed(() => ({
     fontSize: `${props.messageFontSize}%`
 }));
 
+function selectAllDrivers() {
+  const allDriverIds = availableDrivers.value.map(d => d.value);
+  internalSelectedDrivers.value = allDriverIds;
+  emit('update:widgetConfig', { selectedDrivers: allDriverIds });
+}
+
 </script>
 
 <template>
   <div class="custom-chart-widget" :style="widgetStyle">
-    <div v-if="!internalSelectedDrivers || internalSelectedDrivers.length === 0" class="selection-prompt">
-      <h3>Select drivers to plot chart</h3>
-      <MultiSelect
-        :model-value="internalSelectedDrivers"
-        :options="availableDrivers"
+    <div v-if="internalMetricId == ''" class="selection-prompt">
+      <h3>Select A metric type to chart</h3>
+      <Select
+        :model-value="internalMetricId"
+        :options="metrics.map(m => ({ label: m.label, value: m.id }))"
         optionLabel="label"
         optionValue="value"
-        placeholder="Select Drivers to start"
+        placeholder="Select metric to start"
         :filter="true"
         class="w-full"
-        @change="handleDriverSelection"
+        @change="handleMetricSelection"
       />
     </div>
     <div v-else class="chart-container">
-      <Chart type="line" :data="chartData" :options="chartOptions" />
+      <div v-if="internalSelectedDrivers.length === 0" class="selection-prompt">
+        <h3>Select drivers to display data</h3>
+        <p>Use the settings panel to select drivers.</p>
+        <Button label="Select All Drivers" @click="selectAllDrivers" class="p-button-sm p-button-success" />
+      </div>
+      <Chart v-else type="line" :data="chartData" :options="chartOptions" />
     </div>
   </div>
 </template>
@@ -283,6 +295,16 @@ const widgetStyle = computed(() => ({
 .selection-prompt h3 {
   margin-bottom: 1rem;
   font-size: 1.2em;
+}
+
+.selection-prompt p {
+  margin-top: 1rem;
+  font-size: 0.9em;
+  color: #ccc;
+}
+
+.selection-prompt .p-button {
+  margin-top: 1.5rem;
 }
 
 .chart-container {

@@ -11,6 +11,7 @@
       ref="dashboardGridRef"
       class="dashboard-container"
       @grid-updated="handleGridUpdated"
+      @drag-start="handleDragStart"
       :initial-widgets="activeWidgets"
       :edit-mode="isEditMode"
     >
@@ -60,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted, computed, watch } from 'vue';
+import { ref, nextTick, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUiStore } from '@/stores/uiStore';
 import { storeToRefs } from 'pinia';
@@ -83,7 +84,9 @@ const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});
 const widgetInstanceRefs = ref({});
 
-const widgetRefs = ref({}); 
+const widgetRefs = ref({});
+const lastDraggedWidget = ref(null);
+
 const setWidgetRef = (id, el) => {
   if (el) {
     widgetRefs.value[id] = el;
@@ -208,12 +211,58 @@ const handleWidgetSettingsSave = (newConfig, showToast = true) => {
   }
 };
 
+const handleDragStart = (el) => {
+  const widgetId = el.getAttribute('gs-id');
+  const widget = activeWidgets.value.find(w => w.id === widgetId);
+  if (widget) {
+    lastDraggedWidget.value = {
+      id: widget.id,
+      x: widget.x,
+      y: widget.y,
+      w: widget.w,
+      h: widget.h,
+    };
+  }
+};
+
+const undoLayoutChange = () => {
+  if (lastDraggedWidget.value) {
+    const grid = dashboardGridRef.value?.getGridInstance();
+    const widgetEl = grid.engine.nodes.find(n => n.id === lastDraggedWidget.value.id)?.el;
+    const widgetToUndo = activeWidgets.value.find(w => w.id === lastDraggedWidget.value.id);
+
+    if (widgetEl && widgetToUndo) {
+        grid.update(widgetEl, {
+            x: lastDraggedWidget.value.x,
+            y: lastDraggedWidget.value.y,
+            w: lastDraggedWidget.value.w,
+            h: lastDraggedWidget.value.h,
+        });
+    }
+  }
+};
+
+const handleKeyDown = (event) => {
+  if (event.ctrlKey && event.key === 'z') {
+    event.preventDefault();
+    undoLayoutChange();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
+
 const updateLayout = (showToast = true) => {
   settingsStore.updateLayout(activeWidgets.value);
-   if (showToast) {
-    uiStore.showToast('Layout saved', 'success', 2000);
+  if (showToast) {
+    uiStore.showToast('Layout saved (Ctrl+Z to undo)', 'success', 2000);
   }
-}
+};
 
 onMounted(() => {
   const savedEditMode = localStorage.getItem('dashboardEditMode');
@@ -249,7 +298,7 @@ const handleGridUpdated = (updatedItems) => {
       widget.h = updatedItem.h;
     }
   });
-  updateLayout();
+  updateLayout(true);
 };
 
 const openAddWidgetDialog = () => {

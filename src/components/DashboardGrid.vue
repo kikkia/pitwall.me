@@ -31,7 +31,7 @@ let isGridInitialized = false;
 const settingsStore = useSettingsStore();
 const { gridFloat } = storeToRefs(settingsStore);
 
-const emit = defineEmits(['grid-updated']);
+const emit = defineEmits(['grid-updated', 'drag-start']);
 
 const setupGridstack = () => {
     if (gridContainer.value && !isGridInitialized) {
@@ -46,6 +46,10 @@ const setupGridstack = () => {
             staticGrid: !props.editMode,
             acceptWidgets: true,
         }, gridContainer.value);
+
+        grid.on('dragstart', (event, el) => {
+            emit('drag-start', el);
+        });
 
         grid.on('change', (event, items) => {
             const updatedWidgets = items.map(item => ({

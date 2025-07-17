@@ -14,7 +14,7 @@ export type WidgetComponentName =
   'Battle' |
   'Weather' |
   'ChampionshipPrediction' |
-  'LapTimeChart' |
+  // 'LapTimeChart' |
   'CustomChart' |
   'TeamRadio' |
   'PitstopStrategy' |
@@ -37,7 +37,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'Battle': shallowRef(defineAsyncComponent(() => import('./components/widgets/BattleWidget.vue'))),
   'Weather': shallowRef(defineAsyncComponent(() => import('./components/widgets/WeatherWidget.vue'))),
   'ChampionshipPrediction': shallowRef(defineAsyncComponent(() => import('./components/widgets/ChampionshipPredictionWidget.vue'))),
-  'LapTimeChart': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapTimeChartWidget.vue'))),
+  // 'LapTimeChart': shallowRef(defineAsyncComponent(() => import('./components/widgets/LapTimeChartWidget.vue'))),
   'TeamRadio': shallowRef(defineAsyncComponent(() => import('./components/widgets/TeamRadioWidget.vue'))),
   'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
 };
@@ -55,7 +55,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'TyreStrategy': { selectedDriverNumber: null, messageFontSize: 90, ignorePittedLaps: false },
     'RaceControlMessages': { showTimestamp: true, showCategory: true, messageFontSize: 90, selectedCategories: ["Flag", "Other", "Sector", "Drs", "SafetyCar"] },
     'LapCompare': { selectedDrivers: [] },
-    'LapTimeChart': { selectedDrivers: [], ignorePittedLaps: false, slowLapThreshold: 40, messageFontSize: 90 },
+    // 'LapTimeChart': { selectedDrivers: [], ignorePittedLaps: false, slowLapThreshold: 40, messageFontSize: 90 },
     'Battle': { threshold: 1.5, messageFontSize: 90, battleForPosition: 1, auto: false },
     'Weather': {
       messageFontSize: 80,
@@ -82,7 +82,7 @@ export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: num
     'TyreStrategy': { w: 20, h: 22 },
     'TrackMap': { w: 20, h: 13 },
     'LapCompare': { w: 24, h: 6 },
-    'LapTimeChart': { w: 24, h: 14 },
+    // 'LapTimeChart': { w: 24, h: 14 },
     'CustomChart': { w: 24, h: 14 },
     'SpeedTrap': { w: 20, h: 28 },
     'Battle': { w: 24, h: 12 },
@@ -105,7 +105,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'TeamRadio': 'Team Radio',
     'RaceControlMessages': 'Race Control Messages',
     'LapCompare': 'Lap Compare',
-    'LapTimeChart': 'Lap Time Chart',
+    // 'LapTimeChart': 'Lap Time Chart',
     'Battle': 'Battle for Position',
     'DriverCarStats': 'Driver Car Stats',
     'LapHistory': 'Lap History',
@@ -124,7 +124,7 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'TyreStrategy': 'Displays a graphical overview of each driver\'s tyre strategy throughout the race.',
     'TrackMap': 'Shows a map of the track and the positions of the drivers.',
     'LapCompare': 'Compares laps, sectors, and tyre ages for selected drivers, showing diffs.',
-    'LapTimeChart': 'Compares lap times for multiple drivers on a line chart.',
+    // 'LapTimeChart': 'Compares lap times for multiple drivers on a line chart.',
     'CustomChart': 'Chart Lap time, Tire age and other metrics',
     'SpeedTrap': 'Displays speed trap data for all drivers.',
     'Battle': 'Automatically detects and focuses on close on-track battles for position.',
@@ -148,7 +148,7 @@ export const widgetIcons: Record<WidgetComponentName, string> = {
     'Battle': 'pi pi-users',
     'Weather': 'pi pi-cloud',
     'ChampionshipPrediction': 'pi pi-star',
-    'LapTimeChart': 'pi pi-chart-line',
+    // 'LapTimeChart': 'pi pi-chart-line',
     'CustomChart': 'pi pi-chart-bar',
     'TeamRadio': 'pi pi-wifi',
     'PitstopStrategy': 'pi pi-wrench',
@@ -169,7 +169,7 @@ export const widgetTags: Record<WidgetComponentName, string[]> = {
     'Battle': ['Compare'],
     'Weather': ['Track'],
     'ChampionshipPrediction': ['Table'],
-    'LapTimeChart': ['Chart', 'History', 'Compare'],
+    // 'LapTimeChart': ['Chart', 'History', 'Compare'],
     'CustomChart': ['Chart', 'History', 'Compare'],
     'TeamRadio': [],
     'PitstopStrategy': ['Strategy', 'Compare'],

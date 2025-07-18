@@ -62,6 +62,7 @@
 
 <script setup>
 import { ref, nextTick, onMounted, onUnmounted, computed, watch } from 'vue';
+import { useHead } from '@unhead/vue';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUiStore } from '@/stores/uiStore';
 import { storeToRefs } from 'pinia';
@@ -79,6 +80,13 @@ import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '..
 const uiStore = useUiStore();
 const { startWelcomeTour } = storeToRefs(uiStore);
 const welcomeTourRef = ref(null);
+
+useHead({
+  title: 'Dashboard | Pitwall.me',
+  meta: [
+    { name: 'description', content: 'Your personal F1 telemetry dashboard. Add, remove, and configure widgets to build your ideal pitwall.' }
+  ],
+});
 
 const dashboardGridRef = ref(null);
 const gridItemRefs = ref({});

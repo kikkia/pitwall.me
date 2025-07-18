@@ -24,6 +24,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 import Button from 'primevue/button';
 import Navbar from '@/components/Navbar.vue';
 import InfoModal from '@/components/InfoModal.vue';
@@ -32,6 +33,13 @@ import { useUiStore } from '@/stores/uiStore';
 const router = useRouter();
 const uiStore = useUiStore();
 const isInfoModalVisible = ref(false);
+
+useHead({
+  title: 'Pitwall.me - Real-Time F1 Telemetry Dashboards',
+  meta: [
+    { name: 'description', content: 'Take a seat on the pitwall and create your own race engineer dashboards to view real-time or past session telemetry data.' }
+  ],
+});
 
 const goToDashboard = () => {
   router.push('/dashboard');

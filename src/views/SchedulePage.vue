@@ -67,6 +67,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
+import { useHead } from '@unhead/vue';
 import { useRouter } from 'vue-router';
 import { useEventStore, type LocalF1Event } from '@/stores/eventStore';
 import { fetchEvents } from '@/services/eventService';
@@ -78,6 +79,14 @@ import Calendar from 'primevue/calendar';
 import ToggleButton from 'primevue/togglebutton';
 
 const eventStore = useEventStore();
+
+useHead({
+  title: 'F1 Schedule | Pitwall.me',
+  meta: [
+    { name: 'description', content: 'View the upcoming F1 race schedule and check session times.' }
+  ],
+});
+
 const countdown = ref('');
 let countdownInterval: number | undefined;
 

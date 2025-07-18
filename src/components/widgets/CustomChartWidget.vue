@@ -136,46 +136,55 @@ const chartData = computed(() => {
   return { labels, datasets };
 });
 
-const chartOptions = computed(() => ({
-  responsive: true,
-  maintainAspectRatio: false,
-  animation: false,
-  plugins: {
-    legend: {
-      position: 'top',
-      labels: { color: '#eee', font: { size: props.messageFontSize * 0.14 } }
-    },
-    tooltip: {
-        callbacks: {
-            label: function(context: any) {
-                let label = context.dataset.label || '';
-                if (label) { label += ': '; }
-                if (context.parsed.y !== null) {
-                    label += selectedMetric.value.formatter(context.parsed.y);
-                }
-                return label;
-            }
-        }
+const chartOptions = computed(() => {
+  const yAxisTicks: any = {
+    color: '#ddd',
+    callback: function(value: any) {
+      return selectedMetric.value.formatter(value);
     }
-  },
-  scales: {
-    x: {
-      title: { display: true, text: 'Lap Number', color: '#eee' },
-      ticks: { color: '#ddd' },
-      grid: { color: '#444' }
-    },
-    y: {
-      title: { display: true, text: selectedMetric.value.label, color: '#eee' },
-      ticks: {
-        color: '#ddd',
-        callback: function(value: any) {
-          return selectedMetric.value.formatter(value);
-        }
-      },
-      grid: { color: '#444' }
-    }
+  };
+
+  if (['tyreAge', 'position'].includes(internalMetricId.value)) {
+    yAxisTicks.stepSize = 1;
+    yAxisTicks.precision = 0;
   }
-}));
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { color: '#eee', font: { size: props.messageFontSize * 0.14 } }
+      },
+      tooltip: {
+          callbacks: {
+              label: function(context: any) {
+                  let label = context.dataset.label || '';
+                  if (label) { label += ': '; }
+                  if (context.parsed.y !== null) {
+                      label += selectedMetric.value.formatter(context.parsed.y);
+                  }
+                  return label;
+              }
+          }
+      }
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Lap Number', color: '#eee' },
+        ticks: { color: '#ddd' },
+        grid: { color: '#444' }
+      },
+      y: {
+        title: { display: true, text: selectedMetric.value.label, color: '#eee' },
+        ticks: yAxisTicks,
+        grid: { color: '#444' }
+      }
+    }
+  };
+});
 
 const settingsDefinition = computed(() => {
     const activeFilters = filterDefinitions.filter(f => f.appliesTo.includes(internalMetricId.value));

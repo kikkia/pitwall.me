@@ -95,7 +95,10 @@ const currentlyPlayingMessage = ref<TeamRadioCapture | null>(null);
 const isPlaying = ref(false);
 
 const filteredMessages = computed(() => {
-  const allMessages = messages.value || [];
+  const allMessages = messages.value;
+  if (!Array.isArray(allMessages)) {
+    return [];
+  }
   return allMessages.filter(message => {
     const driver = drivers.value.find(d => d.racingNumber === message.RacingNumber);
     const driverFocused = props.focusedDrivers.length === 0 || props.focusedDrivers.includes(message.RacingNumber);
@@ -207,7 +210,7 @@ onUnmounted(() => {
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-if="filteredMessages?.length === 0">
+                <tr v-if="!filteredMessages || filteredMessages.length === 0">
                     <td :colspan="3 + (props.showTimestamp ? 1:0)" style="text-align: center;">
                         Waiting for team radio...
                     </td>

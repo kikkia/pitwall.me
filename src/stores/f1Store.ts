@@ -105,6 +105,9 @@ export const useF1Store = defineStore('f1', () => {
   function setInitialState(initialDataR: Partial<RaceData>) {
     const settingsStore = useSettingsStore();
     console.log("Store Action: Setting initial state...");
+    if (initialDataR.TeamRadio?.Captures && !Array.isArray(initialDataR.TeamRadio.Captures)) {
+        initialDataR.TeamRadio.Captures = Object.values(initialDataR.TeamRadio.Captures).filter(Boolean) as TeamRadioCapture[];
+    }
     Object.assign(raceData, createInitialRaceData(), initialDataR);
 
     if (raceData.ExtrapolatedClock?.Utc) {

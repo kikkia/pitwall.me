@@ -203,6 +203,7 @@
           "selectedMetricId": "lapTime",
           "ignorePittedLaps": false,
           "slowLapThreshold": 10,
+          "favoritedDrivers": [],
           "selectedTyreCompounds": [
             "SOFT",
             "MEDIUM",
@@ -381,6 +382,7 @@
           "selectedMetricId": "lapTime",
           "ignorePittedLaps": false,
           "slowLapThreshold": 31,
+          "favoritedDrivers": [],
           "selectedTyreCompounds": [
             "SOFT",
             "MEDIUM",

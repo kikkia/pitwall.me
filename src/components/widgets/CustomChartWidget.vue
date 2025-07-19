@@ -11,6 +11,7 @@ const f1Store = useF1Store();
 
 const props = defineProps({
   selectedDrivers: { type: Array as () => string[], default: () => [] },
+  favoritedDrivers: { type: Array as () => string[], default: () => [] },
   selectedMetricId: { type: String, default: '' },
   ignorePittedLaps: { type: Boolean, default: false },
   slowLapThreshold: { type: Number, default: 40 },
@@ -22,13 +23,17 @@ const emit = defineEmits(['update:widgetConfig']);
 
 // Internal state refs
 const internalSelectedDrivers = ref(props.selectedDrivers);
+const internalFavoritedDrivers = ref(props.favoritedDrivers);
 const internalMetricId = ref(props.selectedMetricId);
 const internalIgnorePittedLaps = ref(props.ignorePittedLaps);
 const internalSlowLapThreshold = ref(props.slowLapThreshold);
 const internalSelectedTyreCompounds = ref(props.selectedTyreCompounds);
 
+const hoveredDriver = ref<string | null>(null);
+
 // Watchers to keep internal state in sync with props
 watch(() => props.selectedDrivers, (newVal) => internalSelectedDrivers.value = newVal);
+watch(() => props.favoritedDrivers, (newVal) => internalFavoritedDrivers.value = newVal);
 watch(() => props.selectedMetricId, (newVal) => internalMetricId.value = newVal);
 watch(() => props.ignorePittedLaps, (newVal) => internalIgnorePittedLaps.value = newVal);
 watch(() => props.slowLapThreshold, (newVal) => internalSlowLapThreshold.value = newVal);
@@ -43,6 +48,16 @@ const availableDrivers = computed(() => {
       value: driver.racingNumber
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
+});
+
+const availableFavoriteDrivers = computed(() => {
+  return internalSelectedDrivers.value.map(driverNumber => {
+    const driverInfo = f1Store.driversViewModelMap.get(driverNumber);
+    return {
+      label: driverInfo ? `${driverInfo.tla} (${driverInfo.racingNumber})` : driverNumber,
+      value: driverNumber
+    };
+  });
 });
 
 const selectedMetric = computed(() => metrics.find(m => m.id === internalMetricId.value)!);
@@ -141,20 +156,26 @@ const chartData = computed(() => {
     const usageCount = teamColorUsage.get(teamColour) || 0;
     teamColorUsage.set(teamColour, usageCount + 1);
 
+    const isHovered = hoveredDriver.value === driverNumber || internalFavoritedDrivers.value.includes(driverNumber);
+    const isDimmed = (hoveredDriver.value !== null || internalFavoritedDrivers.value.length > 0) && !isHovered;
+
+    const finalBorderColor = isDimmed ? `${teamColour}40` : teamColour;
+
     return {
-        label: driverInfo?.tla ?? driverNumber,
-        racingNumber: driverNumber,
-        data: pointData.map(p => p ? p.value : null),
-        borderColor: teamColour,
-        borderDash: usageCount > 0 ? [5, 5] : [],
-        fill: false,
-        tension: 0.1,
-        spanGaps: true,
-        pointRadius: pointData.map(p => p?.value !== null ? 4 : 0),
-        pointHoverRadius: pointData.map(p => p?.value !== null ? 6 : 0),
-        pointBackgroundColor: pointData.map(p => p ? getTyreCompoundColor(p.tyre) : '#838383'),
-        pointBorderColor: teamColour,
-        pointBorderWidth: 2,
+      label: driverInfo?.tla ?? driverNumber,
+      racingNumber: driverNumber,
+      data: pointData.map(p => p ? p.value : null),
+      borderColor: finalBorderColor,
+      borderWidth: isHovered ? 4 : 2,
+      borderDash: usageCount > 0 ? [5, 5] : [],
+      fill: false,
+      tension: 0.1,
+      spanGaps: true,
+      pointRadius: pointData.map(p => p?.value !== null ? 4 : 0),
+      pointHoverRadius: pointData.map(p => p?.value !== null ? 6 : 0),
+      pointBackgroundColor: pointData.map(p => p ? `${getTyreCompoundColor(p.tyre)}${isDimmed ? '40' : ''}` : '#838383'),
+      pointBorderColor: finalBorderColor,
+      pointBorderWidth: isHovered ? 3 : 2,
     };
   });
 
@@ -178,6 +199,17 @@ const chartOptions = computed(() => {
     responsive: true,
     maintainAspectRatio: false,
     animation: false,
+    onHover: (event: any, elements: any, chart: any) => {
+        if (elements.length > 0) {
+            const datasetIndex = elements[0].datasetIndex;
+            if(chart.data.datasets[datasetIndex]) {
+                const racingNumber = chart.data.datasets[datasetIndex].racingNumber;
+                hoveredDriver.value = racingNumber;
+            }
+        } else {
+            hoveredDriver.value = null;
+        }
+    },
     plugins: {
       legend: {
         position: 'top',
@@ -229,6 +261,14 @@ const settingsDefinition = computed(() => {
             component: 'MultiSelect',
             options: availableDrivers.value,
             props: { placeholder: "Select Drivers", filter: true, optionLabel: 'label', optionValue: 'value' }
+        },
+        {
+            id: 'favoritedDrivers',
+            label: 'Favorite Drivers',
+            type: 'array',
+            component: 'MultiSelect',
+            options: availableFavoriteDrivers.value,
+            props: { placeholder: "Select Favorites", filter: true, optionLabel: 'label', optionValue: 'value' }
         },
         ...activeFilters.map(filter => ({
             id: filter.id,

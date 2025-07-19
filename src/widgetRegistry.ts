@@ -48,7 +48,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'TrackStatusLED': {},
     'FlyingLap': { selectedDriverNumber: null, auto: true, messageFontSize: 90 },
     'PitstopStrategy': { messageFontSize: 90 },
-    'CustomChart': { selectedDrivers: [], selectedMetricId: '', ignorePittedLaps: false, slowLapThreshold: 40, selectedTyreCompounds: ['SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', 'WET'], messageFontSize: 90 },
+    'CustomChart': { selectedDrivers: [], favoritedDrivers: [], selectedMetricId: '', ignorePittedLaps: false, slowLapThreshold: 40, selectedTyreCompounds: ['SOFT', 'MEDIUM', 'HARD', 'INTERMEDIATE', 'WET'], messageFontSize: 90 },
     'SectorTiming': { showBestLap: true, showLastLap: true, showBestSectors: true, showLastSectors: true, showMinisectors: true, messageFontSize: 90 },
     'LapHistory': { selectedDriverNumber: null, messageFontSize: 90 },
     'DriverCarStats': { selectedDriverNumber: null, interpolationRate: 15, shiftLightMode: 'converging', speedUnit: 'kph' },

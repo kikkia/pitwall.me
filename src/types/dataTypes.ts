@@ -241,6 +241,7 @@ export interface ValueWithLap {
   
   export interface DriverListEntry {
 	RacingNumber: string;
+	StartingPosition?: string;
 	BroadcastName: string;
 	FullName: string;
 	Tla: string;
@@ -355,6 +356,7 @@ export interface ValueWithLap {
 	headshotUrl: string;
 	
 	position: string;
+	startingPosition: string;
 	gapToLeader: string;
 	gapToAhead: string;
 	lastLapTime: ValueWithLap | null;

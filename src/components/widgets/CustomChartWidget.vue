@@ -54,9 +54,27 @@ const chartData = computed(() => {
 
   const allDriverLaps = internalSelectedDrivers.value.map(driverNumber => ({
       driverNumber,
-      laps: f1Store.raceData.LapHistoryMap[driverNumber]?.CompletedLaps ?? [],
+      laps: f1Store.raceData.LapHistoryMap[driverNumber]?.CompletedLaps ? [...f1Store.raceData.LapHistoryMap[driverNumber].CompletedLaps] : [],
       stints: f1Store.raceData.TyreStintSeries?.Stints?.[driverNumber] ?? []
   }));
+
+  // When in position mode, insert a fake lap 0 for all drivers with their starting position.
+  if (selectedMetric.value.id === 'position') {
+    allDriverLaps.forEach(({ driverNumber, laps, stints }) => {
+      const driverInfo = f1Store.driversViewModelMap.get(driverNumber);
+      if (driverInfo && driverInfo.startingPosition && parseInt(driverInfo.startingPosition, 10) > 0) {
+        const startingLap = {
+          Lap: 0,
+          Pitted: false,
+          Position: driverInfo.startingPosition,
+          LapTime: '00:00.000',
+          Sectors: [],
+          TyreCompound: stints[0]?.Compound ?? 'UNKNOWN',
+        };
+        laps.unshift(startingLap as any);
+      }
+    });
+  }
 
   const allCompletedLaps = allDriverLaps.flatMap(d => d.laps);
   if (allCompletedLaps.length === 0) {
@@ -75,6 +93,8 @@ const chartData = computed(() => {
   const filteredLapData = allDriverLaps.map(({ driverNumber, laps, stints }) => {
       const filteredLaps = laps.filter(lap => {
 
+          if (selectedMetric.value.id === 'position' && lap.Lap === 0) return true;
+          
           const compound = lap.TyreCompound;
 
           if (internalIgnorePittedLaps.value && lap.Pitted) return false;
@@ -94,7 +114,12 @@ const chartData = computed(() => {
   // --- End Filtering ---
 
   const minLap = Math.min(...allCompletedLaps.map(lap => lap.Lap));
-  const maxLap = Math.max(...allCompletedLaps.map(lap => lap.Lap));
+  let maxLap = Math.max(...allCompletedLaps.map(lap => lap.Lap));
+
+  const lapCount = maxLap - minLap + 1;
+  if (lapCount < 6) {
+    maxLap = 6;
+  }
   const labels = Array.from({ length: maxLap - minLap + 1 }, (_, i) => minLap + i);
 
   const teamColorUsage = new Map<string, number>();

@@ -193,7 +193,13 @@ export const useF1Store = defineStore('f1', () => {
         break;
       case "DriverList":
         if (payload && target.DriverList) {
-            target.DriverList = deepMergeObjects(target.DriverList, payload as Partial<DriverList>);
+            const driverListPayload = payload as Partial<DriverList>;
+            target.DriverList = deepMergeObjects(target.DriverList, driverListPayload);
+            for (const driverNumber in driverListPayload) {
+              if (Object.prototype.hasOwnProperty.call(driverListPayload, driverNumber)) {
+                affectedDriverNumbers.add(driverNumber);
+              }
+            }
         }
         break;
 

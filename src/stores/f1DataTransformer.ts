@@ -25,6 +25,7 @@ export function createOrUpdateDriverViewModel(
     teamColour: '808080',
     headshotUrl: '',
     position: '',
+    startingPosition: '',
     gapToLeader: '',
     gapToAhead: '',
     lastLapTime: null,
@@ -74,6 +75,7 @@ export function createOrUpdateDriverViewModel(
     vm.teamName = driverInfo.TeamName;
     vm.teamColour = driverInfo.TeamColour || '808080'; 
     vm.headshotUrl = driverInfo.HeadshotUrl;
+    vm.startingPosition = driverInfo.StartingPosition || '';
   }
 
   if (timingDataLine) {

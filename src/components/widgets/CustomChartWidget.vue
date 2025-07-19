@@ -12,7 +12,7 @@ const f1Store = useF1Store();
 const props = defineProps({
   selectedDrivers: { type: Array as () => string[], default: () => [] },
   selectedMetricId: { type: String, default: '' },
-  ignorePittedLaps: { type: Boolean, default: true },
+  ignorePittedLaps: { type: Boolean, default: false },
   slowLapThreshold: { type: Number, default: 40 },
   selectedTyreCompounds: { type: Array as () => string[], default: () => [...tyreCompounds] },
   messageFontSize: { type: Number, default: 90 }

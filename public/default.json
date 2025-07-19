@@ -201,7 +201,7 @@
             "1"
           ],
           "selectedMetricId": "lapTime",
-          "ignorePittedLaps": true,
+          "ignorePittedLaps": false,
           "slowLapThreshold": 10,
           "selectedTyreCompounds": [
             "SOFT",
@@ -379,7 +379,7 @@
             "1"
           ],
           "selectedMetricId": "lapTime",
-          "ignorePittedLaps": true,
+          "ignorePittedLaps": false,
           "slowLapThreshold": 31,
           "selectedTyreCompounds": [
             "SOFT",

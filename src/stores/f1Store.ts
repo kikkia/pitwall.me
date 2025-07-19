@@ -356,7 +356,7 @@ export const useF1Store = defineStore('f1', () => {
                 target.LapHistoryMap[RacingNumber] = { RacingNumber: RacingNumber, CompletedLaps: [] };
             }
             target.LapHistoryMap[RacingNumber].CompletedLaps.push(CompletedLap);
-            
+            // console.log(JSON.stringify(CompletedLap))
 
             affectedDriverNumbers.add(RacingNumber);
         }

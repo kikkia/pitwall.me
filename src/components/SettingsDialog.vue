@@ -55,9 +55,10 @@
       </div>
     </div>
   <template #footer>
-    <div class="flex justify-content-between w-full">
+    <div>
         <ImportExport @close-settings="closeDialog" />
-        <Button label="Save" @click="saveSettings" class="save-button" />
+        <Button label="Reset to Default" severity="danger" @click="confirmReset" style="margin-left: .5em" />
+        <Button label="Save" @click="saveSettings" style="margin-left: .5em" />
     </div>
   </template>
 </Dialog>
@@ -86,6 +87,8 @@ import InputText from 'primevue/inputtext';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { storeToRefs } from 'pinia';
 import ImportExport from './ImportExport.vue';
+import { useConfirm } from "primevue/useconfirm";
+import ConfirmDialog from 'primevue/confirmdialog';
 
 defineOptions({
   components: {
@@ -112,6 +115,7 @@ interface Props {
 const props = defineProps<Props>();
 const emit = defineEmits(['update:visible']);
 
+const confirm = useConfirm();
 const settingsStore = useSettingsStore();
 const { websocketDelay, gridFloat, pages } = storeToRefs(settingsStore);
 const localWebsocketDelay = ref(websocketDelay.value);
@@ -153,6 +157,19 @@ const deletePage = (page: Page) => {
   }
 };
 
+const confirmReset = () => {
+    confirm.require({
+        message: 'Are you sure you want to reset all settings to their default values? This action cannot be undone.',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+            settingsStore.resetSettings();
+            emit('update:visible', false);
+        },
+        reject: () => {}
+    });
+};
+
 const gravityOptions = ref([
   { name: 'On (no gravity)', value: true },
   { name: 'Off (widgets gravitate to top)', value: false }
@@ -170,7 +187,6 @@ const closeDialog = () => {
 </script>
 <style scoped>
 .save-button {
-  margin-top: 1rem;
 }
 
 .page-management {
@@ -179,7 +195,5 @@ const closeDialog = () => {
 }
 
 :deep(.p-dialog-footer) {
-    display: flex;
-    justify-content: space-between;
 }
 </style>

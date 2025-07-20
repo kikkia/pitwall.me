@@ -169,6 +169,17 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   }
 
+  async function resetSettings() {
+    const defaultSettings = await loadDefaultSettings();
+    websocketDelay.value = defaultSettings.websocketDelay;
+    gridFloat.value = defaultSettings.gridFloat;
+    pages.value = defaultSettings.pages;
+    activePageId.value = defaultSettings.activePageId;
+    layouts.value = defaultSettings.layouts;
+    replayTimeFactor.value = defaultSettings.replayTimeFactor ?? 1;
+    layoutVersion.value++;
+  }
+
   return {
     websocketDelay,
     gridFloat,
@@ -186,6 +197,7 @@ export const useSettingsStore = defineStore('settings', () => {
     updateLayout,
     exportSettings,
     importSettings,
+    resetSettings,
     layoutVersion,
     initializeStore
   };

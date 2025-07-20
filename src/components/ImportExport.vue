@@ -1,10 +1,8 @@
 <template>
-  <div class="flex justify-content-between">
-    <div>
-      <Button label="Export" icon="pi pi-upload" class="p-button-secondary" @click="exportSettingsToFile" />
-      <Button label="Import" icon="pi pi-download" class="p-button-secondary" @click="triggerImport" style="margin-left: .5em" />
-      <input type="file" ref="fileInput" @change="importSettingsFromFile" style="display: none" accept=".json" />
-    </div>
+  <div style="display: inline-block;">
+    <Button label="Export" icon="pi pi-upload" class="p-button-secondary" @click="exportSettingsToFile" />
+    <Button label="Import" icon="pi pi-download" class="p-button-secondary" @click="triggerImport" style="margin-left: .5em" />
+    <input type="file" ref="fileInput" @change="importSettingsFromFile" style="display: none" accept=".json" />
   </div>
 
   <Dialog v-model:visible="isImportDialogVisible" modal header="Import Settings" :style="{ width: '25vw' }">

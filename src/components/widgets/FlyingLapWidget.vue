@@ -31,6 +31,7 @@ const emit = defineEmits(['update:widgetConfig']);
 const f1Store = useF1Store();
 const settingsStore = useSettingsStore();
 
+const FLYING_LAP_TIME_CUTOFF = 150000;
 const flyingLapDriver = ref<DriverViewModel | null>(null);
 const sectorStartTime = ref(0);
 const displayTime = ref("--:--.---");
@@ -166,6 +167,13 @@ const sessionBestSectors = computed(() => {
 function isDriverOnFlyingLap(driver: DriverViewModel | null): boolean {
   if (!driver || driver.inPit || driver.retired || driver.stopped) {
     return false;
+  }
+
+  if (driver.lastSectorCompleted) {
+    const lapStartTime = driver.lastSectorCompleted - calculateTimerOffset(driver);
+    if ((Date.now() - lapStartTime) > FLYING_LAP_TIME_CUTOFF) {
+      return false;
+    }
   }
 
   const hasCompletedMinisector = driver.sectors.some(s =>

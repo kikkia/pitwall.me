@@ -109,7 +109,7 @@ const { activePageId, layouts, layoutVersion } = storeToRefs(settingsStore);
 const activeWidgets = computed(() => layouts.value[activePageId.value] || []);
 
 const isInfoModalVisible = ref(false);
-const isEditMode = ref(false);
+const isEditMode = ref(true);
 
 const isSettingsDialogOpen = ref(false);
 const settingsTargetWidgetId = ref(null);

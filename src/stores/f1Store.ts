@@ -6,6 +6,7 @@ import { fetchTrackInfo } from '@/services/trackService';
 import * as transformer from '@/stores/f1DataTransformer';
 import { calculateQualifyingGaps } from '@/stores/f1DataTransformer';
 import pako from 'pako';
+import { timeStringToMillis } from '@/utils/formatUtils';
 
 import type {
   RaceData,
@@ -89,6 +90,21 @@ export const useF1Store = defineStore('f1', () => {
     return drivers;
   });
 
+  const fastestLapDriverNumber = computed<string | null>(() => {
+    let fastestTime = Infinity;
+    let fastestDriverNum: string | null = null;
+    for (const driver of driversViewModelMap.values()) {
+      if (driver.bestLapTime?.Value) {
+        const timeMillis = timeStringToMillis(driver.bestLapTime.Value);
+        if (timeMillis > 0 && timeMillis < fastestTime) {
+          fastestTime = timeMillis;
+          fastestDriverNum = driver.racingNumber;
+        }
+      }
+    }
+    return fastestDriverNum;
+  });
+  
   const isQualifyingActive = computed<boolean>(() => {
     return currentSessionType.value === 'Qualifying' && currentQualifyingPart.value > 0;
   });
@@ -478,7 +494,8 @@ export const useF1Store = defineStore('f1', () => {
     get currentQualifyingPart() { return currentQualifyingPart; },
     
     sortedDriversViewModel,
-
+    fastestLapDriverNumber,
+  
     setConnected,
     setInitialState,
     applyFeedUpdate,

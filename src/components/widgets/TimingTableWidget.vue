@@ -8,6 +8,7 @@ const f1Store = useF1Store();
 
 const isQualifying = computed(() => f1Store.currentSessionType === 'Qualifying');
 const currentQualifyingPart = computed(() => f1Store.currentQualifyingPart);
+const fastestLapDriverNumber = computed(() => f1Store.fastestLapDriverNumber);
 
 const drivers = computed(() => {
   let filteredDrivers = f1Store.sortedDriversViewModel.filter((driver) => driver.racingNumber !== "_kf");
@@ -293,7 +294,7 @@ function getTyreAge(driver: DriverViewModel) {
             <td>{{ driver.inPit ? "In Pits" : '' }}</td>
           </template>
           <template v-else>
-            <td v-if="showBest">{{ driver.bestLapTime?.Value || '-' }}</td>
+            <td v-if="showBest" :class="{ 'fastest-lap': driver.racingNumber === fastestLapDriverNumber }">{{ driver.bestLapTime?.Value || '-' }}</td>
             <td v-if="showLast">{{ driver.lastLapTime?.Value || '-' }}</td>
             <td v-if="showGap">{{ driver.gapToLeader || '-' }}</td>
             <td v-if="showInterval">{{ driver.displayInterval || '-' }}</td>
@@ -314,6 +315,10 @@ function getTyreAge(driver: DriverViewModel) {
   th, td { padding: 2px 4px; text-align: left; border-bottom: 1px solid #444; white-space: nowrap; }
   th { background-color: #333; color: #eee; font-weight: bold; }
   td { background-color: #222; color: #ddd; }
+ .fastest-lap {
+   color: #a303a3;
+   font-weight: bold;
+ }
   .tyre-age {
     color: #aaa;
     font-size: 0.8em;

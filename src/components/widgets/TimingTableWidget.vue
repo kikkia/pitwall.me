@@ -48,6 +48,7 @@ const props = defineProps({
   showInterval: { type: Boolean, default: true },
   showTire: { type: Boolean, default: true },
   showPitstopCount: { type: Boolean, default: true },
+  showPositionChange: { type: Boolean, default: false },
   messageFontSize: { type: Number, default: 90 }
 });
 
@@ -95,14 +96,20 @@ const settingsDefinition = ref([
     component: 'Checkbox'
   },
   {
+    id: 'showPositionChange',
+    label: 'Show position change',
+    type: 'boolean',
+    component: 'Checkbox'
+  },
+  {
     id: 'messageFontSize',
     label: 'Message Font Size (%)',
     type: 'number',
-    component: 'Slider',        
-    props: {                    
-      min: 50,                  
-      max: 150,                
-      step: 10 
+    component: 'Slider',
+    props: {
+      min: 50,
+      max: 150,
+      step: 10
     }
   }
 ]);
@@ -195,6 +202,7 @@ const tableColspan = computed(() => {
     if (props.showGap) count++;
     if (props.showInterval) count++;
     if (props.showPitstopCount) count++;
+    if (props.showPositionChange) count++;
   }
   return count;
 });
@@ -257,6 +265,7 @@ function getTyreAge(driver: DriverViewModel) {
             <th v-if="showGap">Gap</th>
             <th v-if="showInterval">Interval</th>
             <th v-if="showPitstopCount">Pits</th>
+            <th v-if="showPositionChange">P+-</th>
           </template>
         </tr>
       </thead>
@@ -299,6 +308,9 @@ function getTyreAge(driver: DriverViewModel) {
             <td v-if="showGap">{{ driver.gapToLeader || '-' }}</td>
             <td v-if="showInterval">{{ driver.displayInterval || '-' }}</td>
             <td v-if="showPitstopCount">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
+            <td v-if="showPositionChange" :class="{ 'gainer': parseInt(driver.startingPosition) - parseInt(driver.position) > 0, 'loser': parseInt(driver.startingPosition) - parseInt(driver.position) < 0 }">
+                {{ driver.startingPosition ? (parseInt(driver.startingPosition) - parseInt(driver.position) > 0 ? '+' : '') + (parseInt(driver.startingPosition) - parseInt(driver.position)) : '-' }}
+            </td>
           </template>
         </tr>
         <!-- Empty state -->
@@ -326,8 +338,15 @@ function getTyreAge(driver: DriverViewModel) {
   tr:nth-child(even) td { background-color: #282828; }
   tr[style*="opacity: 0.5"] td { color: #888; }
 
+  .gainer {
+    color: #00ff00;
+  }
+  .loser {
+    color: #ff0000;
+  }
+
   .knocked-out-pos {
-    color: #FF6347; 
+    color: #FF6347;
     font-weight: bold;
   }
 

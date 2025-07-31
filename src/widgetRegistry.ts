@@ -45,7 +45,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
-    'TimingTable': { showNumber: true, showBest: true, showLast: true, showGap: true, showInterval: true, showTire: true, showPitstopCount: true, messageFontSize: 90 },
+    'TimingTable': { showNumber: true, showBest: true, showLast: true, showGap: true, showInterval: true, showTire: true, showPitstopCount: true, showPositionChange: false, messageFontSize: 90 },
     'TrackMap': { showCornerNumbers: true, focusedDrivers: [], cornerNumberFontSize: 100, nameTagFontSize: 100, carDotSize: 100, windIndicatorPosition: 'off', trackTempIndicatorPosition: 'off', rainfallIndicatorPosition: 'off', dataInterpolationWindow: 1.7 },
     'TrackStatusLED': {},
     'FlyingLap': { selectedDriverNumber: null, auto: true, messageFontSize: 90 },

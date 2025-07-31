@@ -40,7 +40,6 @@ const setupGridstack = () => {
             cellHeight: 20,
             float: gridFloat.value,
             animate: true,
-            disableResize: !props.editMode,
             margin: 2,
             column: innerWidth/20,
             staticGrid: !props.editMode,

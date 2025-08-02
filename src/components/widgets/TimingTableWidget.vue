@@ -6,7 +6,9 @@ import type { DriverViewModel } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
 
-const isQualifying = computed(() => f1Store.currentSessionType === 'Qualifying');
+const isQualifying = computed(() => f1Store.isQuali);
+const isPractice = computed(() => f1Store.isPractice);
+const isRace = computed(() => f1Store.isRace);
 const currentQualifyingPart = computed(() => f1Store.currentQualifyingPart);
 const fastestLapDriverNumber = computed(() => f1Store.fastestLapDriverNumber);
 
@@ -132,11 +134,11 @@ const handleDriverClick = (driver: DriverViewModel) => {
 };
 
 
-const parseTimeToSeconds = (time: string | undefined, isQuali: boolean): number | null => {
+const parseTimeToSeconds = (time: string | undefined, isLapTime: boolean): number | null => {
   if (!time) return 0; // Leader is 0
   if (typeof time !== 'string') return null;
   
-  if (isQuali) {
+  if (isLapTime) {
     return timeStringToMillis(time) / 1000;
   }
 
@@ -145,32 +147,94 @@ const parseTimeToSeconds = (time: string | undefined, isQuali: boolean): number 
   return isNaN(parsed) ? null : parsed;
 };
 
+// Because gaps are not provided during practice sessions we manually calculate them
+const practiceLeaderboard = computed(() => {
+  const leaderboard = new Map<string, { gap: string, interval: string }>();
+  if (!isPractice.value) return leaderboard;
+
+  const driversWithTimes = f1Store.sortedDriversViewModel
+    .map(driver => ({
+      ...driver,
+      timeMillis: driver.bestLapTime?.Value ? timeStringToMillis(driver.bestLapTime.Value) : null,
+    }))
+    .filter(driver => driver.timeMillis !== null && driver.timeMillis > 0)
+    .sort((a, b) => a.timeMillis! - b.timeMillis!);
+
+  if (driversWithTimes.length === 0) {
+      f1Store.sortedDriversViewModel.forEach(driver => {
+          leaderboard.set(driver.racingNumber, { gap: '-', interval: '-' });
+      });
+      return leaderboard;
+  }
+
+  const fastestTime = driversWithTimes[0].timeMillis!;
+
+  for (let i = 0; i < driversWithTimes.length; i++) {
+    const driver = driversWithTimes[i];
+    const gap = driver.timeMillis! - fastestTime;
+    const practiceGap = (i === 0) ? driver.bestLapTime!.Value : `+${(gap / 1000).toFixed(3)}`;
+
+    let practiceInterval = '-';
+    if (i > 0) {
+      const driverAhead = driversWithTimes[i-1];
+      const interval = driver.timeMillis! - driverAhead.timeMillis!;
+      practiceInterval = `+${(interval / 1000).toFixed(3)}`;
+    }
+    
+    leaderboard.set(driver.racingNumber, { gap: practiceGap, interval: practiceInterval });
+  }
+
+  f1Store.sortedDriversViewModel.forEach(driver => {
+      if (!leaderboard.has(driver.racingNumber)) {
+          leaderboard.set(driver.racingNumber, { gap: '-', interval: '-' });
+      }
+  });
+
+  return leaderboard;
+});
+
 const driversForTable = computed(() => {
     const baseDrivers = driversWithEliminationStatus.value;
 
     if (!selectedDriverNumber.value) {
-        // No driver selected, return normal data
         return baseDrivers.map(d => ({
              ...d,
-             displayInterval: isQualifying.value ? d.qualiInterval : d.gapToAhead
+             displayInterval: isPractice.value
+                ? practiceLeaderboard.value.get(d.racingNumber)?.interval ?? '-'
+                : (isQualifying.value ? d.qualiInterval : d.gapToAhead)
         }));
     }
 
     const selectedDriver = baseDrivers.find(d => d.racingNumber === selectedDriverNumber.value);
     if (!selectedDriver) {
-        // Should not happen, but as a fallback
         return baseDrivers.map(d => ({ ...d, displayInterval: isQualifying.value ? d.qualiInterval : d.gapToAhead }));
     }
 
-    const selectedDriverTimeSource = isQualifying.value ? selectedDriver.qualifyingTime?.Value : selectedDriver.gapToLeader;
-    const selectedDriverTimeSeconds = parseTimeToSeconds(selectedDriverTimeSource, isQualifying.value);
+    let selectedDriverTimeSource: string | undefined;
+    if (isQualifying.value) {
+        selectedDriverTimeSource = selectedDriver.qualifyingTime?.Value;
+    } else if (isPractice.value) {
+        selectedDriverTimeSource = selectedDriver.bestLapTime?.Value;
+    } else if (isRace.value) {
+        selectedDriverTimeSource = selectedDriver.gapToLeader;
+    }
+    
+    const isLapTime = isQualifying.value || isPractice.value;
+    const selectedDriverTimeSeconds = parseTimeToSeconds(selectedDriverTimeSource, isLapTime);
 
     return baseDrivers.map(driver => {
-        let displayInterval = isQualifying.value ? driver.qualiInterval : driver.gapToAhead; // Default value
+        let displayInterval = isQualifying.value ? driver.qualiInterval : driver.gapToAhead;
 
         if (selectedDriverTimeSeconds !== null) {
-            const driverTimeSource = isQualifying.value ? driver.qualifyingTime?.Value : driver.gapToLeader;
-            const driverTimeSeconds = parseTimeToSeconds(driverTimeSource, isQualifying.value);
+            let driverTimeSource: string | undefined;
+            if (isQualifying.value) {
+                driverTimeSource = driver.qualifyingTime?.Value;
+            } else if (isPractice.value) {
+                driverTimeSource = driver.bestLapTime?.Value;
+            } else if (isRace.value) {
+                driverTimeSource = driver.gapToLeader;
+            }
+            const driverTimeSeconds = parseTimeToSeconds(driverTimeSource, isLapTime);
 
             if (driverTimeSeconds !== null) {
                 if (driver.racingNumber === selectedDriverNumber.value) {
@@ -305,7 +369,10 @@ function getTyreAge(driver: DriverViewModel) {
           <template v-else>
             <td v-if="showBest" :class="{ 'fastest-lap': driver.racingNumber === fastestLapDriverNumber }">{{ driver.bestLapTime?.Value || '-' }}</td>
             <td v-if="showLast">{{ driver.lastLapTime?.Value || '-' }}</td>
-            <td v-if="showGap">{{ driver.gapToLeader || '-' }}</td>
+            <td v-if="showGap">
+              <template v-if="isPractice">{{ practiceLeaderboard.get(driver.racingNumber)?.gap || '-' }}</template>
+              <template v-else>{{ driver.gapToLeader || '-' }}</template>
+            </td>
             <td v-if="showInterval">{{ driver.displayInterval || '-' }}</td>
             <td v-if="showPitstopCount">{{ driver.inPit ? "In Pits" : (driver.pitOut ? "Pit exit" : driver.numberOfPitStops) }}</td>
             <td v-if="showPositionChange" :class="{ 'gainer': parseInt(driver.startingPosition) - parseInt(driver.position) > 0, 'loser': parseInt(driver.startingPosition) - parseInt(driver.position) < 0 }">

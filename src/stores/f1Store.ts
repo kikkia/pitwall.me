@@ -109,6 +109,11 @@ export const useF1Store = defineStore('f1', () => {
     return currentSessionType.value === 'Qualifying' && currentQualifyingPart.value > 0;
   });
 
+  const isPractice = computed<boolean>(() => currentSessionType.value === 'Practice');
+  const isQuali = computed<boolean>(() => currentSessionType.value === 'Qualifying');
+  const isRace = computed<boolean>(() => currentSessionType.value === 'Race');
+  const isSprint = computed<boolean>(() => !!raceData.SessionInfo?.Name.toLowerCase().includes('sprint'));
+
   // === ACTIONS ===
 
   function setConnected(status: boolean) {
@@ -495,6 +500,10 @@ export const useF1Store = defineStore('f1', () => {
     
     sortedDriversViewModel,
     fastestLapDriverNumber,
+    isPractice,
+    isQuali,
+    isRace,
+    isSprint,
   
     setConnected,
     setInitialState,

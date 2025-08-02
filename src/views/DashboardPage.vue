@@ -76,6 +76,7 @@ import ReplayTour from '../components/ReplayTour.vue';
 import DataDelayReminder from '../components/DataDelayReminder.vue';
 import WelcomeTour from '../components/WelcomeTour.vue';
 import { widgetComponentMap, defaultWidgetConfigs, defaultWidgetSizes } from '../widgetRegistry';
+import { isReplaying, stopReplay } from '@/services/replayService';
 
 const uiStore = useUiStore();
 const { startWelcomeTour } = storeToRefs(uiStore);
@@ -263,6 +264,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', handleKeyDown);
+  if (isReplaying.value) {
+    stopReplay();
+  }
 });
 
 const updateLayout = (showToast = true) => {

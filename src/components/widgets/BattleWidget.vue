@@ -124,7 +124,7 @@ const activeBattles = computed(() => {
         const gap = parseFloat(driverBehind.gapToAhead?.replace('s', ''));
         if (!isNaN(gap) && gap <= props.threshold) {
             battles.push({
-                position: parseInt(driverBehind.position),
+                position: parseInt(driverAhead.position),
                 driverAhead: driverAhead,
                 driverBehind: driverBehind,
                 gap: gap.toFixed(3),

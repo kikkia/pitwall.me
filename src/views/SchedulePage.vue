@@ -22,7 +22,8 @@
               @click="openSessionDetails(raceName, group)">
             <template #title>{{ raceName }}</template>
             <template #content>
-              <p>Begins: {{ getCountdownForGroup(group) }}</p>
+              <p v-if="getEventStatus(group) === 'ongoing'">{{ getNextSessionForGroup(group) }}</p>
+              <p v-else>Begins: {{ getCountdownForGroup(group) }}</p>
             </template>
             <div v-if="getEventStatus(group) === 'finished'" class="event-label finished-label">FINISHED</div>
             <div v-else-if="getEventStatus(group) === 'ongoing'" class="event-label ongoing-label">ONGOING</div>
@@ -286,6 +287,21 @@ const getCountdownForGroup = (group: LocalF1Event[]): string => {
 
   const firstSession = group[0];
   return formatDateTime(firstSession.startTimeLocal);
+};
+
+const getNextSessionForGroup = (group: LocalF1Event[]): string => {
+  const now = new Date();
+  const nextSession = group.find(session => session.endTimeLocal > now);
+
+  if (nextSession) {
+    const timeFormat: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' };
+    const time = nextSession.startTimeLocal.toLocaleTimeString([], timeFormat);
+    const day = nextSession.startTimeLocal.toLocaleDateString([], { weekday: 'short' });
+    
+    return `Next: ${nextSession.description} on ${day} at ${time}`;
+  }
+
+  return 'Event concluded';
 };
 
 const getEventStatus = (group: LocalF1Event[]): 'finished' | 'ongoing' | 'upcoming' => {

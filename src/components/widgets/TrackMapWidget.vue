@@ -131,7 +131,13 @@ const props = withDefaults(defineProps<{
     dataInterpolationWindow: 1.7,
 });
 
-const positionOptions = [ 'off', 'top-left', 'top-right', 'bottom-left', 'bottom-right'];
+const positionOptions = [
+    { label: 'Off', value: 'off' },
+    { label: 'Top Left', value: 'top-left' },
+    { label: 'Top Right', value: 'top-right' },
+    { label: 'Bottom Left', value: 'bottom-left' },
+    { label: 'Bottom Right', value: 'bottom-right' }
+];
 
 const settingsDefinition = ref([
   { id: 'showCornerNumbers', label: 'Show corner numbers', type: 'boolean', component: 'Checkbox' },

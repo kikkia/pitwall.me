@@ -75,7 +75,7 @@ function applyParsedData(parsedData: ParsedWebSocketData, store: ReturnType<type
     typeof parsedData[0] === 'string' &&
     Object.keys(store.raceData).includes(parsedData[0])
   ) {
-    console.log(`Service: Detected direct update message for field: ${parsedData[0]}`);
+    //console.log(`Service: Detected direct update message for field: ${parsedData[0]}`);
     const [fieldName, payload] = parsedData as DirectFeedUpdateMessage;
     store.applyFeedUpdate(fieldName, payload);
   }

@@ -10,16 +10,23 @@ interface RecordedMessage {
 
 export const isReplaying = ref(false);
 export const isPaused = ref(false);
+export const isLoadingReplay = ref(false);
 let timeoutId: number | null = null;
 let messages: RecordedMessage[] = [];
 let currentIndex = 0;
+
+export const replayProgress = ref({
+  startTime: null as Date | null,
+  endTime: null as Date | null,
+  currentTime: null as Date | null
+});
 
 function parseLog(content: string): RecordedMessage[] {
   const lines = content.split('\n');
   const parsedMessages: RecordedMessage[] = [];
 
   for (const line of lines) {
-    const match = line.match(/^\[(.*?)\]\s*(\{.*\})$/);
+    const match = line.match(/^\[(.*?)\]\s*(\{.*\}|\[.*\])$/);
     if (match) {
       try {
         const timestamp = new Date(match[1]);
@@ -37,30 +44,34 @@ function processMessage(message: RecordedMessage) {
     const f1Store = useF1Store();
     const payload = message.payload;
 
-    if (payload.R && payload.R.ExtrapolatedClock && payload.R.ExtrapolatedClock.Utc) {
-        const recordedUtc = new Date(payload.R.ExtrapolatedClock.Utc);
-        const timeDiff = recordedUtc.getTime() - message.timestamp.getTime();
-        payload.R.ExtrapolatedClock.Utc = new Date(Date.now() + timeDiff).toISOString();
-    }
+    if (Array.isArray(payload)) {
+        f1Store.applyFeedUpdate(payload[0], payload[1]);
+    } else {
+        if (payload.R && payload.R.ExtrapolatedClock && payload.R.ExtrapolatedClock.Utc) {
+            const recordedUtc = new Date(payload.R.ExtrapolatedClock.Utc);
+            const timeDiff = recordedUtc.getTime() - message.timestamp.getTime();
+            payload.R.ExtrapolatedClock.Utc = new Date(Date.now() + timeDiff).toISOString();
+        }
 
-    if (payload.M) {
-        for (const entry of payload.M) {
-            if (entry.A && entry.A[0] === 'ExtrapolatedClock') {
-                entry.A[1].Utc = new Date().toISOString();
-                if (entry.A[2]) {
-                    entry.A[2] = new Date().toISOString();
+        if (payload.M) {
+            for (const entry of payload.M) {
+                if (entry.A && entry.A[0] === 'ExtrapolatedClock') {
+                    entry.A[1].Utc = new Date().toISOString();
+                    if (entry.A[2]) {
+                        entry.A[2] = new Date().toISOString();
+                    }
                 }
             }
         }
-    }
 
-    if (payload.R) {
-        f1Store.setInitialState(payload.R as Partial<RaceData>);
-    } else if (payload.M) {
-        for (const entry of payload.M) {
-             if (entry.H === 'Streaming' && entry.M === 'feed' && entry.A) {
-                f1Store.applyFeedUpdate(entry.A[0], entry.A[1]);
-             }
+        if (payload.R) {
+            f1Store.setInitialState(payload.R as Partial<RaceData>);
+        } else if (payload.M) {
+            for (const entry of payload.M) {
+                if (entry.H === 'Streaming' && entry.M === 'feed' && entry.A) {
+                    f1Store.applyFeedUpdate(entry.A[0], entry.A[1]);
+                }
+            }
         }
     }
 }
@@ -76,6 +87,7 @@ function scheduleNextMessage() {
 
   const currentMessage = messages[currentIndex];
   processMessage(currentMessage);
+  replayProgress.value.currentTime = currentMessage.timestamp;
 
   currentIndex++;
 
@@ -91,21 +103,38 @@ function scheduleNextMessage() {
   }
 }
 
-export function startReplay(recordingContent: string) {
+export async function startReplay(recordingContent: string) {
   if (isReplaying.value) {
     stopReplay();
   }
 
-  messages = parseLog(recordingContent);
+  isLoadingReplay.value = true;
+
+  await new Promise<void>((resolve) => {
+    setTimeout(() => {
+      messages = parseLog(recordingContent);
+      resolve();
+    }, 0);
+  });
+
   if (messages.length === 0) {
     console.error('No valid messages found in recording to replay.');
+    isLoadingReplay.value = false;
     return;
   }
+
+  replayProgress.value = {
+    startTime: messages[0]?.timestamp,
+    endTime: messages[messages.length - 1]?.timestamp,
+    currentTime: messages[0]?.timestamp
+  };
 
   isReplaying.value = true;
   isPaused.value = false;
   currentIndex = 0;
-  
+
+  isLoadingReplay.value = false;
+
   scheduleNextMessage();
 }
 
@@ -131,6 +160,11 @@ export function stopReplay() {
     clearTimeout(timeoutId);
     timeoutId = null;
   }
+  replayProgress.value = {
+    startTime: null,
+    endTime: null,
+    currentTime: null
+  };
   console.log('Replay stopped.');
 }
 

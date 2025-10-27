@@ -117,7 +117,7 @@ import { useEventStore } from '@/stores/eventStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUiStore } from '@/stores/uiStore';
 import { fetchEvents } from '@/services/eventService';
-import { isReplaying } from '@/services/replayService';
+import { isReplaying, replayProgress } from '@/services/replayService';
 import { storeToRefs } from 'pinia';
 import type { SessionInfo, SessionData, ExtrapolatedClock, LapCount, SessionStatusSeriesEntry } from '@/types/dataTypes';
 import SettingsDialog from './SettingsDialog.vue';
@@ -232,9 +232,23 @@ onMounted(() => {
   fetchEvents();
 });
 
+const replayProgressDisplay = computed(() => {
+  if (!isReplaying.value || !replayProgress.value.startTime || !replayProgress.value.endTime || !replayProgress.value.currentTime) {
+    return '';
+  }
+
+  const totalDuration = (replayProgress.value.endTime.getTime() - replayProgress.value.startTime.getTime()) / 1000;
+  const currentProgress = (replayProgress.value.currentTime.getTime() - replayProgress.value.startTime.getTime()) / 1000;
+
+  return `${formatSecondsToTime(currentProgress)} / ${formatSecondsToTime(totalDuration)}`;
+});
+
 const raceStatusLabel = computed<string>(() => {
+  if (isReplaying.value) {
+    return replayProgressDisplay.value;
+  }
   const statusInfo = latestSessionStatusInfo.value;
-  const active = statusInfo?.SessionStatus; 
+  const active = statusInfo?.SessionStatus;
   const currentSessionType = sessionType.value;
 
   switch (active) {
@@ -249,7 +263,7 @@ const raceStatusLabel = computed<string>(() => {
           return "Race Ongoing";
       case "Finished":
       case "Ends":
-      case "Finalized": 
+      case "Finalized":
           return "Finished";
       case "Inactive":
           return "Waiting";
@@ -258,7 +272,7 @@ const raceStatusLabel = computed<string>(() => {
       case "Unknown":
             return "Not yet Started";
       default:
-          return active || "Status N/A"; 
+          return active || "Status N/A";
   }
 });
 

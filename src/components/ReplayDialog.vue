@@ -6,7 +6,11 @@
     <div v-else-if="error">
       <p>Error fetching recordings: {{ error }}</p>
     </div>
-    <div v-else-if="!replayInProgress">
+    <div v-else-if="isLoadingReplay" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 150px;">
+        <ProgressSpinner />
+        <p style="margin-top: 1rem;">Loading replay...</p>
+    </div>
+    <div v-else-if="!isReplaying">
       <Accordion :multiple="true">
         <AccordionTab v-for="group in recordingGroups" :key="group.eventName" :header="group.eventName">
           <Listbox :options="group.recordings" optionLabel="name" @change="onRecordingSelect" class="p-listbox-sm" />
@@ -45,6 +49,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Listbox from 'primevue/listbox';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import ProgressSpinner from 'primevue/progressspinner';
 import { useSessionRecordingStore } from '@/stores/sessionRecordingStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { fetchRecordings, downloadAndDecompressRecording } from '@/services/sessionRecordingService';
@@ -53,7 +58,9 @@ import {
   stopReplay as stopReplayService,
   pauseReplay,
   resumeReplay,
-  isPaused
+  isPaused,
+  isReplaying,
+  isLoadingReplay
 } from '@/services/replayService';
 import type { SessionRecording } from '@/stores/sessionRecordingStore';
 import { useF1Store } from '@/stores/f1Store';
@@ -74,7 +81,6 @@ const { recordingGroups, isLoading, error } = storeToRefs(store);
 const { replayTimeFactor } = storeToRefs(settingsStore);
 const confirm = useConfirm();
 
-const replayInProgress = ref(false);
 const selectedRecording = ref<SessionRecording | null>(null);
 
 watch(() => props.visible, (newValue) => {
@@ -105,8 +111,7 @@ const startReplay = async () => {
 
   try {
     const content = await downloadAndDecompressRecording(selectedRecording.value);
-    startReplayService(content);
-    replayInProgress.value = true;
+    await startReplayService(content);
   } catch (err) {
     console.error('Error starting replay:', err);
   }
@@ -114,7 +119,6 @@ const startReplay = async () => {
 
 const stopReplay = () => {
   stopReplayService();
-  replayInProgress.value = false;
   selectedRecording.value = null;
   f1Store.initialize();
 };

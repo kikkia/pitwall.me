@@ -11,9 +11,11 @@ interface RecordedMessage {
 export const isReplaying = ref(false);
 export const isPaused = ref(false);
 export const isLoadingReplay = ref(false);
+export const isSeeking = ref(false);
 let timeoutId: number | null = null;
 let messages: RecordedMessage[] = [];
 let currentIndex = 0;
+let initialReplayState: Partial<RaceData> | null = null;
 
 export const replayProgress = ref({
   startTime: null as Date | null,
@@ -65,12 +67,16 @@ function processMessage(message: RecordedMessage) {
         }
 
         if (payload.R) {
-            f1Store.setInitialState(payload.R as Partial<RaceData>);
+            const initialState = payload.R as Partial<RaceData>;
+            if (!initialReplayState) {
+                initialReplayState = JSON.parse(JSON.stringify(initialState));
+            }
+            f1Store.setInitialState(initialState);
         } else if (payload.M) {
             for (const entry of payload.M) {
-                if (entry.H === 'Streaming' && entry.M === 'feed' && entry.A) {
+                 if (entry.H === 'Streaming' && entry.M === 'feed' && entry.A) {
                     f1Store.applyFeedUpdate(entry.A[0], entry.A[1]);
-                }
+                 }
             }
         }
     }
@@ -128,6 +134,7 @@ export async function startReplay(recordingContent: string) {
     endTime: messages[messages.length - 1]?.timestamp,
     currentTime: messages[0]?.timestamp
   };
+  initialReplayState = null;
 
   isReplaying.value = true;
   isPaused.value = false;
@@ -166,5 +173,46 @@ export function stopReplay() {
     currentTime: null
   };
   console.log('Replay stopped.');
+}
+
+export function seek(seekTime: Date) {
+  if (!isReplaying.value || messages.length === 0) return;
+
+  isSeeking.value = true;
+  pauseReplay();
+
+  setTimeout(() => {
+    const f1Store = useF1Store();
+    const seekTimestamp = seekTime.getTime();
+    const currentTimestamp = messages[currentIndex]?.timestamp.getTime() || 0;
+
+    let nextIndex = -1;
+
+    if (seekTimestamp < currentTimestamp) {
+      // Reset and seek from the beginning
+      if(initialReplayState) {
+        f1Store.setInitialState(JSON.parse(JSON.stringify(initialReplayState)));
+      }
+      nextIndex = messages.findIndex(m => m.timestamp.getTime() >= seekTimestamp);
+      currentIndex = 0;
+    } else {
+      // Seek forward from the current position
+      nextIndex = messages.findIndex((m, i) => i >= currentIndex && m.timestamp.getTime() >= seekTimestamp);
+    }
+    
+    if (nextIndex === -1) {
+      nextIndex = messages.length -1;
+    }
+
+    // Process messages without delay until the seek target
+    while (currentIndex < nextIndex) {
+      processMessage(messages[currentIndex]);
+      replayProgress.value.currentTime = messages[currentIndex].timestamp;
+      currentIndex++;
+    }
+
+    isSeeking.value = false;
+    resumeReplay();
+  }, 50);
 }
 

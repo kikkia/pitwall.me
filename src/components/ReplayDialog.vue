@@ -18,18 +18,44 @@
       </Accordion>
     </div>
     <div v-else>
-      <h3>Replay Controls</h3>
-      <div class="p-grid p-fluid">
-        <div class="p-col-12 p-md-6">
-          <div class="p-field">
-            <label for="time-factor">Time Factor (0.5x - 5x)</label>
-            <InputNumber id="time-factor" v-model="replayTimeFactor" :min="0.5" :max="5" :step="0.1" @update:modelValue="settingsStore.setReplayTimeFactor($event)" />
-          </div>
+      <div v-if="isSeeking" class="seeking-overlay">
+        <ProgressSpinner />
+        <span>Seeking...</span>
+      </div>
+      <div class="replay-controls-wrapper">
+        <div class="controls-row">
+          <Button
+            :icon="isPaused ? 'pi pi-play' : 'pi pi-pause'"
+            @click="togglePlayPause"
+            class="p-button-rounded p-button-text"
+          />
+          <Button
+            icon="pi pi-stop"
+            @click="stop"
+            class="p-button-rounded p-button-text p-button-danger"
+          />
+          <Slider
+            v-model="sliderValue"
+            :min="0"
+            :max="100"
+            @slideend="onSliderChange"
+            class="replay-slider"
+          />
+          <div class="time-display">{{ progressDisplay }}</div>
         </div>
-        <div class="p-col-12 p-md-6" style="margin-top: 1.75rem">
-            <Button v-if="!isPaused" label="Pause" icon="pi pi-pause" @click="pauseReplay" class="p-button-secondary" />
-            <Button v-else label="Resume" icon="pi pi-play" @click="resumeReplay" class="p-button-success" />
-            <Button label="Stop Replay" icon="pi pi-stop" @click="stopReplay" class="p-button-danger" style="margin-left: 0.5rem" />
+        <div class="controls-row">
+          <div class="time-factor-control">
+            <label for="time-factor">Replay speed</label>
+            <InputNumber
+              id="time-factor"
+              v-model="replayTimeFactor"
+              :min="0.5"
+              :max="5"
+              :step="0.1"
+              @update:modelValue="settingsStore.setReplayTimeFactor($event)"
+              class="time-factor-input"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -39,7 +65,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useConfirm } from "primevue/useconfirm";
 import ConfirmDialog from 'primevue/confirmdialog';
@@ -49,6 +75,7 @@ import AccordionTab from 'primevue/accordiontab';
 import Listbox from 'primevue/listbox';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
+import Slider from 'primevue/slider';
 import ProgressSpinner from 'primevue/progressspinner';
 import { useSessionRecordingStore } from '@/stores/sessionRecordingStore';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -56,12 +83,16 @@ import { fetchRecordings, downloadAndDecompressRecording } from '@/services/sess
 import {
   startReplay as startReplayService,
   stopReplay as stopReplayService,
+  isReplaying,
+  isLoadingReplay,
+  isPaused,
   pauseReplay,
   resumeReplay,
-  isPaused,
-  isReplaying,
-  isLoadingReplay
+  seek,
+  isSeeking,
+  replayProgress
 } from '@/services/replayService';
+import { formatSecondsToTime } from '@/utils/formatUtils';
 import type { SessionRecording } from '@/stores/sessionRecordingStore';
 import { useF1Store } from '@/stores/f1Store';
 
@@ -88,6 +119,7 @@ watch(() => props.visible, (newValue) => {
     fetchRecordings();
   }
 });
+
 
 const onRecordingSelect = (event: { value: SessionRecording }) => {
   selectedRecording.value = event.value;
@@ -117,10 +149,96 @@ const startReplay = async () => {
   }
 };
 
-const stopReplay = () => {
+
+const sliderValue = ref(0);
+
+const progressDisplay = computed(() => {
+  if (!replayProgress.value.startTime || !replayProgress.value.endTime || !replayProgress.value.currentTime) {
+    return '00:00:00 / 00:00:00';
+  }
+
+  const totalDuration = (replayProgress.value.endTime.getTime() - replayProgress.value.startTime.getTime()) / 1000;
+  const currentProgress = (replayProgress.value.currentTime.getTime() - replayProgress.value.startTime.getTime()) / 1000;
+
+  return `${formatSecondsToTime(currentProgress)} / ${formatSecondsToTime(totalDuration)}`;
+});
+
+watch(replayProgress, (newProgress) => {
+  if (newProgress.startTime && newProgress.endTime && newProgress.currentTime) {
+    const totalDuration = newProgress.endTime.getTime() - newProgress.startTime.getTime();
+    const currentProgress = newProgress.currentTime.getTime() - newProgress.startTime.getTime();
+    sliderValue.value = totalDuration > 0 ? (currentProgress / totalDuration) * 100 : 0;
+  }
+}, { deep: true });
+
+const togglePlayPause = () => {
+  if (isPaused.value) {
+    resumeReplay();
+  } else {
+    pauseReplay();
+  }
+};
+
+const stop = () => {
   stopReplayService();
-  selectedRecording.value = null;
   f1Store.initialize();
 };
 
+const onSliderChange = (event: { value: number }) => {
+  if (replayProgress.value.startTime && replayProgress.value.endTime) {
+    const totalDuration = replayProgress.value.endTime.getTime() - replayProgress.value.startTime.getTime();
+    const seekTime = new Date(replayProgress.value.startTime.getTime() + (totalDuration * event.value) / 100);
+    seek(seekTime);
+  }
+};
 </script>
+
+<style scoped>
+.seeking-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  z-index: 1001;
+}
+
+.replay-controls-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+}
+
+.replay-slider {
+  flex-grow: 1;
+}
+
+.time-display {
+  min-width: 180px;
+  text-align: center;
+  font-family: monospace;
+}
+
+.time-factor-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.time-factor-input {
+  width: 60px;
+}
+</style>

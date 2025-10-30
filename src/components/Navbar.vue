@@ -55,6 +55,19 @@
         v-if="!showDashboardButtons"
       />
       <Button
+        id="discord-button"
+        @click="openLink('https://discord.gg/7xap5UdHAP')"
+        class="p-button-sm p-button-text p-button-primary discord-button"
+        style="margin-right: 10px"
+        v-if="!showDashboardButtons"
+      >
+        <img
+          alt="Discord"
+          src="/Discord-Symbol-Blurple.svg"
+          style="height: 1.2rem"
+        />
+      </Button>
+      <Button
         id="page-selector-button"
         :label="activePageName"
         icon="pi pi-chevron-down"
@@ -474,6 +487,16 @@ onUnmounted(() => {
   100% {
     box-shadow: 0 0 0 0 rgba(0, 255, 123, 0);
   }
+}
+
+.discord-button .p-button-label {
+  display: none;
+}
+
+.discord-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>
 

@@ -11,9 +11,25 @@
         <p style="margin-top: 1rem;">Loading replay...</p>
     </div>
     <div v-else-if="!isReplaying">
-      <Accordion :multiple="true">
-        <AccordionTab v-for="group in recordingGroups" :key="group.eventName" :header="group.eventName">
-          <Listbox :options="group.recordings" optionLabel="name" @change="onRecordingSelect" class="p-listbox-sm" />
+      <Accordion :activeIndex="0">
+        <AccordionTab v-for="group in recordingGroups" :key="group.eventName">
+            <template #header>
+                <div class="accordion-header">
+                    <span class="country-flag">{{ getCountryFlagEmoji(group.countryFlagCode) }}</span>
+                    <span>{{ group.eventName }}</span>
+                </div>
+            </template>
+            <div class="session-list">
+                <div v-for="recording in group.recordings" :key="recording.path" class="session-card" @click="confirmStartReplay(recording)">
+                    <div class="session-name">{{ recording.name }}</div>
+                    <div v-if="recording.topThree && recording.topThree.length > 0" class="top-three">
+                        <div v-for="driver in recording.topThree" :key="driver.tla" class="driver">
+                            <span class="team-color-indicator" :style="{ backgroundColor: '#' + driver.teamColour }"></span>
+                            {{ driver.tla }}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </AccordionTab>
       </Accordion>
     </div>
@@ -72,7 +88,6 @@ import ConfirmDialog from 'primevue/confirmdialog';
 import Dialog from 'primevue/dialog';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
-import Listbox from 'primevue/listbox';
 import Button from 'primevue/button';
 import InputNumber from 'primevue/inputnumber';
 import Slider from 'primevue/slider';
@@ -112,43 +127,51 @@ const { recordingGroups, isLoading, error } = storeToRefs(store);
 const { replayTimeFactor } = storeToRefs(settingsStore);
 const confirm = useConfirm();
 
-const selectedRecording = ref<SessionRecording | null>(null);
-
 watch(() => props.visible, (newValue) => {
   if (newValue && recordingGroups.value.length === 0) {
     fetchRecordings();
   }
 });
 
-
-const onRecordingSelect = (event: { value: SessionRecording }) => {
-  selectedRecording.value = event.value;
+const confirmStartReplay = (recording: SessionRecording) => {
   confirm.require({
     message: 'You are about to start a replay of a past event. This will disconnect you from any live events until stopped. Continue?',
     header: 'Start Replay?',
     icon: 'pi pi-exclamation-triangle',
     accept: () => {
-      startReplay();
-    },
-    reject: () => {
-      selectedRecording.value = null;
+      startReplay(recording);
     }
   });
 };
 
-const startReplay = async () => {
-  if (!selectedRecording.value) return;
+const startReplay = async (recording: SessionRecording) => {
+  if (!recording) return;
 
   f1Store.terminate(); 
 
   try {
-    const content = await downloadAndDecompressRecording(selectedRecording.value);
+    const content = await downloadAndDecompressRecording(recording);
     await startReplayService(content);
   } catch (err) {
     console.error('Error starting replay:', err);
   }
 };
 
+const countryCodeOverrides: Record<string, string> = {
+    NED: 'NL',
+    MEX: 'MX',
+    UAE: 'AE'
+};
+
+const getCountryFlagEmoji = (countryCode: string) => {
+    if (!countryCode) return '';
+    let correctedCode = countryCodeOverrides[countryCode.toUpperCase()] || countryCode.toUpperCase();
+    correctedCode = correctedCode.substring(0, 2);
+    const codePoints = correctedCode
+        .split('')
+        .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+};
 
 const sliderValue = ref(0);
 
@@ -193,7 +216,74 @@ const onSliderChange = (event: { value: number }) => {
 };
 </script>
 
+<style>
+.p-accordion .p-accordion-header .p-accordion-header-link {
+    padding: 0.75rem 1rem;
+}
+</style>
+
 <style scoped>
+.accordion-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+}
+
+.country-flag {
+    font-size: 2rem;
+}
+
+.session-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.session-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.session-card:hover {
+    background-color: #f0f0f0;
+}
+
+.session-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+.top-three {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    min-width: 180px;
+    justify-content: flex-start;
+}
+
+.driver {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 60px;
+}
+
+.team-color-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    border: 1px solid #ccc;
+}
+
 .seeking-overlay {
   position: absolute;
   top: 0;

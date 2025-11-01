@@ -4,24 +4,29 @@ import type { RecordingsIndex, SessionRecordingGroup, SessionRecording } from '@
 const API_URL = import.meta.env.VITE_API_URL;
 
 function transformRecordings(recordingsIndex: RecordingsIndex): SessionRecordingGroup[] {
-    return Object.entries(recordingsIndex).map(([eventName, paths]) => {
+    const groups = Object.entries(recordingsIndex).map(([eventName, recordings]) => {
         const transformedEventName = eventName
             .replace('recordings/', '')
             .replace(/_/g, ' ');
 
-        const recordings: SessionRecording[] = paths.map(path => {
-            const fileName = path.split('/').pop()?.replace('.txt', '') || '';
-            return {
-                name: fileName.replace(/_/g, ' '),
-                path: path,
-                eventName: transformedEventName
-            };
-        });
+        const processedRecordings = recordings
+            .map(recording => ({
+                ...recording,
+                name: (recording.path.split('/').pop()?.replace('.txt', '') || '').replace(/_/g, ' ')
+            }))
+            .sort((a, b) => new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime());
 
         return {
             eventName: transformedEventName,
-            recordings: recordings
+            recordings: processedRecordings,
+            countryFlagCode: recordings.length > 0 ? recordings[0].countryFlagCode : ''
         };
+    });
+
+    return groups.sort((a, b) => {
+        const aDate = a.recordings.length > 0 ? new Date(a.recordings[0].finishedAt).getTime() : 0;
+        const bDate = b.recordings.length > 0 ? new Date(b.recordings[0].finishedAt).getTime() : 0;
+        return aDate - bDate;
     });
 }
 

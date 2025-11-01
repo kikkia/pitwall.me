@@ -1,16 +1,27 @@
 import { defineStore } from 'pinia';
 
+export interface TopThreeDriver {
+  tla: string;
+  racingNumber: string;
+  teamColour: string;
+}
+
 export interface SessionRecording {
   path: string;
-  eventName: string;
+  name: string;
+  sessionType: string;
+  finishedAt: string;
+  topThree: TopThreeDriver[] | null;
+  countryFlagCode: string;
 }
 
 export interface SessionRecordingGroup {
   eventName: string;
   recordings: SessionRecording[];
+  countryFlagCode: string;
 }
 
-export type RecordingsIndex = Record<string, string[]>;
+export type RecordingsIndex = Record<string, SessionRecording[]>;
 
 export const useSessionRecordingStore = defineStore('sessionRecording', {
   state: () => ({

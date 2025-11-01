@@ -1,0 +1,34 @@
+{
+  "name": "Pitwall.me",
+  "description": "An F1 telemetry dashboard that allows users to create their own race engineer dashboards to view real-time or past session telemetry data.",
+  "features": [
+    {
+      "name": "Customizable Dashboards",
+      "description": "Users can create and customize their own dashboards with a variety of widgets to display F1 data."
+    },
+    {
+      "name": "Real-Time Data",
+      "description": "View live telemetry data during F1 sessions."
+    },
+    {
+      "name": "Session Replays",
+      "description": "Review telemetry data from past F1 sessions."
+    },
+    {
+      "name": "Variety of Widgets",
+      "description": "Includes widgets for lap times, driver tracking, weather, and more."
+    }
+  ],
+  "relevant_keywords": [
+    "F1",
+    "Formula 1",
+    "dashboard",
+    "engineering",
+    "data visualization",
+    "data",
+    "telemetry",
+    "motorsport",
+    "race data",
+    "live timing"
+  ]
+}

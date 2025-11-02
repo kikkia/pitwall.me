@@ -94,6 +94,7 @@ import Slider from 'primevue/slider';
 import ProgressSpinner from 'primevue/progressspinner';
 import { useSessionRecordingStore } from '@/stores/sessionRecordingStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useUiStore } from '@/stores/uiStore';
 import { fetchRecordings, downloadAndDecompressRecording } from '@/services/sessionRecordingService';
 import {
   startReplay as startReplayService,
@@ -122,6 +123,7 @@ const emit = defineEmits(['update:visible']);
 
 const store = useSessionRecordingStore();
 const settingsStore = useSettingsStore();
+const uiStore = useUiStore();
 const f1Store = useF1Store();
 const { recordingGroups, isLoading, error } = storeToRefs(store);
 const { replayTimeFactor } = storeToRefs(settingsStore);
@@ -154,6 +156,7 @@ const startReplay = async (recording: SessionRecording) => {
     await startReplayService(content);
   } catch (err) {
     console.error('Error starting replay:', err);
+    uiStore.showToast('Failed to load replay.', 'error');
   }
 };
 

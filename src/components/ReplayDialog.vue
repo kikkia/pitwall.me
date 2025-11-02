@@ -241,6 +241,7 @@ const onSliderChange = (event: { value: number }) => {
 }
 
 .session-card {
+    position: relative;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -248,11 +249,23 @@ const onSliderChange = (event: { value: number }) => {
     border-radius: 8px;
     padding: 0.5rem 1rem;
     cursor: pointer;
-    transition: background-color 0.2s;
+    overflow: hidden;
 }
 
-.session-card:hover {
-    background-color: #f0f0f0;
+.session-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(ellipse at center, rgba(0,255,113,0) 0%, rgba(0,255,113,0.3) 100%);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.session-card:hover::before {
+    opacity: 1;
 }
 
 .session-name {

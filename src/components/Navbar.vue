@@ -44,6 +44,7 @@
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
         v-if="!showDashboardButtons"
+        aria-label="Support me on Ko-fi"
       />
       <Button
         id="github-button"
@@ -53,6 +54,7 @@
         class="p-button-sm p-button-text p-button-primary"
         style="margin-right: 10px;"
         v-if="!showDashboardButtons"
+        aria-label="View on GitHub"
       />
       <Button
         id="discord-button"
@@ -60,6 +62,7 @@
         class="p-button-sm p-button-text p-button-primary discord-button"
         style="margin-right: 10px"
         v-if="!showDashboardButtons"
+        aria-label="Join our Discord"
       >
         <img
           alt="Discord"

@@ -129,7 +129,33 @@ export const useF1Store = defineStore('f1', () => {
     if (initialDataR.TeamRadio?.Captures && !Array.isArray(initialDataR.TeamRadio.Captures)) {
         initialDataR.TeamRadio.Captures = Object.values(initialDataR.TeamRadio.Captures).filter(Boolean) as TeamRadioCapture[];
     }
+
+    const oldSessionStartDate = raceData.SessionInfo?.StartDate;
+    const newSessionStartDate = initialDataR.SessionInfo?.StartDate;
+    const isSameSession = oldSessionStartDate && newSessionStartDate && oldSessionStartDate === newSessionStartDate;
+    const preservedLapHistory = isSameSession ? raceData.LapHistoryMap : undefined;
+    const preservedDriverList = isSameSession ? raceData.DriverList : undefined;
+
     Object.assign(raceData, createInitialRaceData(), initialDataR);
+
+    if (preservedLapHistory && (!raceData.LapHistoryMap || Object.keys(raceData.LapHistoryMap).length === 0)) {
+        raceData.LapHistoryMap = preservedLapHistory;
+    }
+
+    if (preservedDriverList) {
+        if (!raceData.DriverList || Object.keys(raceData.DriverList).length === 0) {
+            raceData.DriverList = preservedDriverList;
+        } else {
+            for (const driverNumber in preservedDriverList) {
+                const driverInNewList = raceData.DriverList[driverNumber];
+                const driverInOldList = preservedDriverList[driverNumber];
+
+                if (driverInNewList && driverInOldList?.StartingPosition && !driverInNewList.StartingPosition) {
+                    driverInNewList.StartingPosition = driverInOldList.StartingPosition;
+                }
+            }
+        }
+    }
 
     if (raceData.ExtrapolatedClock?.Utc) {
       const clockTimestamp = new Date(raceData.ExtrapolatedClock.Utc);

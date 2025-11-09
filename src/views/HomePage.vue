@@ -9,11 +9,11 @@
         <img src="/pwlogo-full.png" alt="Logo" class="logo" />
         <h2>Take a seat on the pitwall and make your own race engineer dashboads to view real-time, or past session telemtry data.</h2>
         <div class="action-buttons">
-          <Button label="Go to the Pitwall 🏎️" @click="goToDashboard" class="p-button-lg" />
+          <Button label="Go to the Pitwall" @click="goToDashboard" class="p-button-lg" />
           <Button label="Check Schedule" @click="goToSchedule" class="p-button-lg p-button-secondary" />
         </div>
         <div class="action-buttons" style="margin-top: 1rem;">
-          <Button label="Take a tour 👀" @click="takeTour" class="p-button-lg p-button-info" />
+          <Button label="Take a tour" @click="takeTour" class="p-button-lg p-button-info" />
         </div>
       </main>
     </div>

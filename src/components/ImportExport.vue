@@ -65,10 +65,16 @@ const importSettingsFromFile = (event: Event) => {
 };
 
 const handleImport = (merge: boolean) => {
-    if (importedSettings) {
-        settingsStore.importSettings(importedSettings, merge);
+    try {
+        if (importedSettings) {
+            settingsStore.importSettings(importedSettings, merge);
+        }
+    } catch (error) {
+        alert('Failed to import settings. The file may be corrupted or in the wrong format.');
+        console.error(error);
+    } finally {
+        isImportDialogVisible.value = false;
+        importedSettings = null;
     }
-    isImportDialogVisible.value = false;
-    importedSettings = null;
 };
 </script>

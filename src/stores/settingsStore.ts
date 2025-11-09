@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, watch } from 'vue';
+import { SettingsSchema } from '@/types/settingsSchema';
+import { sanitize } from '@/utils/sanitize';
 
 async function loadDefaultSettings() {
   try {
@@ -86,7 +88,7 @@ export const useSettingsStore = defineStore('settings', () => {
 
   function addPage(name: string) {
     const newId = `page-${Date.now()}`;
-    pages.value.push({ id: newId, name });
+    pages.value.push({ id: newId, name: sanitize(name) });
     layouts.value[newId] = [];
     activePageId.value = newId;
   }
@@ -105,7 +107,7 @@ export const useSettingsStore = defineStore('settings', () => {
   function renamePage(pageId: string, newName: string) {
     const page = pages.value.find(p => p.id === pageId);
     if (page) {
-      page.name = newName;
+      page.name = sanitize(newName);
     }
   }
 
@@ -148,23 +150,30 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   async function importSettings(settings: any, merge: boolean) {
+    const validatedSettings = SettingsSchema.parse(settings);
+
     if (merge) {
       // Merge pages
       const existingPageNames = new Set(pages.value.map(p => p.name));
-      for (const newPage of settings.pages) {
-        if (!existingPageNames.has(newPage.name)) {
-          pages.value.push(newPage);
-          layouts.value[newPage.id] = settings.layouts[newPage.id];
+      if (validatedSettings.pages) {
+        for (const newPage of validatedSettings.pages) {
+          const sanitizedName = sanitize(newPage.name);
+          if (!existingPageNames.has(sanitizedName)) {
+            pages.value.push({ ...newPage, name: sanitizedName });
+            if (validatedSettings.layouts) {
+              layouts.value[newPage.id] = validatedSettings.layouts[newPage.id];
+            }
+          }
         }
       }
     } else {
       // Replace settings
       const defaultSettings = await loadDefaultSettings();
-      websocketDelay.value = settings.websocketDelay ?? defaultSettings.websocketDelay;
-      gridFloat.value = settings.gridFloat ?? defaultSettings.gridFloat;
-      pages.value = settings.pages ?? defaultSettings.pages;
-      layouts.value = settings.layouts ?? defaultSettings.layouts;
-      activePageId.value = settings.pages[0]?.id || defaultSettings.activePageId;
+      websocketDelay.value = validatedSettings.websocketDelay ?? defaultSettings.websocketDelay;
+      gridFloat.value = validatedSettings.gridFloat ?? defaultSettings.gridFloat;
+      pages.value = validatedSettings.pages?.map(p => ({...p, name: sanitize(p.name)})) ?? defaultSettings.pages;
+      layouts.value = validatedSettings.layouts ?? defaultSettings.layouts;
+      activePageId.value = validatedSettings.pages?.[0]?.id || defaultSettings.activePageId;
       layoutVersion.value++;
     }
   }

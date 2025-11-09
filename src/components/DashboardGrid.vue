@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch, nextTick, onMounted } from 'vue';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 import { useSettingsStore } from '@/stores/settingsStore';
@@ -69,15 +69,12 @@ const setupGridstack = () => {
     }
 };
 
-// Watch for initialWidgets to be populated and then set up Gridstack
-watch(() => props.initialWidgets, (newWidgets) => {
-    if (newWidgets && newWidgets.length > 0 && !isGridInitialized) {
-        // Use nextTick to ensure DOM is updated with slotted content
-        nextTick(() => {
-            setupGridstack();
-        });
-    }
-}, { immediate: true }); // immediate: true to run on initial component mount
+onMounted(() => {
+    // Use nextTick to ensure DOM is updated with slotted content
+    nextTick(() => {
+        setupGridstack();
+    });
+});
 
 watch(() => props.editMode, (isEditing) => {
     if (grid) {

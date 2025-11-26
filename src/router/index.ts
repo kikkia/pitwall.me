@@ -12,7 +12,7 @@ const router = createRouter({
       component: HomePage,
       meta: {
         title: 'Pitwall.me - Your F1 Dashboard',
-        description: 'Take a seat on the pitwall and create your own race engineer dashboards to view real-time or past session telemetry data.',
+        description: 'Take a seat on the F1 pitwall and create your own race engineer dashboards to view real-time or past session telemetry data. Monitor driver performance, lap times, and more.',
       },
     },
     {
@@ -30,7 +30,16 @@ const router = createRouter({
       component: () => import('../views/SchedulePage.vue'),
       meta: {
         title: 'F1 Race Schedule - Pitwall.me',
-        description: 'Up to date race schedule, including dates, times, and locations for every race.',
+        description: 'Up to date race schedule, including dates, times, and locations for every F1 session.',
+      },
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: () => import('../views/NotFound.vue'),
+      meta: {
+        title: 'Page Not Found - Pitwall.me',
+        description: 'The page you are looking for does not exist.',
       },
     },
   ],

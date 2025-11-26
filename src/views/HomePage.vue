@@ -7,7 +7,7 @@
     <div class="content-wrapper">
       <main class="main-content">
         <img src="/pwlogo-full.png" alt="Logo" class="logo" />
-        <h2>Take a seat on the pitwall and make your own race engineer dashboads to view real-time, or past session telemtry data.</h2>
+        <h1>Take a seat on the F1 pitwall and make your own race engineer dashboads to view real-time, or past session telemtry data.</h1>
         <div class="action-buttons">
           <Button label="Go to the Pitwall" @click="goToDashboard" class="p-button-lg" />
           <Button label="Check Schedule" @click="goToSchedule" class="p-button-lg p-button-secondary" />
@@ -101,9 +101,10 @@ const takeTour = () => {
   max-width: 300px;
 }
 
-h2 {
+h1 {
   font-size: 1.5rem;
   margin-bottom: 2rem;
+  opacity: 0.9;
 }
 
 .action-buttons .p-button {

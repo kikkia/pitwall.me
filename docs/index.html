@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pitwall.me - F1 Timing Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        header {
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        header img {
+            max-width: 300px;
+        }
+        h1, h2 {
+            color: #1a1a1a;
+        }
+        .cta-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .cta-button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .primary {
+            background-color: #e10600; /* F1 Red */
+            color: white;
+        }
+        .primary:hover {
+            background-color: #b40500;
+        }
+        .secondary {
+            background-color: #333;
+            color: white;
+        }
+        .secondary:hover {
+            background-color: #555;
+        }
+        .features-list {
+            list-style: none;
+            padding: 0;
+        }
+        .features-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.9em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="https://raw.githubusercontent.com/kikkia/f1-timings-vue/main/public/pwlogo-full.png" alt="Pitwall.me Logo">
+            <h1>Pitwall.me</h1>
+            <p>A customizable, real-time Formula 1 timing and telemetry dashboard.</p>
+        </header>
+
+        <main>
+            <p>
+                <strong>Pitwall.me</strong> is a customizable, real-time Formula 1 timing and telemetry dashboard designed to provide the kind of compact, data-rich dashboard you'd find on a race engineer's console. This project is the frontend application, built with Vue 3 and Vite.
+            </p>
+
+            <div class="cta-buttons">
+                <a href="https://www.pitwall.me" class="cta-button primary" target="_blank" rel="noopener noreferrer">Go to Pitwall.me App</a>
+                <a href="https://github.com/kikkia/f1-timings-vue" class="cta-button secondary" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+            </div>
+
+            <h2>Features</h2>
+            <ul class="features-list">
+                <li><strong>Real-time Data</strong>: Connects to a data relay stream for live F1 timing and telemetry.</li>
+                <li><strong>Extensive Widget Library</strong>: A wide variety of widgets for telemetry, timing, strategy, and more.</li>
+                <li><strong>Customizable Layouts</strong>: Drag, drop, and resize widgets to create your perfect dashboard.</li>
+                <li><strong>Multi-Page Support</strong>: Organize widgets across multiple pages.</li>
+                <li><strong>Replay System</strong>: Replay timing data from past F1 sessions.</li>
+                <li><strong>Import/Export</strong>: Save and share your custom layouts.</li>
+            </ul>
+
+            <h2>Technology Stack</h2>
+            <p>
+                The frontend is built with Vue 3, Vite, Pinia, and PrimeVue. The backend data provider is a separate project: <a href="https://github.com/kikkia/pitwall-drs" target="_blank" rel="noopener noreferrer">kikkia/pitwall-drs</a>.
+            </p>
+        </main>
+
+        <footer>
+            <p>This is the project page for the Pitwall.me frontend application. The actual application is available at <a href="https://www.pitwall.me">pitwall.me</a>.</p>
+            <p>Developed by <a href="https://github.com/kikkia" target="_blank" rel="noopener noreferrer">kikkia</a>.</p>
+        </footer>
+    </div>
+</body>
+</html>

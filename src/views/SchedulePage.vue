@@ -17,18 +17,28 @@
       </div>
 
       <div v-if="!showCalendar" class="race-weekend-cards-container">
-        <Card v-for="(group, raceName) in groupedEvents" :key="raceName"
-              :class="['race-weekend-card', getEventStatus(group), { 'pulse-blue': raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent }]"
-              @click="openSessionDetails(raceName, group)">
-            <template #title>{{ raceName }}</template>
-            <template #content>
-              <p v-if="getEventStatus(group) === 'ongoing'">{{ getNextSessionForGroup(group) }}</p>
-              <p v-else>Begins: {{ getCountdownForGroup(group) }}</p>
-            </template>
-            <div v-if="getEventStatus(group) === 'finished'" class="event-label finished-label">FINISHED</div>
-            <div v-else-if="getEventStatus(group) === 'ongoing'" class="event-label ongoing-label">ONGOING</div>
-            <div v-else-if="raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent" class="event-label up-next-label">UP NEXT</div>
-          </Card>
+        <template v-for="(item, index) in sortedRaceWeekends" :key="index">
+          <div v-if="item.isDivider" class="year-divider">
+            <span>{{ item.year }} Season</span>
+          </div>
+          <Card v-else
+                :class="['race-weekend-card', getEventStatus(item.sessions), { 'pulse-blue': item.raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent }]"
+                @click="openSessionDetails(item.raceName, item.sessions)">
+              <template #title>
+                <div class="card-title-content">
+                  <span class="country-flag">{{ getCountryFlagEmoji(item.sessions[0]?.location) }}</span>
+                  <span>{{ item.raceName }}</span>
+                </div>
+              </template>
+              <template #content>
+                <p v-if="getEventStatus(item.sessions) === 'ongoing'">{{ getNextSessionForGroup(item.sessions) }}</p>
+                <p v-else>Begins: {{ getCountdownForGroup(item.sessions) }}</p>
+              </template>
+              <div v-if="getEventStatus(item.sessions) === 'finished'" class="event-label finished-label">FINISHED</div>
+              <div v-else-if="getEventStatus(item.sessions) === 'ongoing'" class="event-label ongoing-label">ONGOING</div>
+              <div v-else-if="item.raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent" class="event-label up-next-label">UP NEXT</div>
+            </Card>
+        </template>
       </div>
       <div v-else class="calendar-container">
         <Calendar inline @date-select="onDateSelect" class="large-calendar">
@@ -42,7 +52,7 @@
     </div>
   </div>
 
-  <Dialog v-model:visible="sessionDetailsDialogVisible" modal dismissableMask :header="selectedRaceName" :style="{ width: '50vw' }" class="session-details-dialog">
+  <Dialog v-model:visible="sessionDetailsDialogVisible" modal dismissableMask :header="selectedRaceName" class="session-details-dialog">
     <template #header>
       <div class="dialog-header-content">
         <div class="race-info">
@@ -51,18 +61,22 @@
         <span class="date-range">{{ getRaceWeekendDates(selectedSessions) }}</span>
       </div>
     </template>
-    <div v-if="groupedSessionsByDay && Object.keys(groupedSessionsByDay).length > 0" class="session-details-content">
-        <div v-for="(sessions, day) in groupedSessionsByDay" :key="day" class="day-column">
-          <h2>{{ day }}</h2>
-          <div v-for="session in sessions" :key="session.uid" class="session-item">
-            <h3>{{ session.description }}</h3>
+    <div v-if="selectedSessions.length > 0" class="session-details-content">
+      <Card v-for="session in selectedSessions" :key="session.uid" class="session-card">
+        <template #content>
+          <div class="session-card-content">
+            <div class="session-card-header">
+              <h3>{{ session.description }}</h3>
+              <span class="session-day">{{ getSessionDay(session.startTimeLocal) }}</span>
+            </div>
             <p>{{ formatTimeRange(session.startTimeLocal, session.endTimeLocal) }}</p>
           </div>
-        </div>
-      </div>
-      <div v-else>
-        <p>No session details available.</p>
-      </div>
+        </template>
+      </Card>
+    </div>
+    <div v-else>
+      <p>No session details available.</p>
+    </div>
   </Dialog>
 </template>
 
@@ -141,28 +155,40 @@ const groupedEvents = computed(() => {
   return eventStore.allEventsGroupedByLocation;
 });
 
-const groupedSessionsByDay = computed(() => {
-  const groups: Record<string, LocalF1Event[]> = {};
-  const options: Intl.DateTimeFormatOptions = { weekday: 'long' };
 
-  selectedSessions.value.forEach(session => {
-    const day = session.startTimeLocal.toLocaleDateString(undefined, options);
-    if (!groups[day]) {
-      groups[day] = [];
+const sortedRaceWeekends = computed(() => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  const weekends = Object.entries(groupedEvents.value).map(([raceName, sessions]) => {
+    // Assuming sessions are sorted, use the first session's start time
+    const firstSessionTime = sessions[0]?.startTimeLocal;
+    return {
+      raceName,
+      sessions,
+      year: firstSessionTime ? firstSessionTime.getFullYear() : 0,
+      startTime: firstSessionTime ? firstSessionTime.getTime() : 0,
+    };
+  }).filter(weekend => weekend.startTime > 0); // Filter out empty groups if any
+
+  weekends.sort((a, b) => a.startTime - b.startTime);
+
+  const result: (any)[] = [];
+  let nextYearDividerAdded = false;
+
+  for (const weekend of weekends) {
+    if (weekend.year > currentYear && !nextYearDividerAdded) {
+      // Check if the event is not finished
+      const status = getEventStatus(weekend.sessions);
+      if (status !== 'finished') {
+        result.push({ isDivider: true, year: weekend.year });
+        nextYearDividerAdded = true;
+      }
     }
-    groups[day].push(session);
-  });
+    result.push(weekend);
+  }
 
-  const dayOrder = ['Thursday', 'Friday', 'Saturday', 'Sunday', 'Monday'];
-  const orderedGroups: Record<string, LocalF1Event[]> = {};
-
-  dayOrder.forEach(dayName => {
-    if (groups[dayName]) {
-      orderedGroups[dayName] = groups[dayName];
-    }
-  });
-
-  return orderedGroups;
+  return result;
 });
 
 const hasOngoingEvent = computed(() => {
@@ -209,8 +235,62 @@ const isRaceWeek = computed(() => {
   return firstSessionStartTime > now && firstSessionStartTime <= oneWeekFromNow;
 });
 
+const countryCodeOverrides: Record<string, string> = {
+    NED: 'NL',
+    MEX: 'MX',
+    UAE: 'AE'
+};
+
+const locationToCountryCode: Record<string, string> = {
+  'Bahrain': 'BH',
+  'Saudi Arabia': 'SA',
+  'Australia': 'AU',
+  'Japan': 'JP',
+  'China': 'CN',
+  'Miami': 'US',
+  'Emilia Romagna': 'IT',
+  'Monaco': 'MC',
+  'Canada': 'CA',
+  'Spain': 'ES',
+  'Austria': 'AT',
+  'Great Britain': 'GB',
+  'United Kingdom': 'GB',
+  'Hungary': 'HU',
+  'Belgium': 'BE',
+  'Netherlands': 'NL',
+  'Italy': 'IT',
+  'Azerbaijan': 'AZ',
+  'Singapore': 'SG',
+  'United States': 'US',
+  'Mexico': 'MX',
+  'Brazil': 'BR',
+  'Las Vegas': 'US',
+  'Qatar': 'QA',
+  'Abu Dhabi': 'AE',
+  'United Arab Emirates': 'AE'
+};
+
+const getCountryFlagEmoji = (location: string | undefined) => {
+    if (!location) return '';
+
+    const countryKey = Object.keys(locationToCountryCode).find(loc => location.includes(loc));
+    if (!countryKey) return '';
+    
+    const countryCode = locationToCountryCode[countryKey];
+
+    if (!countryCode) return '';
+    const correctedCode = (countryCodeOverrides[countryCode.toUpperCase()] || countryCode.toUpperCase()).substring(0, 2);
+    const codePoints = correctedCode
+        .split('')
+        .map(char => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+};
+
+const getSessionDay = (date: Date): string => {
+  return date.toLocaleDateString(undefined, { weekday: 'long' });
+};
+
 const getRaceWeekendDates = (sessions: LocalF1Event[]): string => {
-  console.log(sessions)
   if (!sessions || sessions.length === 0) {
     return '';
   }
@@ -398,6 +478,11 @@ const handleAddWidget = () => {
   justify-content: center;
 }
 
+.session-details-dialog {
+  width: 50vw;
+  max-width: 900px;
+}
+
 .session-details-dialog .p-dialog-header {
   border-bottom: 1px solid var(--surface-border);
   padding-bottom: 1rem;
@@ -434,40 +519,56 @@ const handleAddWidget = () => {
 }
 
 .session-details-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.day-column {
-  padding: 10px;
-  background-color: var(--surface-ground);
+.session-card {
+  background-color: var(--surface-card);
   border-radius: var(--border-radius);
-  box-sizing: border-box;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.day-column h2 {
-  font-size: 1.2em;
-  color: var(--primary-color);
-  margin-top: 0;
-  margin-bottom: 15px;
-  text-align: center;
+.session-card:hover {
+  background-color: var(--surface-hover);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.1);
 }
 
-.session-item {
-  margin-bottom: 10px;
+.session-card .p-card-content {
+  padding: 0;
 }
 
-.session-item h3 {
-  font-size: 1em;
+.session-card-content {
+  padding: 1rem;
+}
+
+.session-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-card-header h3 {
   margin: 0;
+  font-size: 1.1em;
   color: var(--text-color);
+  font-weight: bold;
 }
 
-.session-item p {
+.session-day {
   font-size: 0.9em;
   color: var(--text-color-secondary);
+  font-style: italic;
+}
+
+.session-card-content p {
   margin: 0;
+  font-size: 1em;
+  color: var(--text-color-secondary);
 }
 
 h1 {
@@ -507,12 +608,26 @@ h1 {
 .race-weekend-card {
   width: 100%;
   cursor: pointer;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; 
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+  background-color: var(--surface-card);
+  border: 1px solid var(--surface-border);
+  box-shadow: 0 4px 6px rgba(0,0,0, 0.1);
 }
 
 .race-weekend-card:hover {
-  transform: translateY(-5px); 
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); 
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color);
+}
+
+.card-title-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.country-flag {
+  font-size: 1.5rem;
 }
 
 .race-weekend-card .p-card-title {
@@ -602,5 +717,67 @@ h1 {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+
+.year-divider {
+  grid-column: 1 / -1;
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+  color: var(--text-color-secondary);
+}
+
+.year-divider span {
+  background-color: var(--surface-ground);
+  padding: 0 20px;
+  position: relative;
+  z-index: 1;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+.year-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background-color: var(--surface-border);
+  z-index: 0;
+}
+
+@media (max-width: 768px) {
+  .session-details-dialog {
+    width: 95vw;
+  }
+
+  .dialog-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .date-range {
+    margin-top: 8px;
+    font-size: 1em;
+  }
+
+  .race-info .race-name {
+    font-size: 1.2em;
+  }
+
+  .large-calendar {
+    font-size: 1rem;
+  }
+
+  :deep(.p-datepicker table td > span),
+  :deep(.p-datepicker table td > div) {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .season-page {
+    padding: 10px;
+  }
 }
 </style>

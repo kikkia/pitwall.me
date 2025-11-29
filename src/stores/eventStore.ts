@@ -5,6 +5,7 @@ import type { MenuItem } from 'primevue/menuitem';
 export interface LocalF1Event extends F1Event {
   startTimeLocal: Date;
   endTimeLocal: Date;
+  countryCode?: string;
 }
 
 function extractRaceName(summary: string): string {

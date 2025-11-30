@@ -1,53 +1,55 @@
 <template>
   <Navbar @open-info-modal="handleOpenInfoModal" @add-widget="handleAddWidget" :show-dashboard-buttons="false" />
   <div class="season-page">
-    <h1>Upcoming Sessions</h1>
-    <div class="view-toggle">
-      <ToggleButton v-model="showCalendar" onLabel="Calendar View" offLabel="Card View" onIcon="pi pi-calendar" offIcon="pi pi-list" />
-    </div>
-    <div v-if="eventStore.isLoading">Loading sessions...</div>
-    <div v-else-if="eventStore.error" class="error-message">{{ eventStore.error }}</div>
-    <div v-else>
-      <div v-if="isRaceWeek" class="race-week-banner">
-        It's Race Week!
+    <div class="content-wrapper">
+      <h1>Upcoming Sessions</h1>
+      <div class="view-toggle">
+        <ToggleButton v-model="showCalendar" onLabel="Calendar View" offLabel="Card View" onIcon="pi pi-calendar" offIcon="pi pi-list" />
       </div>
-      <div v-if="nextEvent" class="next-event-countdown">
-        <h2>Next Event: {{ nextEvent.summary }}</h2>
-        <p>Starts in: {{ countdown }}</p>
-      </div>
+      <div v-if="eventStore.isLoading">Loading sessions...</div>
+      <div v-else-if="eventStore.error" class="error-message">{{ eventStore.error }}</div>
+      <div v-else>
+        <div v-if="isRaceWeek" class="race-week-banner">
+          It's Race Week!
+        </div>
+        <div v-if="nextEvent" class="next-event-countdown">
+          <h2>Next Event: {{ nextEvent.summary }}</h2>
+          <p>Starts in: {{ countdown }}</p>
+        </div>
 
-      <div v-if="!showCalendar" class="race-weekend-cards-container">
-        <template v-for="(item, index) in sortedRaceWeekends" :key="index">
-          <div v-if="item.isDivider" class="year-divider">
-            <span>{{ item.year }} Season</span>
-          </div>
-          <Card v-else
-                :class="['race-weekend-card', getEventStatus(item.sessions), { 'pulse-blue': item.raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent }]"
-                @click="openSessionDetails(item.raceName, item.sessions)">
-              <template #title>
-                <div class="card-title-content">
-                  <span class="country-flag">{{ getCountryFlagEmoji(item.sessions[0]?.location) }}</span>
-                  <span>{{ item.raceName }}</span>
-                </div>
-              </template>
-              <template #content>
-                <p v-if="getEventStatus(item.sessions) === 'ongoing'">{{ getNextSessionForGroup(item.sessions) }}</p>
-                <p v-else>Begins: {{ getCountdownForGroup(item.sessions) }}</p>
-              </template>
-              <div v-if="getEventStatus(item.sessions) === 'finished'" class="event-label finished-label">FINISHED</div>
-              <div v-else-if="getEventStatus(item.sessions) === 'ongoing'" class="event-label ongoing-label">ONGOING</div>
-              <div v-else-if="item.raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent" class="event-label up-next-label">UP NEXT</div>
-            </Card>
-        </template>
-      </div>
-      <div v-else class="calendar-container">
-        <Calendar inline @date-select="onDateSelect" class="large-calendar">
-          <template #date="slotProps">
-            <div :class="{'event-day': isSession(slotProps.date)}">
-                {{ slotProps.date.day }}
+        <div v-if="!showCalendar" class="race-weekend-cards-container">
+          <template v-for="(item, index) in sortedRaceWeekends" :key="index">
+            <div v-if="item.isDivider" class="year-divider">
+              <span>{{ item.year }} Season</span>
             </div>
+            <Card v-else
+                  :class="['race-weekend-card', getEventStatus(item.sessions), { 'pulse-blue': item.raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent }]"
+                  @click="openSessionDetails(item.raceName, item.sessions)">
+                <template #title>
+                  <div class="card-title-content">
+                    <span class="country-flag">{{ getCountryFlagEmoji(item.sessions[0]?.location) }}</span>
+                    <span>{{ item.raceName }}</span>
+                  </div>
+                </template>
+                <template #content>
+                  <p v-if="getEventStatus(item.sessions) === 'ongoing'">{{ getNextSessionForGroup(item.sessions) }}</p>
+                  <p v-else>Begins: {{ getCountdownForGroup(item.sessions) }}</p>
+                </template>
+                <div v-if="getEventStatus(item.sessions) === 'finished'" class="event-label finished-label">FINISHED</div>
+                <div v-else-if="getEventStatus(item.sessions) === 'ongoing'" class="event-label ongoing-label">ONGOING</div>
+                <div v-else-if="item.raceName === nextUpcomingRaceWeekendName && !hasOngoingEvent" class="event-label up-next-label">UP NEXT</div>
+              </Card>
           </template>
-        </Calendar>
+        </div>
+        <div v-else class="calendar-container">
+          <Calendar inline @date-select="onDateSelect" class="large-calendar">
+            <template #date="slotProps">
+              <div :class="{'event-day': isSession(slotProps.date)}">
+                  {{ slotProps.date.day }}
+              </div>
+            </template>
+          </Calendar>
+        </div>
       </div>
     </div>
   </div>
@@ -437,6 +439,11 @@ const handleAddWidget = () => {
 
 <style scoped>
 .season-page {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+
+.content-wrapper {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;

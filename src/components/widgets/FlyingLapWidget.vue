@@ -721,6 +721,7 @@ defineExpose({ settingsDefinition });
 
 .sector-overall-best { color: #B300B3; }
 .sector-personal-best { color: #00F500; }
+.sector-set { color: #F2E205; }
 
 /* These classes are now applied to the .minisectors-progress div */
 

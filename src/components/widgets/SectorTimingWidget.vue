@@ -311,6 +311,9 @@ const tableStyle = computed(() => ({
   .last-time.sector-overall-best {
     font-weight: bold;
   }
+  .last-time.sector-set {
+    color: #fdd835 !important;
+  }
   .minisector-row {
     width: 100%;
     margin-top: 1px;

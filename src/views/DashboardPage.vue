@@ -16,7 +16,7 @@
       :edit-mode="isEditMode"
     >
       <div
-        v-for="widget in activeWidgets"
+        v-for="widget in validWidgets"
         :key="widget.id"
         class="grid-stack-item"
         :gs-x="widget.x"
@@ -108,6 +108,16 @@ const settingsStore = useSettingsStore();
 const { activePageId, layouts, layoutVersion } = storeToRefs(settingsStore);
 
 const activeWidgets = computed(() => layouts.value[activePageId.value] || []);
+
+const validWidgets = computed(() => {
+  return activeWidgets.value.filter(widget => {
+    const componentExists = !!widgetComponentMap[widget.componentName];
+    if (!componentExists) {
+      console.warn(`DashboardPage: Widget with componentName "${widget.componentName}" (id: ${widget.id}) not found in widgetRegistry. It will be filtered from rendering to prevent a crash.`);
+    }
+    return componentExists;
+  });
+});
 
 const isInfoModalVisible = ref(false);
 const isEditMode = ref(true);

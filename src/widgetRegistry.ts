@@ -19,7 +19,8 @@ export type WidgetComponentName =
   'TeamRadio' |
   'PitstopStrategy' |
   'FlyingLap' |
-  'PositionChange';
+  'PositionChange' |
+  'TimingTower';
 
 // Map component names to their actual component definitions
 export const widgetComponentMap: Record<WidgetComponentName, Component> = {
@@ -42,6 +43,7 @@ export const widgetComponentMap: Record<WidgetComponentName, Component> = {
   'TeamRadio': shallowRef(defineAsyncComponent(() => import('./components/widgets/TeamRadioWidget.vue'))),
   'SpeedTrap': shallowRef(defineAsyncComponent(() => import('./components/widgets/SpeedTrapWidget.vue'))),
   'PositionChange': shallowRef(defineAsyncComponent(() => import('./components/widgets/PositionChangeWidget.vue'))),
+  'TimingTower': shallowRef(defineAsyncComponent(() => import('./components/widgets/TimingTowerWidget.vue'))),
 };
 
 export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
@@ -73,6 +75,7 @@ export const defaultWidgetConfigs: Record<WidgetComponentName, any> = {
     'TeamRadio': { showTimestamp: true, focusedDrivers: [], focusedTeams: [], messageFontSize: 90 },
     'SpeedTrap': { messageFontSize: 90, showI1: true, showI2: true, showFL: true, showST: true, sortBy: 'ST' },
     'PositionChange': { displayMode: 'All', filterMode: 'Both', messageFontSize: 90 },
+    'TimingTower': { displayMode: 'interval', dankMode: false, messageFontSize: 90 },
 };
 
 export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: number }> = {
@@ -95,6 +98,7 @@ export const defaultWidgetSizes: Record<WidgetComponentName, { w: number, h: num
     'PitstopStrategy': { w: 18, h: 10 },
     'FlyingLap': { w: 24, h: 10 },
     'PositionChange': { w: 12, h: 14 },
+    'TimingTower': { w: 12, h: 28 },
 };
 
 export const widgetDisplayNames: Record<WidgetComponentName, string> = {
@@ -117,6 +121,7 @@ export const widgetDisplayNames: Record<WidgetComponentName, string> = {
     'ChampionshipPrediction': 'Championship Prediction',
     'SpeedTrap': 'Speed Trap',
     'PositionChange': 'Position Change',
+    'TimingTower': 'Timing Tower',
   };
 
 export const widgetDescriptions: Record<WidgetComponentName, string> = {
@@ -139,6 +144,7 @@ export const widgetDescriptions: Record<WidgetComponentName, string> = {
     'PitstopStrategy': 'Simulate driver pitstops to see where they will end up.',
     'FlyingLap': 'Highlights a driver on a flying lap, showing sector progress and deltas.',
     'PositionChange': 'Ranks drivers by places gained or lost since the start.',
+    'TimingTower': 'Emulates the F1 timing tower seen on broadcasts.',
   };
 export const widgetIcons: Record<WidgetComponentName, string> = {
     'TimingTable': 'pi pi-table',
@@ -160,6 +166,7 @@ export const widgetIcons: Record<WidgetComponentName, string> = {
     'PitstopStrategy': 'pi pi-wrench',
     'FlyingLap': 'pi pi-forward',
     'PositionChange': 'pi pi-sort-alt',
+    'TimingTower': 'pi pi-list',
 };
 
 export const widgetTags: Record<WidgetComponentName, string[]> = {
@@ -182,4 +189,5 @@ export const widgetTags: Record<WidgetComponentName, string[]> = {
     'PitstopStrategy': ['Strategy', 'Compare'],
     'FlyingLap': ['Quali'],
     'PositionChange': ['Table', 'Compare'],
+    'TimingTower': ['Visualization', 'Table'],
 };

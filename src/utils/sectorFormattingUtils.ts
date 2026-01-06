@@ -16,7 +16,7 @@ export function getLastTimeClass(timeData: any | null | undefined): string {
   if (!timeData) return '';
   if (timeData.OverallFastest) return 'sector-overall-best';
   if (timeData.PersonalFastest) return 'sector-personal-best';
-  return '';
+  return 'sector-set';
 }
 
 // Gets class for the BEST sector/lap time span

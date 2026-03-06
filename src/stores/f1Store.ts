@@ -114,6 +114,16 @@ export const useF1Store = defineStore('f1', () => {
   const isRace = computed<boolean>(() => currentSessionType.value === 'Race');
   const isSprint = computed<boolean>(() => !!raceData.SessionInfo?.Name.toLowerCase().includes('sprint'));
 
+  const overtakeSystemLabel = computed<'DRS' | 'OT'>(() => {
+    if (raceData.SessionInfo?.StartDate) {
+      const sessionYear = new Date(raceData.SessionInfo.StartDate).getFullYear();
+      if (sessionYear >= 2026) {
+        return 'OT';
+      }
+    }
+    return 'DRS';
+  });
+
   // === ACTIONS ===
 
   function setConnected(status: boolean) {
@@ -530,6 +540,7 @@ export const useF1Store = defineStore('f1', () => {
     isQuali,
     isRace,
     isSprint,
+    overtakeSystemLabel,
   
     setConnected,
     setInitialState,

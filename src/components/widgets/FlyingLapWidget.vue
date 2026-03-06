@@ -70,8 +70,8 @@ const targetOpponent = computed<DriverViewModel | null>(() => {
     let safePosition: number | null = null;
 
     if (currentQualifyingPart === 1) {
-        safePosition = 15;
-        isAtRisk = currentDriverPos >= 16;
+        safePosition = 16;
+        isAtRisk = currentDriverPos >= 17;
     } else if (currentQualifyingPart === 2) {
         safePosition = 10;
         isAtRisk = currentDriverPos >= 11;

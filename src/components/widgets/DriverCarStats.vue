@@ -427,7 +427,7 @@ function handleSpeedUnitChange(event: any) {
                 <div class="brake-indicator" :class="{ 'active': currentCarData['5'] }"></div>
               </div>
               <div class="indicator-item">
-                <span class="indicator-label">DRS</span>
+                <span class="indicator-label">{{ f1Store.overtakeSystemLabel }}</span>
                 <div class="drs-indicator" :class="{ 'active': currentCarData['45'] }"></div>
               </div>
             </div>

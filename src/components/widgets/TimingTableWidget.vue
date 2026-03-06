@@ -30,9 +30,9 @@ const driversWithEliminationStatus = computed(() => {
     if (isQualifying.value) {
       const driverPositionNum = parseInt(driver.position);
       if (currentQualifyingPart.value === 1) {
-        isAtRisk = driverPositionNum >= 16 && driverPositionNum <= 20;
+        isAtRisk = driverPositionNum >= 17 && driverPositionNum <= 22;
       } else if (currentQualifyingPart.value === 2) {
-        isAtRisk = driverPositionNum >= 11 && driverPositionNum <= 15;
+        isAtRisk = driverPositionNum >= 11 && driverPositionNum <= 16;
       }
     }
     return {

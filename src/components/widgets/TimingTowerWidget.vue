@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useF1Store } from '@/stores/f1Store';
 import { formatLapTime, timeStringToMillis } from '@/utils/formatUtils';
 import { getMinisectorClass, getLastTimeClass } from '@/utils/sectorFormattingUtils';
+import { MiniSectorStatus } from '@/types/dataTypes';
 
 const f1Store = useF1Store();
 
@@ -23,9 +24,9 @@ const drivers = computed(() => {
       if (isQualifying.value) {
         const driverPositionNum = parseInt(driver.position);
         if (currentQualifyingPart.value === 1) {
-          isAtRisk = driverPositionNum >= 16 && driverPositionNum <= 20;
+          isAtRisk = driverPositionNum >= 17 && driverPositionNum <= 22;
         } else if (currentQualifyingPart.value === 2) {
-          isAtRisk = driverPositionNum >= 11 && driverPositionNum <= 15;
+          isAtRisk = driverPositionNum >= 11 && driverPositionNum <= 16;
         }
       }
       return {
@@ -83,7 +84,7 @@ const computedDisplayValue = (driver: any) => {
         const time = driver.qualifyingTime?.Value;
         if (!time) {
             if (driver.inPit) return 'IN PIT';
-            if (driver.sectors && driver.sectors.some((s: any) => s.Value)) return 'OutLap';
+            if (driver.sectors?.[0]?.Segments?.some((s: any) => s.Status === MiniSectorStatus.InPits)) return 'OutLap';
             return 'No Time';
         }
         return formatLapTime(timeStringToMillis(time));

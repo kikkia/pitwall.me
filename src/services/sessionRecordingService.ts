@@ -13,8 +13,7 @@ function transformRecordings(recordingsIndex: RecordingsIndex): SessionRecording
             .map(recording => ({
                 ...recording,
                 name: (recording.path.split('/').pop()?.replace('.txt', '') || '').replace(/_/g, ' ')
-            }))
-            .sort((a, b) => new Date(a.finishedAt).getTime() - new Date(b.finishedAt).getTime());
+            }));
 
         return {
             eventName: transformedEventName,
@@ -26,7 +25,7 @@ function transformRecordings(recordingsIndex: RecordingsIndex): SessionRecording
     return groups.sort((a, b) => {
         const aDate = a.recordings.length > 0 ? new Date(a.recordings[0].finishedAt).getTime() : 0;
         const bDate = b.recordings.length > 0 ? new Date(b.recordings[0].finishedAt).getTime() : 0;
-        return aDate - bDate;
+        return bDate - aDate;
     });
 }
 

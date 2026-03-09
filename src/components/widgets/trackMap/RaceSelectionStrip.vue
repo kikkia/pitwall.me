@@ -11,7 +11,7 @@
       <DriverStripCard
         :driver="selectedDriver"
         :selected="true"
-        :metrics="[`L ${selectedDriver.gapToLeader || '-'}`]"
+        :metrics="[selectedDriver.lastLapTime?.Value || '-']"
       />
 
       <div class="gap-chip" :class="[behindGapTrendClass, { 'gap-chip--empty': !driverBehind }]">

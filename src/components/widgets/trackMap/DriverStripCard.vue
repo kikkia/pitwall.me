@@ -14,7 +14,15 @@
         <span class="tyre-pill-label">{{ tyreInfo.abbrev }}</span>
         <span class="tyre-pill-age">{{ tyreInfo.ageLabel }}</span>
       </span>
-      <span v-for="(metric, index) in metrics" :key="`${driver.racingNumber}.metric.${index}`" class="lap-val">{{ metric }}</span>
+      <div class="lap-metrics" v-if="metrics.length > 0">
+        <span
+          v-for="(metric, index) in metrics"
+          :key="`${driver.racingNumber}.metric.${index}`"
+          class="lap-val"
+          :class="metricClasses && metricClasses[index]"
+          >{{ metric }}</span
+        >
+      </div>
     </template>
     <template v-else>
       <span class="lap-val">{{ emptyLabel }}</span>
@@ -30,11 +38,13 @@ import { getDriverTyreInfo } from '@/utils/tyreUtils';
 const props = withDefaults(defineProps<{
   driver: DriverViewModel | null;
   metrics?: string[];
+  metricClasses?: (string | undefined)[];
   selected?: boolean;
   nonRace?: boolean;
   emptyLabel?: string;
 }>(), {
   metrics: () => [],
+  metricClasses: () => [],
   selected: false,
   nonRace: false,
   emptyLabel: '-',
@@ -82,9 +92,26 @@ const tyreInfo = computed(() => getDriverTyreInfo(props.driver));
   font-weight: 700;
 }
 
+.lap-metrics {
+  display: flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 2px;
+}
+
 .lap-val {
   color: #b4b4b8;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
+  text-align: right;
+  width: 100%;
+}
+
+.lap-diff-positive {
+  color: #4ade80;
+}
+
+.lap-diff-negative {
+  color: #f87171;
 }
 
 .tyre-pill {

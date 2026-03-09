@@ -2,7 +2,12 @@
   <div class="driver-strip" @click.stop>
     <button class="strip-close" @click="$emit('close')" aria-label="Close selected driver banner">×</button>
     <div class="race-strip-grid">
-      <DriverStripCard :driver="driverAhead" :metrics="[driverAhead?.lastLapTime?.Value || '-']" empty-label="LEADER" />
+      <DriverStripCard
+        :driver="driverAhead"
+        :metrics="aheadMetrics"
+        :metric-classes="aheadMetricClasses"
+        empty-label="LEADER"
+      />
 
       <div class="gap-chip" :class="[aheadGapTrendClass, { 'gap-chip--empty': !driverAhead }]">
         {{ driverAhead ? displayedAheadGap : '' }}
@@ -18,16 +23,23 @@
         {{ driverBehind ? displayedBehindGap : '' }}
       </div>
 
-      <DriverStripCard :driver="driverBehind" :metrics="[driverBehind?.lastLapTime?.Value || '-']" empty-label="TAIL" />
+      <DriverStripCard
+        :driver="driverBehind"
+        :metrics="behindMetrics"
+        :metric-classes="behindMetricClasses"
+        empty-label="TAIL"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { DriverViewModel } from '@/types/dataTypes';
+import { timeStringToMillis, formatDiff } from '@/utils/formatUtils';
 import DriverStripCard from './DriverStripCard.vue';
 
-defineProps<{
+const props = defineProps<{
   selectedDriver: DriverViewModel;
   driverAhead: DriverViewModel | null;
   driverBehind: DriverViewModel | null;
@@ -36,6 +48,42 @@ defineProps<{
   aheadGapTrendClass: string;
   behindGapTrendClass: string;
 }>();
+
+const selectedDriverLastLapMillis = computed(() => timeStringToMillis(props.selectedDriver?.lastLapTime?.Value));
+
+const driverAheadLastLapMillis = computed(() => timeStringToMillis(props.driverAhead?.lastLapTime?.Value));
+
+const driverBehindLastLapMillis = computed(() => timeStringToMillis(props.driverBehind?.lastLapTime?.Value));
+
+const aheadMetrics = computed(() => {
+  const lastLap = props.driverAhead?.lastLapTime?.Value || '-';
+  if (selectedDriverLastLapMillis.value === Infinity || driverAheadLastLapMillis.value === Infinity) {
+    return [lastLap];
+  }
+  const diff = driverAheadLastLapMillis.value - selectedDriverLastLapMillis.value;
+  return [lastLap, formatDiff(diff)];
+});
+
+const aheadMetricClasses = computed(() => {
+  if (aheadMetrics.value.length < 2) return [];
+  const diff = driverAheadLastLapMillis.value - selectedDriverLastLapMillis.value;
+  return [undefined, diff > 0 ? 'lap-diff-positive' : 'lap-diff-negative'];
+});
+
+const behindMetrics = computed(() => {
+  const lastLap = props.driverBehind?.lastLapTime?.Value || '-';
+  if (selectedDriverLastLapMillis.value === Infinity || driverBehindLastLapMillis.value === Infinity) {
+    return [lastLap];
+  }
+  const diff = driverBehindLastLapMillis.value - selectedDriverLastLapMillis.value;
+  return [lastLap, formatDiff(diff)];
+});
+
+const behindMetricClasses = computed(() => {
+  if (behindMetrics.value.length < 2) return [];
+  const diff = driverBehindLastLapMillis.value - selectedDriverLastLapMillis.value;
+  return [undefined, diff > 0 ? 'lap-diff-positive' : 'lap-diff-negative'];
+});
 
 defineEmits<{
   (e: 'close'): void;

@@ -9,8 +9,8 @@
         <img src="/pwlogo-full.png" alt="Logo" class="logo" />
         <h1>Take a seat on the F1 pitwall and make your own race engineer dashboads to view real-time, or past session telemtry data.</h1>
         <div class="action-buttons">
-          <Button label="Go to the Pitwall" @click="goToDashboard" class="p-button-lg" />
-          <Button label="Check Schedule" @click="goToSchedule" class="p-button-lg p-button-secondary" />
+          <Button as="router-link" to="/dashboard" label="Go to the Pitwall" class="p-button-lg" />
+          <Button as="router-link" to="/schedule" label="Check Schedule" class="p-button-lg p-button-secondary" />
         </div>
         <div class="action-buttons" style="margin-top: 1rem;">
           <Button label="Take a tour" @click="takeTour" class="p-button-lg p-button-info" />
@@ -41,13 +41,7 @@ useHead({
   ],
 });
 
-const goToDashboard = () => {
-  router.push('/dashboard');
-};
 
-const goToSchedule = () => {
-  router.push('/schedule');
-};
 
 const takeTour = () => {
   uiStore.triggerWelcomeTour();

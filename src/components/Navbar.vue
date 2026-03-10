@@ -1,12 +1,14 @@
 <template>
   <Toolbar class="app-navbar">
     <template #start>
-      <span class="navbar-brand" @click="handleLogoClick">Pitwall.me</span>
+      <router-link v-if="route.path !== '/'" to="/" class="navbar-brand">Pitwall.me</router-link>
+      <span v-else class="navbar-brand" @click="emit('open-info-modal')" style="cursor: pointer;">Pitwall.me</span>
       <Button
         id="upcoming-sessions-button"
+        as="router-link"
+        to="/schedule"
         icon="pi pi-calendar"
         label="Upcoming Sessions"
-        @click="goToSchedulePage"
         class="p-button-sm p-button-text p-button-secondary"
         style="margin-left: 10px;"
       />
@@ -235,13 +237,7 @@ const openLink = (url: string) => {
   window.open(url, '_blank');
 };
 
-const handleLogoClick = () => {
-  if (route.path === '/') {
-    emit('open-info-modal');
-  } else {
-    router.push('/');
-  }
-};
+
 
 onMounted(() => {
   connect();
@@ -361,9 +357,7 @@ function runCountdownInterval(currentRemainingSeconds: number) {
   }, 1000 / (isReplaying.value ? settingsStore.replayTimeFactor : 1));
 }
 
-const goToSchedulePage = () => {
-  router.push('/schedule');
-};
+
 
 const openSettingsDialog = () => {
   settingsDialogVisible.value = true;
@@ -454,6 +448,8 @@ onUnmounted(() => {
   font-size: 1.2rem;
   display: inline-flex;
   align-items: center;
+  text-decoration: none;
+  color: inherit;
 }
 
 .pulse-disconnected {

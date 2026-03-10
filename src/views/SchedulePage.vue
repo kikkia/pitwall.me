@@ -97,12 +97,59 @@ import ToggleButton from 'primevue/togglebutton';
 
 const eventStore = useEventStore();
 
-useHead({
+const jsonLdData = computed(() => {
+  if (eventStore.events.length === 0) return null;
+  
+  const events = [];
+  let position = 1;
+  for (const raceName in eventStore.allEventsGroupedByLocation) {
+    const group = eventStore.allEventsGroupedByLocation[raceName];
+    if (group && group.length > 0) {
+      const firstSession = group[0];
+      const start = firstSession.startTimeLocal.toISOString();
+      const end = group[group.length - 1].endTimeLocal.toISOString();
+      events.push({
+        "@type": "ListItem",
+        "position": position++,
+        "item": {
+          "@type": "SportsEvent",
+          "name": raceName,
+          "startDate": start,
+          "endDate": end,
+          "location": {
+            "@type": "Place",
+            "name": firstSession.location || raceName
+          }
+        }
+      });
+    }
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "F1 Race Schedule",
+    "itemListElement": events
+  };
+});
+
+useHead(() => ({
   title: 'F1 Schedule | Pitwall.me',
   meta: [
-    { name: 'description', content: 'View the upcoming F1 race schedule and check session times.' }
+    { name: 'description', content: 'View the upcoming F1 race schedule and check session times.' },
+    { name: 'robots', content: 'index, follow' },
+    { property: 'og:title', content: 'F1 Race Schedule - Pitwall.me' },
+    { property: 'og:description', content: 'Up to date race schedule, including dates, times, and locations for every F1 session.' },
+    { name: 'twitter:title', content: 'F1 Race Schedule - Pitwall.me' },
+    { name: 'twitter:description', content: 'Up to date race schedule, including dates, times, and locations for every F1 session.' }
   ],
-});
+  script: jsonLdData.value ? [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify(jsonLdData.value)
+    }
+  ] : []
+}));
 
 const countdown = ref('');
 let countdownInterval: number | undefined;
@@ -708,6 +755,7 @@ h1 {
   background: linear-gradient(120deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3);
   background-size: 200% 200%;
   -webkit-background-clip: text;
+  background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: rainbow-text 6s ease infinite;
   padding: 15px;

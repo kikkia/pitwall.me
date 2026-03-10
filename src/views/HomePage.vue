@@ -41,8 +41,6 @@ useHead({
   ],
 });
 
-
-
 const takeTour = () => {
   uiStore.triggerWelcomeTour();
   router.push('/dashboard');

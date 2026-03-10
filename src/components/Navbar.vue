@@ -237,8 +237,6 @@ const openLink = (url: string) => {
   window.open(url, '_blank');
 };
 
-
-
 onMounted(() => {
   connect();
   fetchEvents();
@@ -356,8 +354,6 @@ function runCountdownInterval(currentRemainingSeconds: number) {
     }
   }, 1000 / (isReplaying.value ? settingsStore.replayTimeFactor : 1));
 }
-
-
 
 const openSettingsDialog = () => {
   settingsDialogVisible.value = true;

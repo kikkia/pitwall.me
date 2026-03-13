@@ -163,7 +163,8 @@ const startReplay = async (recording: SessionRecording) => {
 const countryCodeOverrides: Record<string, string> = {
     NED: 'NL',
     MEX: 'MX',
-    UAE: 'AE'
+    UAE: 'AE',
+    CHN: 'CN',
 };
 
 const getCountryFlagEmoji = (countryCode: string) => {

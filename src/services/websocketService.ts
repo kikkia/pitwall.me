@@ -2,6 +2,7 @@ import { useF1Store } from '@/stores/f1Store';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUiStore } from '@/stores/uiStore';
 import type { RaceData } from '@/types/dataTypes';
+import pako from 'pako';
 
 type DirectFeedUpdateMessage = [keyof RaceData, Partial<RaceData[keyof RaceData]>];
 
@@ -131,6 +132,7 @@ export function connect(): void {
 
   console.log(`Service: Connecting WebSocket to proxy: ${WS_URL}`);
   websocket = new WebSocket(WS_URL);
+  websocket.binaryType = 'arraybuffer';
   let store = getStore(); 
 
   websocket.onopen = () => {
@@ -155,19 +157,35 @@ export function connect(): void {
 
   websocket.onmessage = (event: MessageEvent) => {
     try {
-      const parsedData: ParsedWebSocketData = JSON.parse(event.data as string);
+      let dataString = '';
+      if (event.data instanceof ArrayBuffer) {
+        dataString = pako.inflate(new Uint8Array(event.data), { to: 'string' });
+      } else {
+        dataString = event.data as string;
+      }
+      const parsedData: any = JSON.parse(dataString);
 
-      // Avoid holding a global state to at least show something to the user
-      if (typeof parsedData === 'object' && parsedData !== null && 'R' in parsedData && typeof parsedData.R === 'object') {
-        console.log("Service: global state message, applying immediately (skipping queue).");
-        try {
-          const f1Store = getStore();
-          applyParsedData(parsedData, f1Store);
-        } catch (e) {
-          console.error("Service: Failed to apply global state message:", e, parsedData);
+      const handleParsedMessage = (msg: ParsedWebSocketData) => {
+        // Avoid holding a global state to at least show something to the user
+        if (typeof msg === 'object' && msg !== null && 'R' in msg && typeof msg.R === 'object') {
+          console.log("Service: global state message, applying immediately (skipping queue).");
+          try {
+            const f1Store = getStore();
+            applyParsedData(msg, f1Store);
+          } catch (e) {
+            console.error("Service: Failed to apply global state message:", e, msg);
+          }
+        } else {
+          messageQueue.push({ timestamp: Date.now(), data: msg });
+        }
+      };
+
+      if (parsedData && parsedData.type === "bundle" && Array.isArray(parsedData.messages)) {
+        for (const msg of parsedData.messages) {
+          handleParsedMessage(msg);
         }
       } else {
-        messageQueue.push({ timestamp: Date.now(), data: parsedData });
+        handleParsedMessage(parsedData);
       }
     } catch (e) {
       console.error("Service: Failed to parse WebSocket message:", e, event.data);
